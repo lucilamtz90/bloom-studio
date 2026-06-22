@@ -975,7 +975,10 @@ function renderBouquet(selectedIds, ribbonColor, envelopeColor, small=false) {
   const ribH = Math.round(ribW * 1208/1505);
   const ribLeft = Math.round(cx - ribW/2);
   const ribTop  = Math.round(by - ribH * 0.45);
-  html += `<div style="position:absolute;left:${ribLeft}px;top:${ribTop}px;width:${ribW}px;height:${ribH}px;-webkit-mask-image:url('images/ribbon.png');mask-image:url('images/ribbon.png');-webkit-mask-size:contain;mask-size:contain;-webkit-mask-repeat:no-repeat;mask-repeat:no-repeat;-webkit-mask-position:center;mask-position:center;background-color:${ribbonColor};z-index:11;pointer-events:none"></div>`;
+  // Outer div: masked to ribbon shape, isolates the blend group
+  // Inside: solid tint base + grayscale ribbon multiplied over it
+  // → white fabric becomes tint colour; dots become darker tint (texture preserved)
+  html += `<div style="position:absolute;left:${ribLeft}px;top:${ribTop}px;width:${ribW}px;height:${ribH}px;z-index:11;pointer-events:none;isolation:isolate;-webkit-mask-image:url('images/ribbon.png');mask-image:url('images/ribbon.png');-webkit-mask-size:contain;mask-size:contain;-webkit-mask-repeat:no-repeat;mask-repeat:no-repeat;-webkit-mask-position:center;mask-position:center"><div style="position:absolute;inset:0;background:${ribbonColor}"></div><img src="images/ribbon.png" style="position:absolute;inset:0;width:100%;height:100%;object-fit:contain;filter:grayscale(1);mix-blend-mode:multiply"></div>`;
   html += `</div>`;
   return html;
 }
