@@ -1,0 +1,84 @@
+/* ═══════════════════════════════════════════
+   THE BLOOM ATELIER — Design Tokens
+   Import this file first in your project.
+   Usage: @import './bloom-tokens.css';
+═══════════════════════════════════════════ */
+
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&family=Jost:wght@300;400&family=Courier+Prime&display=swap');
+
+:root {
+  /* ── Colors ── */
+  --color-parchment:   #F5F0EC;   /* backgrounds, card fills */
+  --color-canvas:      #EDECEA;   /* page background */
+  --color-rose:        #D9C5C0;   /* primary / buttons */
+  --color-mauve:       #B89FA0;   /* accent / hover */
+  --color-sage:        #C4C5AA;   /* nature accent / tags */
+  --color-stone:       #A8A089;   /* secondary neutral */
+  --color-bark:        #2C2725;   /* body text / headings */
+  --color-muted:       #8C7F7A;   /* placeholder / captions */
+  --color-hairline:    rgba(44, 39, 37, 0.1); /* dividers / borders */
+  --color-error:       #C47A7A;   /* error states */
+
+  /* ── Typography ── */
+  --font-display: 'Cormorant Garamond', serif;
+  --font-body:    'Jost', sans-serif;
+  --font-mono:    'Courier Prime', monospace;
+
+  /* ── Font sizes ── */
+  --text-hero:    48px;
+  --text-h1:      32px;
+  --text-h2:      22px;
+  --text-body:    14px;
+  --text-sm:      12px;
+  --text-xs:      10px;
+  --text-label:   11px;
+  --text-mono:    13px;
+
+  /* ── Font weights ── */
+  --weight-light:   300;
+  --weight-regular: 400;
+
+  /* ── Line heights ── */
+  --leading-tight:  1.1;
+  --leading-snug:   1.3;
+  --leading-normal: 1.6;
+  --leading-loose:  1.7;
+
+  /* ── Letter spacing ── */
+  --tracking-tight:  -0.02em;
+  --tracking-normal:  0.02em;
+  --tracking-wide:    0.08em;
+  --tracking-wider:   0.14em;
+  --tracking-widest:  0.22em;
+
+  /* ── Border radius ── */
+  --radius-sm:   8px;
+  --radius-md:   16px;
+  --radius-lg:   24px;
+  --radius-pill: 999px;
+
+  /* ── Spacing scale ── */
+  --space-1:   4px;
+  --space-2:   8px;
+  --space-3:   12px;
+  --space-4:   16px;
+  --space-5:   20px;
+  --space-6:   24px;
+  --space-8:   32px;
+  --space-10:  40px;
+  --space-12:  48px;
+  --space-16:  64px;
+
+  /* ── Shadows ── */
+  --shadow-sm:  0 2px 12px rgba(44, 39, 37, 0.06);
+  --shadow-md:  0 8px 28px rgba(44, 39, 37, 0.10);
+  --shadow-lg:  0 20px 48px rgba(44, 39, 37, 0.12);
+  --shadow-rose: 0 8px 24px rgba(184, 159, 160, 0.35);
+
+  /* ── Transitions ── */
+  --ease-bloom: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-petal: cubic-bezier(0.16, 1, 0.3, 1);
+  --duration-fast:   150ms;
+  --duration-normal: 220ms;
+  --duration-slow:   400ms;
+}

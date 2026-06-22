@@ -71,7 +71,7 @@ body{background:#FDF5F0;color:var(--bark);font-family:var(--font-body);font-weig
   display:flex;align-items:center;justify-content:center;line-height:18px;text-align:center
 }
 .flower-card.disabled:not(.selected){opacity:0.38;pointer-events:none}
-.flower-card svg{width:72px;height:72px}
+.flower-card .flower-img{height:108px;width:auto;max-width:76px;object-fit:contain;object-position:bottom center;display:block;margin:0 auto}
 .flower-name{font-family:var(--font-display);font-size:13px;font-style:italic;color:var(--bark);text-align:center}
 .flower-mood{font-size:9px;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);text-align:center}
 
@@ -402,11 +402,18 @@ const TRANSLATIONS = {
     toastSaveFail:'Could not save — try screenshot ✿',
     toastShareFail:'Could not share — saving instead ✿',
     flowers:{
-      rose:{name:'Rose',mood:'love & passion'}, tulip:{name:'Tulip',mood:'spring joy'},
-      daisy:{name:'Daisy',mood:'pure sweetness'}, peony:{name:'Peony',mood:'romance'},
-      sunflower:{name:'Sunflower',mood:'happiness'}, lavender:{name:'Lavender',mood:'calm & grace'},
-      anemone:{name:'Anemone',mood:'anticipation'}, ranunculus:{name:'Ranunculus',mood:'radiant charm'},
-      babysbreath:{name:"Baby's Breath",mood:'purity'}, sweetpea:{name:'Sweet Pea',mood:'delicate bliss'},
+      sunflower:{name:'Sunflower',mood:'happiness & warmth'},
+      peony:{name:'Peony',mood:'romance & lush beauty'},
+      rose:{name:'Rose',mood:'love & passion'},
+      margarite:{name:'Margarite',mood:'playful sweetness'},
+      'pink-alcatraz':{name:'Pink Alcatraz',mood:'delicate charm'},
+      ranunculus:{name:'Ranunculus',mood:'radiant beauty'},
+      sunies:{name:'Sunies',mood:'cheerful joy'},
+      dolar:{name:'Dolar',mood:'wild energy'},
+      liry:{name:'Liry',mood:'grace & nature'},
+      alcatraz:{name:'Alcatraz',mood:'pure elegance'},
+      anemone:{name:'Anemone',mood:'anticipation'},
+      'baby-hair':{name:'Baby Hair',mood:'calm & wonder'},
     },
     ribbonNames:['dusty rose','mauve','sage','lavender','sky blue','cream'],
     envelopeNames:['parchment','blush','sage mist','lavender','sky','cream'],
@@ -443,11 +450,18 @@ const TRANSLATIONS = {
     toastSaveFail:'No se pudo guardar — intenta captura de pantalla ✿',
     toastShareFail:'No se pudo compartir — guardando en su lugar ✿',
     flowers:{
-      rose:{name:'Rosa',mood:'amor y pasión'}, tulip:{name:'Tulipán',mood:'alegría de primavera'},
-      daisy:{name:'Margarita',mood:'dulzura pura'}, peony:{name:'Peonía',mood:'romance'},
-      sunflower:{name:'Girasol',mood:'felicidad'}, lavender:{name:'Lavanda',mood:'calma y gracia'},
-      anemone:{name:'Anémona',mood:'anticipación'}, ranunculus:{name:'Ranúnculo',mood:'encanto radiante'},
-      babysbreath:{name:'Gypsophila',mood:'pureza'}, sweetpea:{name:'Guisante de olor',mood:'dicha delicada'},
+      sunflower:{name:'Girasol',mood:'felicidad y calidez'},
+      peony:{name:'Peonía',mood:'romance y belleza exuberante'},
+      rose:{name:'Rosa',mood:'amor y pasión'},
+      margarite:{name:'Margarita',mood:'dulzura juguetona'},
+      'pink-alcatraz':{name:'Alcatraz Rosa',mood:'encanto delicado'},
+      ranunculus:{name:'Ranúnculo',mood:'belleza radiante'},
+      sunies:{name:'Sunies',mood:'alegría brillante'},
+      dolar:{name:'Dolar',mood:'energía salvaje'},
+      liry:{name:'Liry',mood:'gracia y naturaleza'},
+      alcatraz:{name:'Alcatraz',mood:'elegancia pura'},
+      anemone:{name:'Anémona',mood:'anticipación'},
+      'baby-hair':{name:'Baby Hair',mood:'calma y asombro'},
     },
     ribbonNames:['rosa polvo','malva','salvia','lavanda','celeste','crema'],
     envelopeNames:['pergamino','rubor','neblina salvia','lavanda','cielo','crema'],
@@ -484,11 +498,18 @@ const TRANSLATIONS = {
     toastSaveFail:"Impossible de sauvegarder — essaie une capture d'écran ✿",
     toastShareFail:'Impossible de partager — sauvegarde à la place ✿',
     flowers:{
-      rose:{name:'Rose',mood:'amour et passion'}, tulip:{name:'Tulipe',mood:'joie printanière'},
-      daisy:{name:'Marguerite',mood:'douce innocence'}, peony:{name:'Pivoine',mood:'romance'},
-      sunflower:{name:'Tournesol',mood:'bonheur'}, lavender:{name:'Lavande',mood:'calme et grâce'},
-      anemone:{name:'Anémone',mood:'anticipation'}, ranunculus:{name:'Renoncule',mood:'charme éclatant'},
-      babysbreath:{name:'Gypsophile',mood:'pureté'}, sweetpea:{name:'Pois de senteur',mood:'délicate félicité'},
+      sunflower:{name:'Tournesol',mood:'bonheur et chaleur'},
+      peony:{name:'Pivoine',mood:'romance et beauté luxuriante'},
+      rose:{name:'Rose',mood:'amour et passion'},
+      margarite:{name:'Marguerite',mood:'douceur espiègle'},
+      'pink-alcatraz':{name:'Alcatraz Rose',mood:'charme délicat'},
+      ranunculus:{name:'Renoncule',mood:'beauté rayonnante'},
+      sunies:{name:'Sunies',mood:'joie joyeuse'},
+      dolar:{name:'Dolar',mood:'énergie sauvage'},
+      liry:{name:'Liry',mood:'grâce et nature'},
+      alcatraz:{name:'Alcatraz',mood:'élégance pure'},
+      anemone:{name:'Anémone',mood:'anticipation'},
+      'baby-hair':{name:'Baby Hair',mood:'calme et émerveillement'},
     },
     ribbonNames:['rose poudré','mauve','sauge','lavande','ciel','crème'],
     envelopeNames:['parchemin','blush','brume sauge','lavande','ciel','crème'],
@@ -525,11 +546,18 @@ const TRANSLATIONS = {
     toastSaveFail:'Não foi possível salvar — tente captura de tela ✿',
     toastShareFail:'Não foi possível compartilhar — salvando em vez disso ✿',
     flowers:{
-      rose:{name:'Rosa',mood:'amor e paixão'}, tulip:{name:'Tulipa',mood:'alegria da primavera'},
-      daisy:{name:'Margarida',mood:'doce pureza'}, peony:{name:'Peônia',mood:'romance'},
-      sunflower:{name:'Girassol',mood:'felicidade'}, lavender:{name:'Lavanda',mood:'calma e graça'},
-      anemone:{name:'Anêmona',mood:'antecipação'}, ranunculus:{name:'Ranúnculo',mood:'charme radiante'},
-      babysbreath:{name:'Gipsofila',mood:'pureza'}, sweetpea:{name:'Ervilha-de-cheiro',mood:'delicada felicidade'},
+      sunflower:{name:'Girassol',mood:'felicidade e calor'},
+      peony:{name:'Peônia',mood:'romance e beleza exuberante'},
+      rose:{name:'Rosa',mood:'amor e paixão'},
+      margarite:{name:'Margarida',mood:'doçura lúdica'},
+      'pink-alcatraz':{name:'Alcatraz Rosa',mood:'charme delicado'},
+      ranunculus:{name:'Ranúnculo',mood:'beleza radiante'},
+      sunies:{name:'Sunies',mood:'alegria animada'},
+      dolar:{name:'Dolar',mood:'energia selvagem'},
+      liry:{name:'Liry',mood:'graça e natureza'},
+      alcatraz:{name:'Alcatraz',mood:'elegância pura'},
+      anemone:{name:'Anêmona',mood:'antecipação'},
+      'baby-hair':{name:'Baby Hair',mood:'calma e maravilha'},
     },
     ribbonNames:['rosa empoeirado','malva','sálvia','lavanda','celeste','creme'],
     envelopeNames:['pergaminho','blush','neblina sálvia','lavanda','céu','creme'],
@@ -566,11 +594,18 @@ const TRANSLATIONS = {
     toastSaveFail:'Speichern fehlgeschlagen — Screenshot versuchen ✿',
     toastShareFail:'Teilen fehlgeschlagen — Stattdessen speichern ✿',
     flowers:{
-      rose:{name:'Rose',mood:'Liebe & Leidenschaft'}, tulip:{name:'Tulpe',mood:'Frühlingsfreude'},
-      daisy:{name:'Gänseblümchen',mood:'reine Süße'}, peony:{name:'Pfingstrose',mood:'Romantik'},
-      sunflower:{name:'Sonnenblume',mood:'Glück'}, lavender:{name:'Lavendel',mood:'Ruhe & Anmut'},
-      anemone:{name:'Anemone',mood:'Vorfreude'}, ranunculus:{name:'Ranunkel',mood:'strahlender Charme'},
-      babysbreath:{name:'Schleierkraut',mood:'Reinheit'}, sweetpea:{name:'Wicke',mood:'zarte Seligkeit'},
+      sunflower:{name:'Sonnenblume',mood:'Glück & Wärme'},
+      peony:{name:'Pfingstrose',mood:'Romantik & üppige Schönheit'},
+      rose:{name:'Rose',mood:'Liebe & Leidenschaft'},
+      margarite:{name:'Margerite',mood:'verspielte Süße'},
+      'pink-alcatraz':{name:'Rosa Alcatraz',mood:'zarter Charme'},
+      ranunculus:{name:'Ranunkel',mood:'strahlende Schönheit'},
+      sunies:{name:'Sunies',mood:'fröhliche Freude'},
+      dolar:{name:'Dolar',mood:'wilde Energie'},
+      liry:{name:'Liry',mood:'Anmut & Natur'},
+      alcatraz:{name:'Alcatraz',mood:'reine Eleganz'},
+      anemone:{name:'Anemone',mood:'Vorfreude'},
+      'baby-hair':{name:'Baby Hair',mood:'Stille & Staunen'},
     },
     ribbonNames:['Staubrosa','Mauve','Salbei','Lavendel','Himmelblau','Creme'],
     envelopeNames:['Pergament','Erröten','Salbeinebel','Lavendel','Himmel','Creme'],
@@ -607,11 +642,18 @@ const TRANSLATIONS = {
     toastSaveFail:'Impossibile salvare — prova uno screenshot ✿',
     toastShareFail:'Impossibile condividere — salvataggio in corso ✿',
     flowers:{
-      rose:{name:'Rosa',mood:'amore e passione'}, tulip:{name:'Tulipano',mood:'gioia primaverile'},
-      daisy:{name:'Margherita',mood:'dolce purezza'}, peony:{name:'Peonia',mood:'romanticismo'},
-      sunflower:{name:'Girasole',mood:'felicità'}, lavender:{name:'Lavanda',mood:'calma e grazia'},
-      anemone:{name:'Anemone',mood:'anticipazione'}, ranunculus:{name:'Ranuncolo',mood:'fascino radioso'},
-      babysbreath:{name:'Gypsophila',mood:'purezza'}, sweetpea:{name:'Pisello odoroso',mood:'delicata gioia'},
+      sunflower:{name:'Girasole',mood:'felicità e calore'},
+      peony:{name:'Peonia',mood:'romanticismo e bellezza lussureggiante'},
+      rose:{name:'Rosa',mood:'amore e passione'},
+      margarite:{name:'Margherita',mood:'dolcezza giocosa'},
+      'pink-alcatraz':{name:'Alcatraz Rosa',mood:'fascino delicato'},
+      ranunculus:{name:'Ranuncolo',mood:'bellezza radiosa'},
+      sunies:{name:'Sunies',mood:'gioia allegra'},
+      dolar:{name:'Dolar',mood:'energia selvaggia'},
+      liry:{name:'Liry',mood:'grazia e natura'},
+      alcatraz:{name:'Alcatraz',mood:'eleganza pura'},
+      anemone:{name:'Anemone',mood:'anticipazione'},
+      'baby-hair':{name:'Baby Hair',mood:'calma e meraviglia'},
     },
     ribbonNames:['rosa antico','malva','salvia','lavanda','azzurro','crema'],
     envelopeNames:['pergamena','cipria','nebbia salvia','lavanda','cielo','crema'],
@@ -648,11 +690,18 @@ const TRANSLATIONS = {
     toastSaveFail:'保存できませんでした — スクリーンショットをお試しください ✿',
     toastShareFail:'共有できませんでした — 代わりに保存します ✿',
     flowers:{
-      rose:{name:'バラ',mood:'愛と情熱'}, tulip:{name:'チューリップ',mood:'春の喜び'},
-      daisy:{name:'デイジー',mood:'純粋な甘さ'}, peony:{name:'シャクヤク',mood:'ロマンス'},
-      sunflower:{name:'ひまわり',mood:'幸福'}, lavender:{name:'ラベンダー',mood:'穏やかさと優雅さ'},
-      anemone:{name:'アネモネ',mood:'期待'}, ranunculus:{name:'ラナンキュラス',mood:'輝く魅力'},
-      babysbreath:{name:'カスミソウ',mood:'純粋'}, sweetpea:{name:'スイートピー',mood:'繊細な喜び'},
+      sunflower:{name:'ひまわり',mood:'幸福と温もり'},
+      peony:{name:'シャクヤク',mood:'ロマンスと豊かな美しさ'},
+      rose:{name:'バラ',mood:'愛と情熱'},
+      margarite:{name:'マーガレット',mood:'遊び心の甘さ'},
+      'pink-alcatraz':{name:'ピンクアンスリウム',mood:'繊細な魅力'},
+      ranunculus:{name:'ラナンキュラス',mood:'輝く美しさ'},
+      sunies:{name:'サニーズ',mood:'明るい喜び'},
+      dolar:{name:'ドラール',mood:'野性のエネルギー'},
+      liry:{name:'リリー',mood:'優雅さと自然'},
+      alcatraz:{name:'アルカトラス',mood:'純粋な優雅さ'},
+      anemone:{name:'アネモネ',mood:'期待'},
+      'baby-hair':{name:'ベイビーヘア',mood:'穏やかさと驚き'},
     },
     ribbonNames:['ダスティローズ','モーブ','セージ','ラベンダー','スカイブルー','クリーム'],
     envelopeNames:['パーチメント','ブラッシュ','セージミスト','ラベンダー','スカイ','クリーム'],
@@ -689,11 +738,18 @@ const TRANSLATIONS = {
     toastSaveFail:'无法保存 — 请尝试截图 ✿',
     toastShareFail:'无法分享 — 正在保存 ✿',
     flowers:{
-      rose:{name:'玫瑰',mood:'爱与激情'}, tulip:{name:'郁金香',mood:'春日喜悦'},
-      daisy:{name:'雏菊',mood:'纯洁甜美'}, peony:{name:'牡丹',mood:'浪漫'},
-      sunflower:{name:'向日葵',mood:'快乐'}, lavender:{name:'薰衣草',mood:'宁静与优雅'},
-      anemone:{name:'银莲花',mood:'期待'}, ranunculus:{name:'毛茛',mood:'璀璨魅力'},
-      babysbreath:{name:'满天星',mood:'纯洁'}, sweetpea:{name:'香豌豆',mood:'细腻幸福'},
+      sunflower:{name:'向日葵',mood:'快乐与温暖'},
+      peony:{name:'牡丹',mood:'浪漫与丰盛之美'},
+      rose:{name:'玫瑰',mood:'爱与激情'},
+      margarite:{name:'雏菊',mood:'俏皮的甜蜜'},
+      'pink-alcatraz':{name:'粉红鹤蕉',mood:'精致的魅力'},
+      ranunculus:{name:'毛茛',mood:'璀璨的美丽'},
+      sunies:{name:'阳光花',mood:'欢快的喜悦'},
+      dolar:{name:'多拉尔',mood:'狂野的能量'},
+      liry:{name:'利里',mood:'优雅与自然'},
+      alcatraz:{name:'鹤蕉',mood:'纯粹的优雅'},
+      anemone:{name:'银莲花',mood:'期待'},
+      'baby-hair':{name:'满天星',mood:'平静与惊叹'},
     },
     ribbonNames:['玫瑰粉','紫藤','鼠尾草','薰衣草','天蓝','奶油'],
     envelopeNames:['羊皮纸','腮红','鼠尾草雾','薰衣草','天空','奶油'],
@@ -730,11 +786,18 @@ const TRANSLATIONS = {
     toastSaveFail:'저장할 수 없어요 — 스크린샷을 시도해 보세요 ✿',
     toastShareFail:'공유할 수 없어요 — 대신 저장합니다 ✿',
     flowers:{
-      rose:{name:'장미',mood:'사랑과 열정'}, tulip:{name:'튤립',mood:'봄의 기쁨'},
-      daisy:{name:'데이지',mood:'순수한 달콤함'}, peony:{name:'모란',mood:'로맨스'},
-      sunflower:{name:'해바라기',mood:'행복'}, lavender:{name:'라벤더',mood:'차분함과 우아함'},
-      anemone:{name:'아네모네',mood:'설렘'}, ranunculus:{name:'라넌큘러스',mood:'빛나는 매력'},
-      babysbreath:{name:'안개꽃',mood:'순수함'}, sweetpea:{name:'스위트피',mood:'섬세한 행복'},
+      sunflower:{name:'해바라기',mood:'행복과 따뜻함'},
+      peony:{name:'모란',mood:'로맨스와 풍성한 아름다움'},
+      rose:{name:'장미',mood:'사랑과 열정'},
+      margarite:{name:'마거리트',mood:'장난스러운 달콤함'},
+      'pink-alcatraz':{name:'핑크 알카트라스',mood:'섬세한 매력'},
+      ranunculus:{name:'라넌큘러스',mood:'빛나는 아름다움'},
+      sunies:{name:'서니즈',mood:'명랑한 기쁨'},
+      dolar:{name:'돌라르',mood:'야생의 에너지'},
+      liry:{name:'리리',mood:'우아함과 자연'},
+      alcatraz:{name:'알카트라스',mood:'순수한 우아함'},
+      anemone:{name:'아네모네',mood:'설렘'},
+      'baby-hair':{name:'베이비 헤어',mood:'고요함과 경이'},
     },
     ribbonNames:['더스티 로즈','모브','세이지','라벤더','스카이 블루','크림'],
     envelopeNames:['양피지','블러쉬','세이지 미스트','라벤더','스카이','크림'],
@@ -772,11 +835,18 @@ const TRANSLATIONS = {
     toastSaveFail:'تعذّر الحفظ — حاولي التقاط لقطة شاشة ✿',
     toastShareFail:'تعذّرت المشاركة — جارٍ الحفظ بدلاً من ذلك ✿',
     flowers:{
-      rose:{name:'وردة',mood:'الحب والشغف'}, tulip:{name:'توليب',mood:'بهجة الربيع'},
-      daisy:{name:'أقحوان',mood:'براءة حلوة'}, peony:{name:'فاوانيا',mood:'رومانسية'},
-      sunflower:{name:'عباد الشمس',mood:'سعادة'}, lavender:{name:'خزامى',mood:'هدوء وأناقة'},
-      anemone:{name:'شقائق النعمان',mood:'ترقّب'}, ranunculus:{name:'حوذان',mood:'سحر متألق'},
-      babysbreath:{name:'جبسوفيلا',mood:'نقاء'}, sweetpea:{name:'بازلاء عطرية',mood:'سعادة رقيقة'},
+      sunflower:{name:'عباد الشمس',mood:'سعادة ودفء'},
+      peony:{name:'فاوانيا',mood:'رومانسية وجمال نضر'},
+      rose:{name:'وردة',mood:'الحب والشغف'},
+      margarite:{name:'مارغريت',mood:'حلاوة مرحة'},
+      'pink-alcatraz':{name:'أنثوريوم وردي',mood:'سحر رقيق'},
+      ranunculus:{name:'حوذان',mood:'جمال متألق'},
+      sunies:{name:'صنيز',mood:'فرح مبهج'},
+      dolar:{name:'دولار',mood:'طاقة برية'},
+      liry:{name:'ليري',mood:'رقة وطبيعة'},
+      alcatraz:{name:'ألكاتراز',mood:'أناقة نقية'},
+      anemone:{name:'شقائق النعمان',mood:'ترقّب'},
+      'baby-hair':{name:'بيبي هير',mood:'هدوء ودهشة'},
     },
     ribbonNames:['وردي مترب','موف','مريمية','خزامى','أزرق سماوي','كريمي'],
     envelopeNames:['رق','وردي فاتح','ضباب مريمية','خزامى','سماوي','كريمي'],
@@ -844,7 +914,7 @@ function applyTranslations() {
 /* ════════════════
    FLOWER / STATIC DATA
 ════════════════ */
-const FLOWER_IDS = ['rose','tulip','daisy','peony','sunflower','lavender','anemone','ranunculus','babysbreath','sweetpea'];
+const FLOWER_IDS = ['sunflower','peony','rose','margarite','pink-alcatraz','ranunculus','sunies','dolar','liry','alcatraz','anemone','baby-hair'];
 
 const RIBBON_COLORS = [
   {color:'#D9C5C0',light:true},{color:'#B89FA0',light:false},{color:'#C4C5AA',light:false},
@@ -856,10 +926,10 @@ const ENVELOPE_COLORS = [
 ];
 
 const POSITIONS = [
-  {x:130,y:58,rot:0,z:5},{x:96,y:78,rot:-20,z:4},{x:164,y:78,rot:20,z:4},
-  {x:64,y:102,rot:-38,z:3},{x:196,y:102,rot:38,z:3},{x:113,y:90,rot:-10,z:6},
-  {x:147,y:90,rot:10,z:6},{x:46,y:128,rot:-52,z:2},{x:214,y:128,rot:52,z:2},
-  {x:130,y:108,rot:3,z:7},
+  {rot:0,z:7},{rot:-16,z:6},{rot:16,z:6},
+  {rot:-30,z:5},{rot:30,z:5},{rot:-40,z:4},
+  {rot:40,z:4},{rot:-8,z:8},{rot:8,z:8},
+  {rot:2,z:9},
 ];
 
 const state = {
@@ -867,98 +937,6 @@ const state = {
   toName:'', fromName:'', message:'', font:'serif',
 };
 
-/* ════════════════
-   FLOWER SVGs
-════════════════ */
-function flowerSVG(id, size=72) {
-  const paths = {
-    rose:`
-      <ellipse cx="28" cy="14" rx="10" ry="13" fill="#ECC8C4" transform="rotate(0,28,28)"/>
-      <ellipse cx="28" cy="14" rx="10" ry="13" fill="#E8C0BC" transform="rotate(72,28,28)"/>
-      <ellipse cx="28" cy="14" rx="10" ry="13" fill="#ECC8C4" transform="rotate(144,28,28)"/>
-      <ellipse cx="28" cy="14" rx="10" ry="13" fill="#E0B0AC" transform="rotate(216,28,28)"/>
-      <ellipse cx="28" cy="14" rx="10" ry="13" fill="#ECC8C4" transform="rotate(288,28,28)"/>
-      <circle cx="28" cy="28" r="10" fill="#D09490"/><circle cx="28" cy="28" r="6" fill="#C08080"/>
-      <circle cx="28" cy="28" r="3" fill="#B07070"/>
-      <line x1="28" y1="38" x2="28" y2="68" stroke="#7AAE60" stroke-width="2.5" stroke-linecap="round"/>
-      <ellipse cx="20" cy="55" rx="8" ry="3.5" fill="#8ABE70" transform="rotate(-35,20,55)"/>`,
-    tulip:`
-      <path d="M28,42 Q14,35 14,22 Q14,10 28,8 Q42,10 42,22 Q42,35 28,42Z" fill="#F0A898"/>
-      <path d="M28,42 Q14,35 14,22 Q14,10 22,9 Q20,22 22,36Z" fill="#F4BCB4" opacity="0.7"/>
-      <path d="M28,42 Q42,35 42,22 Q42,10 34,9 Q36,22 34,36Z" fill="#F4BCB4" opacity="0.7"/>
-      <path d="M28,8 Q22,2 18,5 Q16,12 20,18 Q24,22 28,22Z" fill="#E89888"/>
-      <path d="M28,8 Q34,2 38,5 Q40,12 36,18 Q32,22 28,22Z" fill="#EC9E8E"/>
-      <line x1="28" y1="42" x2="28" y2="68" stroke="#7AAE60" stroke-width="2.5" stroke-linecap="round"/>
-      <ellipse cx="19" cy="58" rx="9" ry="4" fill="#8ABE70" transform="rotate(-30,19,58)"/>
-      <ellipse cx="37" cy="62" rx="9" ry="4" fill="#8ABE70" transform="rotate(25,37,62)"/>`,
-    daisy:`
-      ${[0,30,60,90,120,150,180,210,240,270,300,330].map(a=>`<ellipse cx="28" cy="12" rx="5.5" ry="11" fill="${a%60===0?'#FFF8E8':'#FFFDF5'}" opacity="0.95" transform="rotate(${a},28,28)"/>`).join('')}
-      <circle cx="28" cy="28" r="10" fill="#F5C840"/><circle cx="28" cy="28" r="6" fill="#E8B820"/>
-      <circle cx="28" cy="28" r="3" fill="#D4A010"/>
-      <line x1="28" y1="38" x2="28" y2="68" stroke="#7AAE60" stroke-width="2.5" stroke-linecap="round"/>
-      <ellipse cx="20" cy="55" rx="8" ry="3.5" fill="#8ABE70" transform="rotate(-30,20,55)"/>`,
-    peony:`
-      <circle cx="28" cy="28" r="20" fill="#F4C4CC"/>
-      <circle cx="20" cy="20" r="11" fill="#F0B8C4"/><circle cx="36" cy="20" r="11" fill="#F0B8C4"/>
-      <circle cx="18" cy="32" r="10" fill="#EEB0BC"/><circle cx="38" cy="32" r="10" fill="#EEB0BC"/>
-      <circle cx="28" cy="36" r="12" fill="#F4C4CC"/><circle cx="28" cy="22" r="13" fill="#F8D0D8"/>
-      <circle cx="24" cy="26" r="9" fill="#FAD8E0"/><circle cx="32" cy="26" r="9" fill="#FAD8E0"/>
-      <circle cx="28" cy="28" r="8" fill="#F0C0CC"/><circle cx="28" cy="28" r="4" fill="#D89098"/>
-      <line x1="28" y1="48" x2="28" y2="68" stroke="#7AAE60" stroke-width="2.5" stroke-linecap="round"/>`,
-    sunflower:`
-      ${[0,26,52,78,104,130,156,182,208,234,260,286,312,338].map(a=>`<ellipse cx="28" cy="9" rx="5" ry="12" fill="#F5D060" transform="rotate(${a},28,28)"/>`).join('')}
-      <circle cx="28" cy="28" r="13" fill="#5C3A1E"/><circle cx="28" cy="28" r="10" fill="#4A2E16"/>
-      <circle cx="28" cy="28" r="6" fill="#3C2410"/>
-      ${[[22,22],[34,22],[22,34],[34,34],[28,20],[28,36]].map(([x,y])=>`<circle cx="${x}" cy="${y}" r="2" fill="#6A4828" opacity="0.6"/>`).join('')}
-      <line x1="28" y1="41" x2="28" y2="68" stroke="#5A8040" stroke-width="3" stroke-linecap="round"/>
-      <ellipse cx="17" cy="57" rx="11" ry="5" fill="#6A9850" transform="rotate(-35,17,57)"/>
-      <ellipse cx="39" cy="61" rx="11" ry="5" fill="#6A9850" transform="rotate(30,39,61)"/>`,
-    lavender:`
-      <line x1="28" y1="10" x2="28" y2="68" stroke="#8A9860" stroke-width="2" stroke-linecap="round"/>
-      ${[8,14,20,26,32].map(y=>`<ellipse cx="26" cy="${y}" rx="4" ry="5" fill="#C0A0D8" transform="rotate(-15,26,${y})"/><ellipse cx="30" cy="${y+3}" rx="4" ry="5" fill="#C8ACD8" transform="rotate(15,30,${y+3})"/>`).join('')}
-      <ellipse cx="28" cy="6" rx="5" ry="6" fill="#B890D0"/>
-      <ellipse cx="20" cy="40" rx="8" ry="3.5" fill="#A0B870" transform="rotate(-40,20,40)"/>
-      <ellipse cx="36" cy="50" rx="8" ry="3.5" fill="#A0B870" transform="rotate(35,36,50)"/>`,
-    anemone:`
-      ${[0,60,120,180,240,300].map(a=>`<ellipse cx="28" cy="13" rx="8.5" ry="14" fill="${a%120===0?'#D4C8EC':'#C8B8E8'}" transform="rotate(${a},28,28)"/>`).join('')}
-      <circle cx="28" cy="28" r="12" fill="#2A2040"/><circle cx="28" cy="28" r="8" fill="#1E1830"/>
-      ${[[23,23],[33,23],[23,33],[33,33],[28,20],[28,36],[20,28],[36,28]].map(([x,y])=>`<circle cx="${x}" cy="${y}" r="1.5" fill="#E8D0F8" opacity="0.85"/>`).join('')}
-      <circle cx="28" cy="28" r="3" fill="#3A2860"/>
-      <line x1="28" y1="40" x2="28" y2="68" stroke="#7AAE60" stroke-width="2.5" stroke-linecap="round"/>
-      <ellipse cx="20" cy="55" rx="8" ry="3.5" fill="#8ABE70" transform="rotate(-30,20,55)"/>`,
-    ranunculus:`
-      ${[0,40,80,120,160,200,240,280,320].map(a=>`<ellipse cx="28" cy="11" rx="8" ry="12" fill="#FAC8A0" opacity="0.85" transform="rotate(${a},28,28)"/>`).join('')}
-      ${[0,45,90,135,180,225,270,315].map(a=>`<ellipse cx="28" cy="16" rx="6.5" ry="9" fill="#F8D4B4" opacity="0.9" transform="rotate(${a},28,28)"/>`).join('')}
-      ${[0,60,120,180,240,300].map(a=>`<ellipse cx="28" cy="20" rx="5" ry="7" fill="#FDE0C4" transform="rotate(${a},28,28)"/>`).join('')}
-      <circle cx="28" cy="28" r="8" fill="#F0B888"/><circle cx="28" cy="28" r="5" fill="#E8A870"/>
-      <circle cx="28" cy="28" r="3" fill="#D89858"/>
-      <line x1="28" y1="36" x2="28" y2="68" stroke="#7AAE60" stroke-width="2.5" stroke-linecap="round"/>
-      <ellipse cx="20" cy="54" rx="8" ry="3.5" fill="#8ABE70" transform="rotate(-30,20,54)"/>`,
-    babysbreath:`
-      <line x1="28" y1="68" x2="28" y2="40" stroke="#A0B870" stroke-width="1.5"/>
-      <line x1="28" y1="50" x2="14" y2="28" stroke="#A0B870" stroke-width="1.2"/>
-      <line x1="28" y1="50" x2="42" y2="28" stroke="#A0B870" stroke-width="1.2"/>
-      <line x1="14" y1="28" x2="8" y2="16" stroke="#A0B870" stroke-width="1"/>
-      <line x1="14" y1="28" x2="20" y2="14" stroke="#A0B870" stroke-width="1"/>
-      <line x1="42" y1="28" x2="36" y2="14" stroke="#A0B870" stroke-width="1"/>
-      <line x1="42" y1="28" x2="48" y2="16" stroke="#A0B870" stroke-width="1"/>
-      <line x1="28" y1="40" x2="18" y2="30" stroke="#A0B870" stroke-width="1"/>
-      <line x1="28" y1="40" x2="38" y2="30" stroke="#A0B870" stroke-width="1"/>
-      ${[[8,16],[14,12],[20,14],[28,8],[36,14],[42,12],[48,16],[18,30],[38,30],[22,24],[34,24],[28,20]].map(([x,y])=>`<circle cx="${x}" cy="${y}" r="3" fill="white" stroke="#E8E4E0" stroke-width="0.5" opacity="0.95"/>`).join('')}`,
-    sweetpea:`
-      <path d="M28,38 Q10,28 10,18 Q10,6 20,6 Q26,6 28,14 Q30,6 36,6 Q46,6 46,18 Q46,28 28,38Z" fill="#E0C4F0"/>
-      <path d="M28,38 Q10,28 10,18 Q10,6 20,6 Q26,6 28,14Z" fill="#D4B4E8"/>
-      <path d="M28,38 Q46,28 46,18 Q46,6 36,6 Q30,6 28,14Z" fill="#CCB0E0"/>
-      <path d="M28,14 Q24,8 22,12 Q20,16 24,20 Q26,22 28,22Z" fill="#ECE0F8"/>
-      <path d="M28,14 Q32,8 34,12 Q36,16 32,20 Q30,22 28,22Z" fill="#ECE0F8"/>
-      <ellipse cx="28" cy="20" rx="5" ry="4" fill="#F0E8F8"/>
-      <circle cx="28" cy="22" r="3" fill="#C8A0E0"/>
-      <line x1="28" y1="38" x2="28" y2="60" stroke="#7AAE60" stroke-width="2" stroke-linecap="round"/>
-      <path d="M28,48 Q20,44 18,50 Q20,56 28,54Z" fill="#8ABE70"/>
-      <path d="M28,52 Q36,48 38,54 Q36,60 28,58Z" fill="#8ABE70"/>`,
-  };
-  return `<svg viewBox="0 0 56 72" width="${size}" height="${size}" xmlns="http://www.w3.org/2000/svg">${paths[id]||''}</svg>`;
-}
 
 /* ════════════════
    BOUQUET RENDERER
@@ -967,41 +945,32 @@ function renderBouquet(selectedIds, ribbonColor, envelopeColor, small=false) {
   if (!selectedIds.length) return null;
   const scale = small ? 0.68 : 1;
   const W = Math.round(260*scale), H = Math.round(300*scale);
-  const cx = W/2, wrapY = Math.round(190*scale), bowY = Math.round(205*scale);
+  const cx = W/2;
+  const wrapY = Math.round(190*scale), bowY = Math.round(205*scale);
+  const imgW = Math.round(62*scale), imgH = Math.round(175*scale);
+  const bottomGap = H - wrapY;
   const items = selectedIds.map((id,i)=>({id,pos:POSITIONS[i]})).sort((a,b)=>a.pos.z-b.pos.z);
 
-  let svg = `<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" xmlns="http://www.w3.org/2000/svg">`;
-  svg += `<g opacity="0.85">`;
-  selectedIds.forEach((_,i)=>{
-    const p=POSITIONS[i], sx=Math.round(p.x*scale), sy=Math.round((p.y+38)*scale);
-    svg += `<path d="M${sx},${sy} Q${Math.round((sx+cx)/2)},${Math.round((sy+wrapY)/2+10)} ${cx},${wrapY}" fill="none" stroke="#7AAE60" stroke-width="${small?1.5:2}" stroke-linecap="round" opacity="0.75"/>`;
+  let html = `<div style="position:relative;width:${W}px;height:${H}px">`;
+  items.forEach(({id,pos}) => {
+    html += `<img src="flowers/${id}.png" style="position:absolute;bottom:${bottomGap}px;left:${cx-imgW/2}px;width:${imgW}px;height:${imgH}px;object-fit:contain;object-position:bottom center;transform:rotate(${pos.rot}deg);transform-origin:50% 100%;z-index:${pos.z}">`;
   });
-  svg += `</g>`;
   const coneL=Math.round(55*scale), coneR=Math.round(205*scale), coneBot=Math.round(288*scale);
-  svg += `<path d="M${coneL},${wrapY} Q${cx},${coneBot+10} ${coneR},${wrapY}" fill="${envelopeColor}" opacity="0.96"/>`;
-  svg += `<path d="M${coneL},${wrapY} L${cx},${coneBot}" stroke="rgba(44,39,37,0.08)" stroke-width="1" fill="none"/>`;
-  svg += `<path d="M${coneR},${wrapY} L${cx},${coneBot}" stroke="rgba(44,39,37,0.08)" stroke-width="1" fill="none"/>`;
-  svg += `<path d="M${Math.round(cx-20*scale)},${wrapY} Q${cx},${coneBot-10} ${Math.round(cx+5*scale)},${coneBot}" stroke="rgba(255,255,255,0.35)" stroke-width="${small?1:1.5}" fill="none"/>`;
-  items.forEach(({id,pos})=>{
-    const fs=Math.round(56*scale), px=Math.round(pos.x*scale), py=Math.round(pos.y*scale);
-    svg += `<g transform="translate(${px},${py}) rotate(${pos.rot}) translate(${-fs/2},${-fs/2}) scale(${scale})">${getFlowerPaths(id)}</g>`;
-  });
-  svg += `<path d="M${coneL+10},${bowY+4} Q${cx},${bowY} ${coneR-10},${bowY+4}" stroke="${ribbonColor}" stroke-width="${small?6:8}" fill="none" stroke-linecap="round" opacity="0.8"/>`;
-  const bx=cx, by=bowY;
-  svg += `<path d="M${bx},${by} Q${bx-35*scale},${by-22*scale} ${bx-22*scale},${by+2} Q${bx-8*scale},${by+10} ${bx},${by}" fill="${ribbonColor}" stroke="rgba(44,39,37,0.12)" stroke-width="0.5" opacity="0.95"/>`;
-  svg += `<path d="M${bx},${by} Q${bx+35*scale},${by-22*scale} ${bx+22*scale},${by+2} Q${bx+8*scale},${by+10} ${bx},${by}" fill="${ribbonColor}" stroke="rgba(44,39,37,0.12)" stroke-width="0.5" opacity="0.95"/>`;
-  const tw=small?4:5;
-  svg += `<path d="M${bx-6},${by+4} Q${bx-22*scale},${by+30*scale} ${bx-32*scale},${by+52*scale}" stroke="${ribbonColor}" stroke-width="${tw}" fill="none" stroke-linecap="round" opacity="0.88"/>`;
-  svg += `<path d="M${bx+6},${by+4} Q${bx+22*scale},${by+30*scale} ${bx+32*scale},${by+52*scale}" stroke="${ribbonColor}" stroke-width="${tw}" fill="none" stroke-linecap="round" opacity="0.88"/>`;
-  svg += `<ellipse cx="${bx}" cy="${by+2}" rx="${small?6:8}" ry="${small?5:7}" fill="${ribbonColor}" stroke="rgba(44,39,37,0.18)" stroke-width="0.5"/>`;
-  svg += `</svg>`;
-  return svg;
-}
-
-function getFlowerPaths(id) {
-  const tmp = document.createElement('div');
-  tmp.innerHTML = flowerSVG(id, 56);
-  return tmp.querySelector('svg').innerHTML;
+  const bx=cx, by=bowY, tw=small?4:5;
+  html += `<svg style="position:absolute;inset:0;pointer-events:none;z-index:10" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg">`;
+  html += `<path d="M${coneL},${wrapY} Q${cx},${coneBot+10} ${coneR},${wrapY}" fill="${envelopeColor}" opacity="0.97"/>`;
+  html += `<path d="M${coneL},${wrapY} L${cx},${coneBot}" stroke="rgba(44,39,37,0.08)" stroke-width="1" fill="none"/>`;
+  html += `<path d="M${coneR},${wrapY} L${cx},${coneBot}" stroke="rgba(44,39,37,0.08)" stroke-width="1" fill="none"/>`;
+  html += `<path d="M${Math.round(cx-20*scale)},${wrapY} Q${cx},${coneBot-10} ${Math.round(cx+5*scale)},${coneBot}" stroke="rgba(255,255,255,0.35)" stroke-width="${small?1:1.5}" fill="none"/>`;
+  html += `<path d="M${coneL+10},${by+4} Q${cx},${by} ${coneR-10},${by+4}" stroke="${ribbonColor}" stroke-width="${small?6:8}" fill="none" stroke-linecap="round" opacity="0.8"/>`;
+  html += `<path d="M${bx},${by} Q${bx-35*scale},${by-22*scale} ${bx-22*scale},${by+2} Q${bx-8*scale},${by+10} ${bx},${by}" fill="${ribbonColor}" stroke="rgba(44,39,37,0.12)" stroke-width="0.5" opacity="0.95"/>`;
+  html += `<path d="M${bx},${by} Q${bx+35*scale},${by-22*scale} ${bx+22*scale},${by+2} Q${bx+8*scale},${by+10} ${bx},${by}" fill="${ribbonColor}" stroke="rgba(44,39,37,0.12)" stroke-width="0.5" opacity="0.95"/>`;
+  html += `<path d="M${bx-6},${by+4} Q${bx-22*scale},${by+30*scale} ${bx-32*scale},${by+52*scale}" stroke="${ribbonColor}" stroke-width="${tw}" fill="none" stroke-linecap="round" opacity="0.88"/>`;
+  html += `<path d="M${bx+6},${by+4} Q${bx+22*scale},${by+30*scale} ${bx+32*scale},${by+52*scale}" stroke="${ribbonColor}" stroke-width="${tw}" fill="none" stroke-linecap="round" opacity="0.88"/>`;
+  html += `<ellipse cx="${bx}" cy="${by+2}" rx="${small?6:8}" ry="${small?5:7}" fill="${ribbonColor}" stroke="rgba(44,39,37,0.18)" stroke-width="0.5"/>`;
+  html += `</svg>`;
+  html += `</div>`;
+  return html;
 }
 
 /* ════════════════
@@ -1015,7 +984,7 @@ function initCarousel() {
     const card = document.createElement('div');
     card.className = 'flower-card' + (state.selected.includes(id) ? ' selected' : '');
     card.dataset.id = id;
-    card.innerHTML = flowerSVG(id, 72) +
+    card.innerHTML = `<img class="flower-img" src="flowers/${id}.png" alt="${f.name}">` +
       `<span class="flower-name">${f.name}</span>` +
       `<span class="flower-mood">${f.mood}</span>`;
     card.addEventListener('click', () => toggleFlower(id, card));
