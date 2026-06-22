@@ -157,10 +157,13 @@ body{background:#FDF5F0;color:var(--bark);font-family:var(--font-body);font-weig
 
 /* ── RESULT SCREEN ── */
 #screen-result{
-  min-height:100vh;background:#C5D8E8;
+  position:fixed;inset:0;z-index:50;overflow-y:auto;
+  display:none;
+  background:#C5D8E8;
   background-image:radial-gradient(ellipse at 25% 20%,#D8E8F2 0%,transparent 55%),radial-gradient(ellipse at 75% 80%,#E0D0E8 0%,transparent 55%);
-  display:flex;flex-direction:column;align-items:center;padding:44px 20px 80px
+  flex-direction:column;align-items:center;padding:44px 20px 80px
 }
+#screen-result.active{display:flex}
 .result-top{text-align:center;margin-bottom:28px}
 .result-top h2{font-family:var(--font-display);font-size:30px;font-weight:300;font-style:italic;color:#2C2725}
 .result-top p{font-size:12px;color:rgba(44,39,37,0.6);margin-top:5px}
@@ -1141,10 +1144,10 @@ function buildResult() {
 }
 
 function showResult() {
-  document.getElementById('screen-builder').classList.remove('active');
-  document.getElementById('screen-result').classList.add('active');
   buildResult();
-  window.scrollTo(0, 0);
+  const el = document.getElementById('screen-result');
+  el.classList.add('active');
+  el.scrollTop = 0;
 }
 
 /* ════════════════
@@ -1232,8 +1235,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
   document.getElementById('btn-new').addEventListener('click', () => {
     document.getElementById('screen-result').classList.remove('active');
-    document.getElementById('screen-builder').classList.add('active');
-    window.scrollTo(0, 0);
     state.selected = [];
     state.toName = state.fromName = state.message = '';
     document.querySelectorAll('.flower-card').forEach(c => c.classList.remove('selected','disabled'));
