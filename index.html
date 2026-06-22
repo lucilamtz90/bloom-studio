@@ -969,6 +969,13 @@ function renderBouquet(selectedIds, ribbonColor, envelopeColor, small=false) {
   html += `<path d="M${bx+6},${by+4} Q${bx+22*scale},${by+30*scale} ${bx+32*scale},${by+52*scale}" stroke="${ribbonColor}" stroke-width="${tw}" fill="none" stroke-linecap="round" opacity="0.88"/>`;
   html += `<ellipse cx="${bx}" cy="${by+2}" rx="${small?6:8}" ry="${small?5:7}" fill="${ribbonColor}" stroke="rgba(44,39,37,0.18)" stroke-width="0.5"/>`;
   html += `</svg>`;
+  // Ribbon photo, tinted via CSS mask (alpha channel as stencil, background-color as tint)
+  // SVG bow above stays as silent fallback for html2canvas which doesn't support mask-image
+  const ribW = Math.round(160*scale);
+  const ribH = Math.round(ribW * 1208/1505);
+  const ribLeft = Math.round(cx - ribW/2);
+  const ribTop  = Math.round(by - ribH * 0.45);
+  html += `<div style="position:absolute;left:${ribLeft}px;top:${ribTop}px;width:${ribW}px;height:${ribH}px;-webkit-mask-image:url('images/ribbon.png');mask-image:url('images/ribbon.png');-webkit-mask-size:contain;mask-size:contain;-webkit-mask-repeat:no-repeat;mask-repeat:no-repeat;-webkit-mask-position:center;mask-position:center;background-color:${ribbonColor};z-index:11;pointer-events:none"></div>`;
   html += `</div>`;
   return html;
 }
