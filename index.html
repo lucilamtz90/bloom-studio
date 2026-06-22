@@ -37,8 +37,7 @@ body{background:#FDF5F0;color:var(--bark);font-family:var(--font-body);font-weig
 @keyframes floatdeco{0%,100%{transform:translateY(0) rotate(0deg)}50%{transform:translateY(-10px) rotate(8deg)}}
 
 .page-sub{font-size:13px;color:var(--color-muted);text-align:center;margin-bottom:12px;font-weight:300;line-height:1.6}
-.date-static{font-family:var(--font-mono);font-size:12px;color:var(--color-stone);text-align:center;letter-spacing:0.06em;margin-bottom:32px}
-.date-static strong{color:var(--color-bark)}
+
 
 .step-label{font-size:10px;letter-spacing:0.2em;text-transform:uppercase;color:var(--stone);margin-bottom:10px;display:flex;align-items:center;gap:8px}
 .step-label::after{content:'';flex:1;height:1px;background:var(--hairline)}
@@ -123,9 +122,8 @@ body{background:#FDF5F0;color:var(--bark);font-family:var(--font-body);font-weig
 .btn-message{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;padding:14px 28px;box-shadow:inset 0 0 0 1.5px var(--color-rose)}
 .btn-message:hover{background:var(--color-rose)}
 .btn-message.has-msg{box-shadow:inset 0 0 0 1.5px #8AB878;background:rgba(138,184,120,0.1)}
-.btn-create{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;padding:16px 36px;text-transform:uppercase;letter-spacing:0.14em}
+.btn-create{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;padding:16px 36px}
 .btn-create:disabled{opacity:0.38;cursor:not-allowed;transform:none}
-.create-hint{font-size:11px;color:var(--color-muted);text-align:center}
 
 /* ── MODAL ── */
 .overlay{position:fixed;inset:0;background:rgba(44,39,37,0.42);backdrop-filter:blur(5px);z-index:100;display:flex;align-items:flex-end;justify-content:center;opacity:0;pointer-events:none;transition:opacity 0.3s}
@@ -152,7 +150,7 @@ body{background:#FDF5F0;color:var(--bark);font-family:var(--font-body);font-weig
 .font-opt.sel{border-color:var(--bark);background:var(--parchment)}
 .font-opt-preview{font-size:15px;color:var(--bark);margin-bottom:3px;line-height:1.2}
 .font-opt-name{font-size:9px;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted)}
-.btn-sheet-save{width:100%;margin-top:24px;padding:15px;font-size:11px;font-weight:400;letter-spacing:0.18em;text-transform:uppercase}
+.btn-sheet-save{width:100%;margin-top:24px;padding:15px}
 .picker-group.bloom-card{overflow:visible;border-radius:var(--radius-md)}
 
 /* ── RESULT SCREEN ── */
@@ -211,7 +209,7 @@ body{background:#FDF5F0;color:var(--bark);font-family:var(--font-body);font-weig
 [dir="rtl"] .count-row{flex-direction:row-reverse}
 [dir="rtl"] .carr-arrow.left{left:auto;right:-15px}
 [dir="rtl"] .carr-arrow.right{right:auto;left:-15px}
-[dir="rtl"] .date-static{direction:rtl}
+
 [dir="rtl"] .r-row{flex-direction:row-reverse}
 [dir="rtl"] .r-total-row{flex-direction:row-reverse}
 [dir="rtl"] .sheet-handle{margin:0 auto 22px}
@@ -238,7 +236,7 @@ body{background:#FDF5F0;color:var(--bark);font-family:var(--font-body);font-weig
       <p class="bloom-eyebrow" style="text-align:center;margin-bottom:6px" id="el-eyebrow">✿ bloom studio ✿</p>
       <h1 class="bloom-hero" style="text-align:center;font-size:clamp(34px,8vw,54px);margin-bottom:8px" id="el-page-title">Send a <em>bouquet</em> now</h1>
       <p class="page-sub" id="el-page-sub">Choose your flowers, personalise the ribbon &amp; wrap,<br>and send a beautiful bloom to someone you love.</p>
-      <p class="date-static"><span id="el-today-lbl">Today is</span> <strong id="today-date"></strong></p>
+
 
       <div class="preview-section">
         <p class="preview-lbl bloom-eyebrow" id="el-preview-lbl">live preview</p>
@@ -278,7 +276,6 @@ body{background:#FDF5F0;color:var(--bark);font-family:var(--font-body);font-weig
       <div class="action-stack">
         <button class="btn-message bloom-btn bloom-btn--outline bloom-btn--lg" id="btn-open-msg"><span>✉</span> <span id="el-btn-msg-txt">Write a cute message</span></button>
         <button class="btn-create bloom-btn bloom-btn--dark bloom-btn--lg" id="btn-create" disabled><span>✿</span> <span id="el-btn-create-txt">Create my bouquet</span></button>
-        <p class="create-hint" id="create-hint">Select at least 5 flowers to create your bouquet</p>
       </div>
     </div>
   </div>
@@ -389,7 +386,7 @@ const TRANSLATIONS = {
     createHintOn:(n)=>`${n} flower${n>1?'s':''} selected — ready to bloom! ✿`,
     maxFlowers:'Maximum 10 flowers reached ✿',
     sheetTitle:'Write a cute message ✉',
-    sheetSub:'Optional — your note will appear on the bouquet card',
+    sheetSub:'Your note will appear on the bouquet card',
     lblTo:'To', lblFrom:'From', lblMsg:'Message', lblFont:'Message font',
     phTo:"Recipient's name", phFrom:'Your name', phMsg:'Write something sweet… ♡',
     fontElegant:'Elegant', fontScript:'Script', fontTypewriter:'Typewriter',
@@ -437,7 +434,7 @@ const TRANSLATIONS = {
     createHintOn:(n)=>`${n} flor${n>1?'es':''} seleccionada${n>1?'s':''} — ¡lista para florecer! ✿`,
     maxFlowers:'Máximo de 10 flores alcanzado ✿',
     sheetTitle:'Escribe un mensaje bonito ✉',
-    sheetSub:'Opcional — tu nota aparecerá en la tarjeta del ramo',
+    sheetSub:'Tu nota aparecerá en la tarjeta del ramo',
     lblTo:'Para', lblFrom:'De', lblMsg:'Mensaje', lblFont:'Fuente del mensaje',
     phTo:'Nombre del destinatario', phFrom:'Tu nombre', phMsg:'Escribe algo dulce… ♡',
     fontElegant:'Elegante', fontScript:'Cursiva', fontTypewriter:'Máquina de escribir',
@@ -485,7 +482,7 @@ const TRANSLATIONS = {
     createHintOn:(n)=>`${n} fleur${n>1?'s':''} sélectionnée${n>1?'s':''} — prête à fleurir ! ✿`,
     maxFlowers:'Maximum de 10 fleurs atteint ✿',
     sheetTitle:'Écrire un joli message ✉',
-    sheetSub:'Facultatif — ta note apparaîtra sur la carte du bouquet',
+    sheetSub:'Ta note apparaîtra sur la carte du bouquet',
     lblTo:'Pour', lblFrom:'De', lblMsg:'Message', lblFont:'Police du message',
     phTo:'Nom du destinataire', phFrom:'Ton nom', phMsg:'Écris quelque chose de doux… ♡',
     fontElegant:'Élégant', fontScript:'Manuscrit', fontTypewriter:'Machine à écrire',
@@ -533,7 +530,7 @@ const TRANSLATIONS = {
     createHintOn:(n)=>`${n} flor${n>1?'es':''} selecionada${n>1?'s':''} — pronta para florescer! ✿`,
     maxFlowers:'Máximo de 10 flores atingido ✿',
     sheetTitle:'Escrever uma mensagem fofa ✉',
-    sheetSub:'Opcional — sua nota aparecerá no cartão do buquê',
+    sheetSub:'Sua nota aparecerá no cartão do buquê',
     lblTo:'Para', lblFrom:'De', lblMsg:'Mensagem', lblFont:'Fonte da mensagem',
     phTo:'Nome do destinatário', phFrom:'Seu nome', phMsg:'Escreva algo doce… ♡',
     fontElegant:'Elegante', fontScript:'Manuscrito', fontTypewriter:'Máquina de escrever',
@@ -581,7 +578,7 @@ const TRANSLATIONS = {
     createHintOn:(n)=>`${n} Blume${n>1?'n':''} ausgewählt — bereit zu blühen! ✿`,
     maxFlowers:'Maximal 10 Blumen erreicht ✿',
     sheetTitle:'Eine süße Nachricht schreiben ✉',
-    sheetSub:'Optional — deine Notiz erscheint auf der Straußkarte',
+    sheetSub:'Deine Notiz erscheint auf der Straußkarte',
     lblTo:'An', lblFrom:'Von', lblMsg:'Nachricht', lblFont:'Nachrichtenschrift',
     phTo:'Name des Empfängers', phFrom:'Dein Name', phMsg:'Schreibe etwas Süßes… ♡',
     fontElegant:'Elegant', fontScript:'Schreibschrift', fontTypewriter:'Schreibmaschine',
@@ -629,7 +626,7 @@ const TRANSLATIONS = {
     createHintOn:(n)=>`${n} fior${n>1?'i':'e'} selezionat${n>1?'i':'o'} — pront${n>1?'i':'o'} a sbocciare! ✿`,
     maxFlowers:'Massimo di 10 fiori raggiunto ✿',
     sheetTitle:'Scrivi un messaggio carino ✉',
-    sheetSub:'Facoltativo — la tua nota apparirà sulla scheda del bouquet',
+    sheetSub:'La tua nota apparirà sulla scheda del bouquet',
     lblTo:'A', lblFrom:'Da', lblMsg:'Messaggio', lblFont:'Carattere del messaggio',
     phTo:'Nome del destinatario', phFrom:'Il tuo nome', phMsg:'Scrivi qualcosa di dolce… ♡',
     fontElegant:'Elegante', fontScript:'Corsivo', fontTypewriter:'Macchina da scrivere',
@@ -677,7 +674,7 @@ const TRANSLATIONS = {
     createHintOn:(n)=>`${n}種類の花を選択 — 咲かせる準備完了！ ✿`,
     maxFlowers:'最大10種類の花に達しました ✿',
     sheetTitle:'かわいいメッセージを書く ✉',
-    sheetSub:'オプション — メモは花束カードに表示されます',
+    sheetSub:'メモは花束カードに表示されます',
     lblTo:'宛先', lblFrom:'送り主', lblMsg:'メッセージ', lblFont:'フォント',
     phTo:'受取人のお名前', phFrom:'あなたのお名前', phMsg:'甘いメッセージを書いて… ♡',
     fontElegant:'エレガント', fontScript:'手書き風', fontTypewriter:'タイプライター',
@@ -725,7 +722,7 @@ const TRANSLATIONS = {
     createHintOn:(n)=>`已选 ${n} 种花 — 准备绽放！ ✿`,
     maxFlowers:'已达到最多10种花 ✿',
     sheetTitle:'写一条甜蜜的留言 ✉',
-    sheetSub:'可选 — 你的留言将显示在花束卡片上',
+    sheetSub:'你的留言将显示在花束卡片上',
     lblTo:'收件人', lblFrom:'发件人', lblMsg:'留言', lblFont:'留言字体',
     phTo:'收件人姓名', phFrom:'你的姓名', phMsg:'写点甜蜜的话… ♡',
     fontElegant:'优雅', fontScript:'手写体', fontTypewriter:'打字机',
@@ -773,7 +770,7 @@ const TRANSLATIONS = {
     createHintOn:(n)=>`${n}가지 꽃 선택됨 — 피어날 준비 완료! ✿`,
     maxFlowers:'최대 10가지 꽃에 도달했습니다 ✿',
     sheetTitle:'귀여운 메시지 쓰기 ✉',
-    sheetSub:'선택 사항 — 메모가 꽃다발 카드에 표시됩니다',
+    sheetSub:'메모가 꽃다발 카드에 표시됩니다',
     lblTo:'받는 분', lblFrom:'보내는 분', lblMsg:'메시지', lblFont:'메시지 폰트',
     phTo:'받는 분 이름', phFrom:'보내는 분 이름', phMsg:'달콤한 메시지를 써주세요… ♡',
     fontElegant:'우아한', fontScript:'손글씨', fontTypewriter:'타자기',
@@ -822,7 +819,7 @@ const TRANSLATIONS = {
     createHintOn:(n)=>`تم اختيار ${n} زهرة — جاهزة للتفتّح! ✿`,
     maxFlowers:'تم الوصول إلى الحد الأقصى 10 زهور ✿',
     sheetTitle:'اكتبي رسالة لطيفة ✉',
-    sheetSub:'اختياري — ستظهر ملاحظتك على بطاقة الباقة',
+    sheetSub:'ستظهر ملاحظتك على بطاقة الباقة',
     lblTo:'إلى', lblFrom:'من', lblMsg:'الرسالة', lblFont:'خط الرسالة',
     phTo:'اسم المستلم', phFrom:'اسمك', phMsg:'اكتبي شيئاً رقيقاً… ♡',
     fontElegant:'أنيق', fontScript:'خط يدوي', fontTypewriter:'آلة كاتبة',
@@ -1035,10 +1032,7 @@ function updateBouquetPreview() {
 
 function updateCreateBtn() {
   const btn = document.getElementById('btn-create');
-  const hint = document.getElementById('create-hint');
-  const n = state.selected.length, ok = n >= 5;
-  btn.disabled = !ok;
-  hint.textContent = ok ? T.createHintOn(n) : T.createHintOff;
+  btn.disabled = state.selected.length < 5;
 }
 
 function initSwatches(containerId, colorsList, namesList, stateKey, onChange) {
@@ -1066,11 +1060,6 @@ function initSwatches(containerId, colorsList, namesList, stateKey, onChange) {
   });
 }
 
-function initDate() {
-  const d = new Date(), pad = n => String(n).padStart(2,'0');
-  document.getElementById('today-date').textContent =
-    `${pad(d.getDate())}/${pad(d.getMonth()+1)}/${d.getFullYear()}`;
-}
 
 function getDateStr() {
   const d = new Date(), pad = n => String(n).padStart(2,'0');
@@ -1217,7 +1206,6 @@ function showToast(msg, dur=2800) {
 ════════════════ */
 document.addEventListener('DOMContentLoaded', () => {
   applyTranslations();
-  initDate();
   initCarousel();
   initArrows();
   initModal();
