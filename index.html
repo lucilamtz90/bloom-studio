@@ -201,6 +201,8 @@ body{background:#FDF5F0;color:var(--bark);font-family:var(--font-body);font-weig
 @keyframes toastin{from{opacity:0;transform:translateY(10px) scale(0.97)}to{opacity:1;transform:none}}
 .sparkle{position:fixed;pointer-events:none;z-index:200;font-size:16px;animation:sparkle 1.4s ease-out forwards}
 @keyframes sparkle{0%{opacity:0;transform:scale(0) rotate(0)}40%{opacity:1;transform:scale(1.2) rotate(90deg)}100%{opacity:0;transform:scale(0) rotate(200deg) translateY(-40px)}}
+@keyframes flowerIn  { from{opacity:0} to{opacity:1} }
+@keyframes flowerOut { from{opacity:1} to{opacity:0} }
 
 /* ── RTL SUPPORT ── */
 [dir="rtl"] .step-label{flex-direction:row-reverse}
@@ -262,15 +264,17 @@ body{background:#FDF5F0;color:var(--bark);font-family:var(--font-body);font-weig
       </div>
 
       <div class="step-label"><span class="step-num">2</span> <span id="el-step2">Customise colours</span></div>
-      <div class="pickers-grid">
+      <div class="pickers-grid" style="grid-template-columns:1fr">
         <div class="picker-group bloom-card">
           <p class="picker-title bloom-eyebrow" id="el-ribbon-title">Ribbon colour</p>
           <div class="swatches" id="ribbon-swatches"></div>
         </div>
+        <!-- Wrapping paper picker parked — kraft paper photo is the fixed envelope asset
         <div class="picker-group bloom-card">
           <p class="picker-title bloom-eyebrow" id="el-wrap-title">Wrapping paper</p>
           <div class="swatches" id="envelope-swatches"></div>
         </div>
+        -->
       </div>
 
       <div class="action-stack">
@@ -932,6 +936,8 @@ const POSITIONS = [
   {rot:2,z:9},
 ];
 
+let positionCounter = 0;
+
 const state = {
   selected:[], ribbonColor:RIBBON_COLORS[0].color, envelopeColor:ENVELOPE_COLORS[0].color,
   toName:'', fromName:'', message:'', font:'serif',
@@ -946,22 +952,23 @@ function renderBouquet(selectedIds, ribbonColor, envelopeColor, small=false) {
   const scale = small ? 0.68 : 1;
   const W = Math.round(260*scale), H = Math.round(300*scale);
   const cx = W/2;
-  const wrapY = Math.round(190*scale), bowY = Math.round(205*scale);
+  const wrapY = Math.round(190*scale), bowY = Math.round(265*scale);
   const imgW = Math.round(62*scale), imgH = Math.round(175*scale);
   const bottomGap = H - wrapY;
   const items = selectedIds.map((id,i)=>({id,pos:POSITIONS[i]})).sort((a,b)=>a.pos.z-b.pos.z);
 
   let html = `<div style="position:relative;width:${W}px;height:${H}px">`;
+  // Flower images behind envelope (z-index 1-9)
   items.forEach(({id,pos}) => {
-    html += `<img src="flowers/${id}.png" style="position:absolute;bottom:${bottomGap}px;left:${cx-imgW/2}px;width:${imgW}px;height:${imgH}px;object-fit:contain;object-position:bottom center;transform:rotate(${pos.rot}deg);transform-origin:50% 100%;z-index:${pos.z}">`;
+    html += `<img src="images/flowers/${id}.png" style="position:absolute;bottom:${bottomGap}px;left:${cx-imgW/2}px;width:${imgW}px;height:${imgH}px;object-fit:contain;object-position:bottom center;transform:rotate(${pos.rot}deg);transform-origin:50% 100%;z-index:${pos.z}">`;
   });
-  const coneL=Math.round(55*scale), coneR=Math.round(205*scale), coneBot=Math.round(288*scale);
+  // Kraft paper envelope photo (z-index 10, covers stems)
+  const envTop = Math.round(-30*scale);
+  html += `<img src="images/envelop.png" style="position:absolute;top:${envTop}px;left:0;width:${W}px;height:auto;z-index:10;pointer-events:none" alt="">`;
+  // SVG ribbon bow — html2canvas fallback (mask-image not rendered by html2canvas)
+  const coneL=Math.round(55*scale), coneR=Math.round(205*scale);
   const bx=cx, by=bowY, tw=small?4:5;
-  html += `<svg style="position:absolute;inset:0;pointer-events:none;z-index:10" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg">`;
-  html += `<path d="M${coneL},${wrapY} Q${cx},${coneBot+10} ${coneR},${wrapY}" fill="${envelopeColor}" opacity="0.97"/>`;
-  html += `<path d="M${coneL},${wrapY} L${cx},${coneBot}" stroke="rgba(44,39,37,0.08)" stroke-width="1" fill="none"/>`;
-  html += `<path d="M${coneR},${wrapY} L${cx},${coneBot}" stroke="rgba(44,39,37,0.08)" stroke-width="1" fill="none"/>`;
-  html += `<path d="M${Math.round(cx-20*scale)},${wrapY} Q${cx},${coneBot-10} ${Math.round(cx+5*scale)},${coneBot}" stroke="rgba(255,255,255,0.35)" stroke-width="${small?1:1.5}" fill="none"/>`;
+  html += `<svg style="position:absolute;inset:0;pointer-events:none;z-index:10" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" overflow="hidden" xmlns="http://www.w3.org/2000/svg">`;
   html += `<path d="M${coneL+10},${by+4} Q${cx},${by} ${coneR-10},${by+4}" stroke="${ribbonColor}" stroke-width="${small?6:8}" fill="none" stroke-linecap="round" opacity="0.8"/>`;
   html += `<path d="M${bx},${by} Q${bx-35*scale},${by-22*scale} ${bx-22*scale},${by+2} Q${bx-8*scale},${by+10} ${bx},${by}" fill="${ribbonColor}" stroke="rgba(44,39,37,0.12)" stroke-width="0.5" opacity="0.95"/>`;
   html += `<path d="M${bx},${by} Q${bx+35*scale},${by-22*scale} ${bx+22*scale},${by+2} Q${bx+8*scale},${by+10} ${bx},${by}" fill="${ribbonColor}" stroke="rgba(44,39,37,0.12)" stroke-width="0.5" opacity="0.95"/>`;
@@ -969,15 +976,11 @@ function renderBouquet(selectedIds, ribbonColor, envelopeColor, small=false) {
   html += `<path d="M${bx+6},${by+4} Q${bx+22*scale},${by+30*scale} ${bx+32*scale},${by+52*scale}" stroke="${ribbonColor}" stroke-width="${tw}" fill="none" stroke-linecap="round" opacity="0.88"/>`;
   html += `<ellipse cx="${bx}" cy="${by+2}" rx="${small?6:8}" ry="${small?5:7}" fill="${ribbonColor}" stroke="rgba(44,39,37,0.18)" stroke-width="0.5"/>`;
   html += `</svg>`;
-  // Ribbon photo, tinted via CSS mask (alpha channel as stencil, background-color as tint)
-  // SVG bow above stays as silent fallback for html2canvas which doesn't support mask-image
+  // Ribbon photo overlay (z-index 11) — grayscale+multiply preserves polka-dot texture with tint
   const ribW = Math.round(88*scale);
   const ribH = Math.round(ribW * 1208/1505);
   const ribLeft = Math.round(cx - ribW/2);
   const ribTop  = Math.round(by - ribH * 0.45);
-  // Outer div: masked to ribbon shape, isolates the blend group
-  // Inside: solid tint base + grayscale ribbon multiplied over it
-  // → white fabric becomes tint colour; dots become darker tint (texture preserved)
   html += `<div style="position:absolute;left:${ribLeft}px;top:${ribTop}px;width:${ribW}px;height:${ribH}px;z-index:11;pointer-events:none;isolation:isolate;-webkit-mask-image:url('images/ribbon.png');mask-image:url('images/ribbon.png');-webkit-mask-size:contain;mask-size:contain;-webkit-mask-repeat:no-repeat;mask-repeat:no-repeat;-webkit-mask-position:center;mask-position:center"><div style="position:absolute;inset:0;background:${ribbonColor}"></div><img src="images/ribbon.png" style="position:absolute;inset:0;width:100%;height:100%;object-fit:contain;filter:grayscale(1);mix-blend-mode:multiply"></div>`;
   html += `</div>`;
   return html;
@@ -994,7 +997,7 @@ function initCarousel() {
     const card = document.createElement('div');
     card.className = 'flower-card' + (state.selected.includes(id) ? ' selected' : '');
     card.dataset.id = id;
-    card.innerHTML = `<img class="flower-img" src="flowers/${id}.png" alt="${f.name}">` +
+    card.innerHTML = `<img class="flower-img" src="images/flowers/${id}.png" alt="${f.name}">` +
       `<span class="flower-name">${f.name}</span>` +
       `<span class="flower-mood">${f.mood}</span>`;
     card.addEventListener('click', () => toggleFlower(id, card));
@@ -1007,15 +1010,16 @@ function toggleFlower(id, card) {
   if (idx > -1) {
     state.selected.splice(idx, 1);
     card.classList.remove('selected');
+    removeFlowerFromPreview(id);
   } else {
     if (state.selected.length >= 10) { showToast(T.maxFlowers); return; }
     state.selected.push(id);
     card.classList.add('selected');
+    addFlowerToPreview(id);
   }
   sparkleAt(card);
   updateCountBadge();
   updateDisabled();
-  updateBouquetPreview();
   updateCreateBtn();
 }
 
@@ -1032,12 +1036,71 @@ function updateDisabled() {
 }
 
 function updateBouquetPreview() {
-  const el = document.getElementById('bouquet-preview');
-  if (!state.selected.length) {
-    el.innerHTML = `<div class="empty-hint"><span class="big">✿</span><span class="txt">${T.emptyHint}</span></div>`;
-    return;
-  }
-  el.innerHTML = renderBouquet(state.selected, state.ribbonColor, state.envelopeColor);
+  // Legacy full-rebuild — used when preview DOM needs a complete reset from state
+  const flowersEl = document.getElementById('bp-flowers');
+  if (!flowersEl) return;
+  flowersEl.innerHTML = '';
+  positionCounter = 0;
+  const emptyEl = document.getElementById('bp-empty');
+  if (!state.selected.length) { if (emptyEl) emptyEl.style.display = ''; return; }
+  if (emptyEl) emptyEl.style.display = 'none';
+  state.selected.forEach(id => addFlowerToPreview(id));
+}
+
+/* ════════════════
+   BOUQUET PREVIEW — INCREMENTAL DOM
+════════════════ */
+function initBouquetPreview() {
+  const wrap = document.getElementById('bouquet-preview');
+  const cx = 130, bowY = 265, ribW = 88;
+  const ribH = Math.round(ribW * 1208/1505);
+  const ribLeft = Math.round(cx - ribW/2), ribTop = Math.round(bowY - ribH * 0.45);
+  wrap.innerHTML =
+    `<div id="bp-flowers" style="position:absolute;inset:0;z-index:1"></div>` +
+    `<img src="images/envelop.png" style="position:absolute;top:-30px;left:0;width:260px;height:auto;z-index:10;pointer-events:none" alt="">` +
+    `<div id="bp-ribbon" style="position:absolute;left:${ribLeft}px;top:${ribTop}px;width:${ribW}px;height:${ribH}px;z-index:11;pointer-events:none;isolation:isolate;-webkit-mask-image:url('images/ribbon.png');mask-image:url('images/ribbon.png');-webkit-mask-size:contain;mask-size:contain;-webkit-mask-repeat:no-repeat;mask-repeat:no-repeat;-webkit-mask-position:center;mask-position:center">` +
+    `<div id="bp-ribbon-color" style="position:absolute;inset:0;background:${state.ribbonColor}"></div>` +
+    `<img src="images/ribbon.png" style="position:absolute;inset:0;width:100%;height:100%;object-fit:contain;filter:grayscale(1);mix-blend-mode:multiply" alt="">` +
+    `</div>` +
+    `<div id="bp-empty" style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;z-index:12;pointer-events:none">` +
+    `<span style="font-size:42px;opacity:0.25">✿</span>` +
+    `<span id="el-empty-hint" style="font-family:var(--font-display);font-size:14px;font-style:italic;opacity:0.7;color:var(--color-muted)">${T.emptyHint}</span>` +
+    `</div>`;
+}
+
+function addFlowerToPreview(id) {
+  const flowersEl = document.getElementById('bp-flowers');
+  if (!flowersEl) return;
+  const pos = POSITIONS[Math.min(positionCounter, POSITIONS.length-1)];
+  positionCounter++;
+  const cx=130, wrapY=190, imgW=62, imgH=175, bottomGap=300-wrapY;
+  const img = document.createElement('img');
+  img.src = `images/flowers/${id}.png`;
+  img.dataset.fid = id;
+  img.style.cssText = `position:absolute;bottom:${bottomGap}px;left:${cx-imgW/2}px;width:${imgW}px;height:${imgH}px;object-fit:contain;object-position:bottom center;transform:rotate(${pos.rot}deg);transform-origin:50% 100%;z-index:${pos.z};animation:flowerIn 0.45s var(--ease-petal) both`;
+  flowersEl.appendChild(img);
+  const emptyEl = document.getElementById('bp-empty');
+  if (emptyEl) emptyEl.style.display = 'none';
+}
+
+function removeFlowerFromPreview(id) {
+  const flowersEl = document.getElementById('bp-flowers');
+  if (!flowersEl) return;
+  const img = flowersEl.querySelector(`[data-fid="${id}"]`);
+  if (!img) return;
+  img.style.animation = 'flowerOut 0.35s var(--ease-bloom) both';
+  setTimeout(() => {
+    img.remove();
+    if (flowersEl.children.length === 0) {
+      const emptyEl = document.getElementById('bp-empty');
+      if (emptyEl) emptyEl.style.display = '';
+    }
+  }, 370);
+}
+
+function updateRibbonInPreview(ribbonColor) {
+  const colorDiv = document.getElementById('bp-ribbon-color');
+  if (colorDiv) colorDiv.style.background = ribbonColor;
 }
 
 function updateCreateBtn() {
@@ -1219,8 +1282,11 @@ document.addEventListener('DOMContentLoaded', () => {
   initCarousel();
   initArrows();
   initModal();
-  initSwatches('ribbon-swatches',   RIBBON_COLORS,   T.ribbonNames,   'ribbonColor',   updateBouquetPreview);
+  initBouquetPreview();
+  initSwatches('ribbon-swatches', RIBBON_COLORS, T.ribbonNames, 'ribbonColor', () => updateRibbonInPreview(state.ribbonColor));
+  /* Wrapping paper picker parked — kraft paper envelope is a fixed photo asset
   initSwatches('envelope-swatches', ENVELOPE_COLORS, T.envelopeNames, 'envelopeColor', updateBouquetPreview);
+  */
 
   document.getElementById('btn-create').addEventListener('click', () => {
     if (state.selected.length < 5) return;
@@ -1243,8 +1309,12 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('input-from').value = '';
     document.getElementById('input-msg').value = '';
     document.getElementById('char-bar').textContent = '0 / 140';
+    positionCounter = 0;
+    const flowersEl = document.getElementById('bp-flowers');
+    if (flowersEl) flowersEl.innerHTML = '';
+    const emptyEl = document.getElementById('bp-empty');
+    if (emptyEl) emptyEl.style.display = '';
     updateCountBadge();
-    updateBouquetPreview();
     updateCreateBtn();
     showToast(T.toastNew);
   });
