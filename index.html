@@ -946,7 +946,7 @@ function renderBouquet(selectedIds, envelopeColor, small=false) {
 
   let html = `<div style="position:relative;width:${W}px;height:${H}px;overflow:hidden">`;
   html += `<svg xmlns="http://www.w3.org/2000/svg" style="position:absolute;width:0;height:0;overflow:hidden"><defs><clipPath id="${clipId}" clipPathUnits="userSpaceOnUse"><path transform="translate(${envLeft} ${H}) scale(${scX} -${scY})" d="${MASK_PATH}"/></clipPath></defs></svg>`;
-  html += `<div style="position:absolute;inset:0;z-index:5;clip-path:url(#${clipId})">`;
+  html += `<div style="position:absolute;inset:0;z-index:15;clip-path:url(#${clipId})">`;
   items.forEach(({id,pos}) => {
     html += `<img src="images/flowers/${id}.png" style="position:absolute;bottom:${bottomGap}px;left:${cx-imgW/2}px;width:${imgW}px;height:${imgH}px;object-fit:contain;object-position:bottom center;transform:rotate(${pos.rot}deg);transform-origin:50% 100%;z-index:${pos.z}">`;
   });
@@ -1023,7 +1023,7 @@ function initBouquetPreview() {
   const cx = 130, H = 300, W = 260;
   const envW = Math.round(H * 2239/3794), envLeft = Math.round((W - envW)/2);
   wrap.innerHTML =
-    `<div id="bp-flowers" style="position:absolute;inset:0;z-index:5;clip-path:url(#bouquet-clip)"></div>` +
+    `<div id="bp-flowers" style="position:absolute;inset:0;z-index:15;clip-path:url(#bouquet-clip)"></div>` +
     `<img src="images/envelop.png" style="position:absolute;top:0;left:${envLeft}px;width:${envW}px;height:auto;z-index:10;pointer-events:none" alt="">`;
 }
 
