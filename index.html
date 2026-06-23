@@ -33,8 +33,15 @@ body{background:#FDF5F0;color:var(--bark);font-family:var(--font-body);font-weig
 }
 .builder-wrap{max-width:680px;margin:0 auto;padding:44px 20px 120px;position:relative;z-index:1}
 
-.deco{position:fixed;pointer-events:none;z-index:0;animation:floatdeco 5s ease-in-out infinite;opacity:0.45;font-size:18px;user-select:none}
-@keyframes floatdeco{0%,100%{transform:translateY(0) rotate(0deg)}50%{transform:translateY(-10px) rotate(8deg)}}
+.petal{position:fixed;pointer-events:none;z-index:0;object-fit:contain;opacity:0;will-change:transform}
+@keyframes petalFall{
+  0%  {transform:translateY(-6vh) translateX(0px) rotate(0deg);opacity:0}
+  6%  {opacity:0.55}
+  28% {transform:translateY(28vh) translateX(16px) rotate(110deg)}
+  55% {transform:translateY(55vh) translateX(-12px) rotate(220deg)}
+  92% {opacity:0.55}
+  100%{transform:translateY(108vh) translateX(8px) rotate(380deg);opacity:0}
+}
 
 .page-sub{font-size:13px;color:var(--color-muted);text-align:center;margin-bottom:12px;font-weight:300;line-height:1.6}
 
@@ -227,12 +234,6 @@ body{background:#FDF5F0;color:var(--bark);font-family:var(--font-body);font-weig
 <!-- SCREEN 1: BUILDER -->
 <div id="screen-builder" class="screen active">
   <div class="builder-bg">
-    <span class="deco" style="top:8%;left:4%;animation-delay:0s">✦</span>
-    <span class="deco" style="top:22%;right:5%;animation-delay:0.7s;font-size:14px">♡</span>
-    <span class="deco" style="top:55%;left:2%;animation-delay:1.4s;font-size:13px">✿</span>
-    <span class="deco" style="top:75%;right:3%;animation-delay:0.3s">★</span>
-    <span class="deco" style="top:40%;right:6%;animation-delay:2s;font-size:12px">✦</span>
-    <span class="deco" style="top:90%;left:6%;animation-delay:1s;font-size:11px">✧</span>
 
     <div class="builder-wrap">
       <p class="bloom-eyebrow" style="text-align:center;margin-bottom:6px" id="el-eyebrow">✿ bloom studio ✿</p>
@@ -1213,10 +1214,35 @@ function showToast(msg, dur=2800) {
 /* ════════════════
    BOOT
 ════════════════ */
+function initPetals() {
+  const SRCS = [
+    'images/petals/Style=Blue.png',
+    'images/petals/Style=Pale Rose.png',
+    'images/petals/Style=Red.png',
+    'images/petals/Style=Rose.png',
+    'images/petals/Style=Violet.png',
+  ];
+  const bg = document.querySelector('.builder-bg');
+  const total = 22;
+  for (let i = 0; i < total; i++) {
+    const img = document.createElement('img');
+    img.className = 'petal';
+    img.src = SRCS[i % SRCS.length];
+    img.alt = '';
+    const dur  = (9 + Math.random() * 8).toFixed(1);
+    const del  = (-(Math.random() * 18)).toFixed(1);
+    const left = (Math.random() * 93).toFixed(1);
+    const sz   = (14 + Math.random() * 8).toFixed(0);
+    img.style.cssText = `left:${left}%;width:${sz}px;height:${sz}px;animation:petalFall ${dur}s ${del}s linear infinite`;
+    bg.appendChild(img);
+  }
+}
+
 document.addEventListener('DOMContentLoaded', () => {
   applyTranslations();
   initCarousel();
   initArrows();
+  initPetals();
   initModal();
   initBouquetPreview();
 
