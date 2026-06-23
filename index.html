@@ -959,10 +959,11 @@ function renderBouquet(selectedIds, ribbonColor, envelopeColor, small=false) {
   const bottomGap = H - wrapY;
   const clipBottom = H - Math.round(H * 1263/3794) - Math.round(20*scale);
   const items = selectedIds.map((id,i)=>({id,pos:POSITIONS[i]})).sort((a,b)=>a.pos.z-b.pos.z);
-  // Bow tint — mask clips to ribbon.png bow shape; multiply tints the baked-in bow
-  const bowTintW   = Math.round(envW * 0.34);
-  const bowTintH   = Math.round(bowTintW * 1208/1505);
-  const bowTintTop = Math.round(H * 2920/3794);
+  // Bow tint — center ribbon.png mask on the knot (image y=2655 → canvas y≈210)
+  const bowY      = Math.round(H * 2655/3794);
+  const bowTintW  = Math.round(envW * 0.34);
+  const bowTintH  = Math.round(bowTintW * 1208/1505);
+  const bowTintTop = Math.round(bowY - bowTintH * 0.5);
 
   let html = `<div style="position:relative;width:${W}px;height:${H}px;overflow:hidden">`;
   // Flowers clipped above cone opening (z-index 15 = in front of envelope)
@@ -1046,10 +1047,11 @@ function initBouquetPreview() {
   const envW = Math.round(H * 2239/3794), envLeft = Math.round((W - envW)/2);
   const openingY = Math.round(H * 1263/3794); // widest opening ≈ y=100
   const clipBottom = H - openingY - 20; // flower clip: 20px below opening
-  // Bow tint — mask clips to ribbon.png bow shape; multiply tints the baked-in bow
-  const bowTintW   = Math.round(envW * 0.34);
-  const bowTintH   = Math.round(bowTintW * 1208/1505);
-  const bowTintTop = Math.round(H * 2920/3794);
+  // Bow tint — center ribbon.png mask on the knot (image y=2655 → canvas y≈210)
+  const bowY      = Math.round(H * 2655/3794);
+  const bowTintW  = Math.round(envW * 0.34);
+  const bowTintH  = Math.round(bowTintW * 1208/1505);
+  const bowTintTop = Math.round(bowY - bowTintH * 0.5);
   wrap.innerHTML =
     `<div id="bp-flowers" style="position:absolute;inset:0;z-index:15;clip-path:inset(0 0 ${clipBottom}px 0)"></div>` +
     `<img src="images/envelop.png" style="position:absolute;top:0;left:${envLeft}px;width:${envW}px;height:auto;z-index:10;pointer-events:none" alt="">` +
