@@ -969,13 +969,10 @@ function renderBouquet(selectedIds, ribbonColor, envelopeColor, small=false) {
   html += `</div>`;
   // Kraft paper envelope — width-limited to fit H, centered horizontally
   html += `<img src="images/envelop.png" style="position:absolute;top:0;left:${envLeft}px;width:${envW}px;height:auto;z-index:10;pointer-events:none" alt="">`;
-  // Ribbon photo overlay (z-index 11) — grayscale+multiply preserves polka-dot texture with tint
-  const bx=cx, by=bowY;
-  const ribW = Math.round(88*scale);
-  const ribH = Math.round(ribW * 1208/1505);
-  const ribLeft = Math.round(cx - ribW/2);
-  const ribTop  = Math.round(by - ribH * 0.45);
-  html += `<div style="position:absolute;left:${ribLeft}px;top:${ribTop}px;width:${ribW}px;height:${ribH}px;z-index:11;pointer-events:none;isolation:isolate;-webkit-mask-image:url('images/ribbon.png');mask-image:url('images/ribbon.png');-webkit-mask-size:contain;mask-size:contain;-webkit-mask-repeat:no-repeat;mask-repeat:no-repeat;-webkit-mask-position:center;mask-position:center"><div style="position:absolute;inset:0;background:${ribbonColor}"></div><img src="images/ribbon.png" style="position:absolute;inset:0;width:100%;height:100%;object-fit:contain;filter:grayscale(1);mix-blend-mode:multiply"></div>`;
+  // Colour tint over the envelope's built-in knot ribbon — multiply on white fabric = picker colour
+  const ribW = Math.round(envW * 0.62), ribH = Math.round(ribW * 0.52);
+  const ribLeft = Math.round(cx - ribW/2), ribTop = bowY - Math.round(ribH/2);
+  html += `<div style="position:absolute;left:${ribLeft}px;top:${ribTop}px;width:${ribW}px;height:${ribH}px;z-index:11;pointer-events:none;background:${ribbonColor};mix-blend-mode:multiply;border-radius:50%"></div>`;
   html += `</div>`;
   return html;
 }
@@ -1052,15 +1049,13 @@ function initBouquetPreview() {
   const bowY = Math.round(H * 2655/3794); // ribbon at 70% of canvas height
   const openingY = Math.round(H * 1263/3794); // widest opening ≈ y=100
   const clipBottom = H - openingY - 20; // flower clip: 20px below opening
-  const ribW = 88, ribH = Math.round(ribW * 1208/1505);
-  const ribLeft = Math.round(cx - ribW/2), ribTop = Math.round(bowY - ribH * 0.45);
+  // Colour tint ellipse over the envelope's knot ribbon — multiply on white = picker colour
+  const ribW = Math.round(envW * 0.62), ribH = Math.round(ribW * 0.52);
+  const ribLeft = Math.round(cx - ribW/2), ribTop = bowY - Math.round(ribH/2);
   wrap.innerHTML =
     `<div id="bp-flowers" style="position:absolute;inset:0;z-index:15;clip-path:inset(0 0 ${clipBottom}px 0)"></div>` +
     `<img src="images/envelop.png" style="position:absolute;top:0;left:${envLeft}px;width:${envW}px;height:auto;z-index:10;pointer-events:none" alt="">` +
-    `<div id="bp-ribbon" style="position:absolute;left:${ribLeft}px;top:${ribTop}px;width:${ribW}px;height:${ribH}px;z-index:11;pointer-events:none;isolation:isolate;-webkit-mask-image:url('images/ribbon.png');mask-image:url('images/ribbon.png');-webkit-mask-size:contain;mask-size:contain;-webkit-mask-repeat:no-repeat;mask-repeat:no-repeat;-webkit-mask-position:center;mask-position:center">` +
-    `<div id="bp-ribbon-color" style="position:absolute;inset:0;background:${state.ribbonColor}"></div>` +
-    `<img src="images/ribbon.png" style="position:absolute;inset:0;width:100%;height:100%;object-fit:contain;filter:grayscale(1);mix-blend-mode:multiply" alt="">` +
-    `</div>` +
+    `<div id="bp-ribbon-color" style="position:absolute;left:${ribLeft}px;top:${ribTop}px;width:${ribW}px;height:${ribH}px;z-index:11;pointer-events:none;background:${state.ribbonColor};mix-blend-mode:multiply;border-radius:50%"></div>` +
     `<div id="bp-empty" style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;z-index:12;pointer-events:none">` +
     `<span style="font-size:42px;opacity:0.25">✿</span>` +
     `<span id="el-empty-hint" style="font-family:var(--font-display);font-size:14px;font-style:italic;opacity:0.7;color:var(--color-muted)">${T.emptyHint}</span>` +
