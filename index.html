@@ -971,7 +971,7 @@ function renderBouquet(selectedIds, ribbonColor, envelopeColor, small=false) {
   html += `</svg>`;
   // Ribbon photo, tinted via CSS mask (alpha channel as stencil, background-color as tint)
   // SVG bow above stays as silent fallback for html2canvas which doesn't support mask-image
-  const ribW = Math.round(136*scale);
+  const ribW = Math.round(88*scale);
   const ribH = Math.round(ribW * 1208/1505);
   const ribLeft = Math.round(cx - ribW/2);
   const ribTop  = Math.round(by - ribH * 0.45);
