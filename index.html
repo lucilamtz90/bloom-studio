@@ -969,18 +969,8 @@ function renderBouquet(selectedIds, ribbonColor, envelopeColor, small=false) {
   html += `</div>`;
   // Kraft paper envelope — width-limited to fit H, centered horizontally
   html += `<img src="images/envelop.png" style="position:absolute;top:0;left:${envLeft}px;width:${envW}px;height:auto;z-index:10;pointer-events:none" alt="">`;
-  // SVG ribbon bow — html2canvas fallback (mask-image not rendered by html2canvas)
-  const coneL = envLeft + Math.round(10*scale), coneR = envLeft + envW - Math.round(10*scale);
-  const bx=cx, by=bowY, tw=small?4:5;
-  html += `<svg style="position:absolute;inset:0;pointer-events:none;z-index:10" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" overflow="hidden" xmlns="http://www.w3.org/2000/svg">`;
-  html += `<path d="M${coneL+10},${by+4} Q${cx},${by} ${coneR-10},${by+4}" stroke="${ribbonColor}" stroke-width="${small?6:8}" fill="none" stroke-linecap="round" opacity="0.8"/>`;
-  html += `<path d="M${bx},${by} Q${bx-35*scale},${by-22*scale} ${bx-22*scale},${by+2} Q${bx-8*scale},${by+10} ${bx},${by}" fill="${ribbonColor}" stroke="rgba(44,39,37,0.12)" stroke-width="0.5" opacity="0.95"/>`;
-  html += `<path d="M${bx},${by} Q${bx+35*scale},${by-22*scale} ${bx+22*scale},${by+2} Q${bx+8*scale},${by+10} ${bx},${by}" fill="${ribbonColor}" stroke="rgba(44,39,37,0.12)" stroke-width="0.5" opacity="0.95"/>`;
-  html += `<path d="M${bx-6},${by+4} Q${bx-22*scale},${by+30*scale} ${bx-32*scale},${by+52*scale}" stroke="${ribbonColor}" stroke-width="${tw}" fill="none" stroke-linecap="round" opacity="0.88"/>`;
-  html += `<path d="M${bx+6},${by+4} Q${bx+22*scale},${by+30*scale} ${bx+32*scale},${by+52*scale}" stroke="${ribbonColor}" stroke-width="${tw}" fill="none" stroke-linecap="round" opacity="0.88"/>`;
-  html += `<ellipse cx="${bx}" cy="${by+2}" rx="${small?6:8}" ry="${small?5:7}" fill="${ribbonColor}" stroke="rgba(44,39,37,0.18)" stroke-width="0.5"/>`;
-  html += `</svg>`;
   // Ribbon photo overlay (z-index 11) — grayscale+multiply preserves polka-dot texture with tint
+  const bx=cx, by=bowY;
   const ribW = Math.round(88*scale);
   const ribH = Math.round(ribW * 1208/1505);
   const ribLeft = Math.round(cx - ribW/2);
