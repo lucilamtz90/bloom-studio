@@ -231,6 +231,14 @@ body{background:#FDF5F0;color:var(--bark);font-family:var(--font-body);font-weig
 </head>
 <body>
 
+<svg xmlns="http://www.w3.org/2000/svg" style="position:absolute;width:0;height:0;overflow:hidden" aria-hidden="true">
+  <defs>
+    <clipPath id="bouquet-clip" clipPathUnits="userSpaceOnUse">
+      <path transform="translate(42 300) scale(0.3046 -0.6237)" d="M66.9702 411.244C16.5702 393.644 1.97015 361.911 0.970151 348.244C-3.42985 320.244 24.1368 281.578 38.4701 265.744L66.9702 235.744L280.97 1.24432C282.57 -0.755684 285.637 1.74432 286.97 3.24432C375.97 81.0777 557.47 242.444 571.47 265.244C585.47 288.044 579.637 313.411 574.97 323.244C558.17 358.844 453.303 409.078 402.97 429.744L295.47 479.744C159.47 442.544 86.4702 418.578 66.9702 411.244Z"/>
+    </clipPath>
+  </defs>
+</svg>
+
 <!-- SCREEN 1: BUILDER -->
 <div id="screen-builder" class="screen active">
   <div class="builder-bg">
@@ -912,6 +920,8 @@ const POSITIONS = [
 
 let positionCounter = 0;
 
+const MASK_PATH = 'M66.9702 411.244C16.5702 393.644 1.97015 361.911 0.970151 348.244C-3.42985 320.244 24.1368 281.578 38.4701 265.744L66.9702 235.744L280.97 1.24432C282.57 -0.755684 285.637 1.74432 286.97 3.24432C375.97 81.0777 557.47 242.444 571.47 265.244C585.47 288.044 579.637 313.411 574.97 323.244C558.17 358.844 453.303 409.078 402.97 429.744L295.47 479.744C159.47 442.544 86.4702 418.578 66.9702 411.244Z';
+
 const state = {
   selected:[], envelopeColor:ENVELOPE_COLORS[0].color,
   toName:'', fromName:'', message:'', font:'serif',
@@ -930,11 +940,13 @@ function renderBouquet(selectedIds, envelopeColor, small=false) {
   const wrapY = Math.round(190*scale);
   const imgW = Math.round(62*scale), imgH = Math.round(175*scale);
   const bottomGap = H - wrapY;
-  const clipBottom = H - Math.round(H * 1263/3794) - Math.round(20*scale);
+  const clipId = 'bc' + Date.now();
+  const scX = (envW/581).toFixed(4), scY = (H/481).toFixed(4);
   const items = selectedIds.map((id,i)=>({id,pos:POSITIONS[i]})).sort((a,b)=>a.pos.z-b.pos.z);
 
   let html = `<div style="position:relative;width:${W}px;height:${H}px;overflow:hidden">`;
-  html += `<div style="position:absolute;inset:0;z-index:15;clip-path:inset(0 0 ${clipBottom}px 0)">`;
+  html += `<svg xmlns="http://www.w3.org/2000/svg" style="position:absolute;width:0;height:0;overflow:hidden"><defs><clipPath id="${clipId}" clipPathUnits="userSpaceOnUse"><path transform="translate(${envLeft} ${H}) scale(${scX} -${scY})" d="${MASK_PATH}"/></clipPath></defs></svg>`;
+  html += `<div style="position:absolute;inset:0;z-index:5;clip-path:url(#${clipId})">`;
   items.forEach(({id,pos}) => {
     html += `<img src="images/flowers/${id}.png" style="position:absolute;bottom:${bottomGap}px;left:${cx-imgW/2}px;width:${imgW}px;height:${imgH}px;object-fit:contain;object-position:bottom center;transform:rotate(${pos.rot}deg);transform-origin:50% 100%;z-index:${pos.z}">`;
   });
@@ -1010,10 +1022,8 @@ function initBouquetPreview() {
   // Envelope scaled to fit 300px canvas height exactly: W = 300*(2239/3794) = 177px
   const cx = 130, H = 300, W = 260;
   const envW = Math.round(H * 2239/3794), envLeft = Math.round((W - envW)/2);
-  const openingY = Math.round(H * 1263/3794);
-  const clipBottom = H - openingY - 20;
   wrap.innerHTML =
-    `<div id="bp-flowers" style="position:absolute;inset:0;z-index:15;clip-path:inset(0 0 ${clipBottom}px 0)"></div>` +
+    `<div id="bp-flowers" style="position:absolute;inset:0;z-index:5;clip-path:url(#bouquet-clip)"></div>` +
     `<img src="images/envelop.png" style="position:absolute;top:0;left:${envLeft}px;width:${envW}px;height:auto;z-index:10;pointer-events:none" alt="">`;
 }
 
