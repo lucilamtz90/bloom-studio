@@ -969,10 +969,9 @@ function renderBouquet(selectedIds, ribbonColor, envelopeColor, small=false) {
   html += `</div>`;
   // Kraft paper envelope — width-limited to fit H, centered horizontally
   html += `<img src="images/envelop.png" style="position:absolute;top:0;left:${envLeft}px;width:${envW}px;height:auto;z-index:10;pointer-events:none" alt="">`;
-  // Ribbon.png overlay — mask clips to bow shape, grayscale+multiply tints fabric to picker colour
-  const ribW = Math.round(envW * 0.62), ribH = Math.round(ribW * 1208/1505);
+  const ribW = Math.round(88*scale), ribH = Math.round(ribW * 1208/1505);
   const ribLeft = Math.round(cx - ribW/2), ribTop = Math.round(bowY - ribH * 0.45);
-  html += `<div style="position:absolute;left:${ribLeft}px;top:${ribTop}px;width:${ribW}px;height:${ribH}px;z-index:11;pointer-events:none;isolation:isolate;-webkit-mask-image:url('images/ribbon.png');mask-image:url('images/ribbon.png');-webkit-mask-size:contain;mask-size:contain;-webkit-mask-repeat:no-repeat;mask-repeat:no-repeat;-webkit-mask-position:center;mask-position:center"><div style="position:absolute;inset:0;background:${ribbonColor}"></div><img src="images/ribbon.png" style="position:absolute;inset:0;width:100%;height:100%;object-fit:contain;filter:grayscale(1);mix-blend-mode:multiply"></div>`;
+  html += `<div style="position:absolute;left:${ribLeft}px;top:${ribTop}px;width:${ribW}px;height:${ribH}px;z-index:11;pointer-events:none;-webkit-mask-image:url('images/ribbon.png');mask-image:url('images/ribbon.png');-webkit-mask-size:contain;mask-size:contain;-webkit-mask-repeat:no-repeat;mask-repeat:no-repeat;-webkit-mask-position:center;mask-position:center;background-color:${ribbonColor}"></div>`;
   html += `</div>`;
   return html;
 }
@@ -1032,9 +1031,6 @@ function updateBouquetPreview() {
   if (!flowersEl) return;
   flowersEl.innerHTML = '';
   positionCounter = 0;
-  const emptyEl = document.getElementById('bp-empty');
-  if (!state.selected.length) { if (emptyEl) emptyEl.style.display = ''; return; }
-  if (emptyEl) emptyEl.style.display = 'none';
   state.selected.forEach(id => addFlowerToPreview(id));
 }
 
@@ -1049,16 +1045,12 @@ function initBouquetPreview() {
   const bowY = Math.round(H * 2655/3794); // ribbon at 70% of canvas height
   const openingY = Math.round(H * 1263/3794); // widest opening ≈ y=100
   const clipBottom = H - openingY - 20; // flower clip: 20px below opening
-  const ribW = Math.round(envW * 0.62), ribH = Math.round(ribW * 1208/1505);
+  const ribW = 88, ribH = Math.round(ribW * 1208/1505);
   const ribLeft = Math.round(cx - ribW/2), ribTop = Math.round(bowY - ribH * 0.45);
   wrap.innerHTML =
     `<div id="bp-flowers" style="position:absolute;inset:0;z-index:15;clip-path:inset(0 0 ${clipBottom}px 0)"></div>` +
     `<img src="images/envelop.png" style="position:absolute;top:0;left:${envLeft}px;width:${envW}px;height:auto;z-index:10;pointer-events:none" alt="">` +
-    `<div id="bp-ribbon" style="position:absolute;left:${ribLeft}px;top:${ribTop}px;width:${ribW}px;height:${ribH}px;z-index:11;pointer-events:none;isolation:isolate;-webkit-mask-image:url('images/ribbon.png');mask-image:url('images/ribbon.png');-webkit-mask-size:contain;mask-size:contain;-webkit-mask-repeat:no-repeat;mask-repeat:no-repeat;-webkit-mask-position:center;mask-position:center"><div id="bp-ribbon-color" style="position:absolute;inset:0;background:${state.ribbonColor}"></div><img src="images/ribbon.png" style="position:absolute;inset:0;width:100%;height:100%;object-fit:contain;filter:grayscale(1);mix-blend-mode:multiply" alt=""></div>` +
-    `<div id="bp-empty" style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;z-index:12;pointer-events:none">` +
-    `<span style="font-size:42px;opacity:0.25">✿</span>` +
-    `<span id="el-empty-hint" style="font-family:var(--font-display);font-size:14px;font-style:italic;opacity:0.7;color:var(--color-muted)">${T.emptyHint}</span>` +
-    `</div>`;
+    `<div id="bp-ribbon-color" style="position:absolute;left:${ribLeft}px;top:${ribTop}px;width:${ribW}px;height:${ribH}px;z-index:11;pointer-events:none;-webkit-mask-image:url('images/ribbon.png');mask-image:url('images/ribbon.png');-webkit-mask-size:contain;mask-size:contain;-webkit-mask-repeat:no-repeat;mask-repeat:no-repeat;-webkit-mask-position:center;mask-position:center;background-color:${state.ribbonColor}"></div>`;
 }
 
 function addFlowerToPreview(id) {
@@ -1072,8 +1064,6 @@ function addFlowerToPreview(id) {
   img.dataset.fid = id;
   img.style.cssText = `position:absolute;bottom:${bottomGap}px;left:${cx-imgW/2}px;width:${imgW}px;height:${imgH}px;object-fit:contain;object-position:bottom center;transform:rotate(${pos.rot}deg);transform-origin:50% 100%;z-index:${pos.z};animation:flowerIn 0.45s var(--ease-petal) both`;
   flowersEl.appendChild(img);
-  const emptyEl = document.getElementById('bp-empty');
-  if (emptyEl) emptyEl.style.display = 'none';
 }
 
 function removeFlowerFromPreview(id) {
@@ -1082,13 +1072,7 @@ function removeFlowerFromPreview(id) {
   const img = flowersEl.querySelector(`[data-fid="${id}"]`);
   if (!img) return;
   img.style.animation = 'flowerOut 0.35s var(--ease-bloom) both';
-  setTimeout(() => {
-    img.remove();
-    if (flowersEl.children.length === 0) {
-      const emptyEl = document.getElementById('bp-empty');
-      if (emptyEl) emptyEl.style.display = '';
-    }
-  }, 370);
+  setTimeout(() => { img.remove(); }, 370);
 }
 
 function updateRibbonInPreview(ribbonColor) {
@@ -1305,8 +1289,6 @@ document.addEventListener('DOMContentLoaded', () => {
     positionCounter = 0;
     const flowersEl = document.getElementById('bp-flowers');
     if (flowersEl) flowersEl.innerHTML = '';
-    const emptyEl = document.getElementById('bp-empty');
-    if (emptyEl) emptyEl.style.display = '';
     updateCountBadge();
     updateCreateBtn();
     showToast(T.toastNew);
