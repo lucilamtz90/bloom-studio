@@ -954,11 +954,15 @@ function renderBouquet(selectedIds, ribbonColor, envelopeColor, small=false) {
   const cx = W/2;
   // Envelope scaled to fit canvas height exactly (no overflow)
   const envW = Math.round(H * 2239/3794), envLeft = Math.round((W - envW)/2);
-  const wrapY = Math.round(190*scale), bowY = Math.round(H * 2655/3794);
+  const wrapY = Math.round(190*scale);
   const imgW = Math.round(62*scale), imgH = Math.round(175*scale);
   const bottomGap = H - wrapY;
   const clipBottom = H - Math.round(H * 1263/3794) - Math.round(20*scale);
   const items = selectedIds.map((id,i)=>({id,pos:POSITIONS[i]})).sort((a,b)=>a.pos.z-b.pos.z);
+  // Bow tint — pixel-measured: bow sits at image y=2920–3320, x=834–1528
+  const bowTintTop = Math.round(H * 2920/3794);
+  const bowTintH   = Math.round(H * 400/3794);
+  const bowTintW   = Math.round(envW * 0.34);
 
   let html = `<div style="position:relative;width:${W}px;height:${H}px;overflow:hidden">`;
   // Flowers clipped above cone opening (z-index 15 = in front of envelope)
@@ -969,8 +973,7 @@ function renderBouquet(selectedIds, ribbonColor, envelopeColor, small=false) {
   html += `</div>`;
   // Kraft paper envelope — width-limited to fit H, centered horizontally
   html += `<img src="images/envelop.png" style="position:absolute;top:0;left:${envLeft}px;width:${envW}px;height:auto;z-index:10;pointer-events:none" alt="">`;
-  const bowTintW = Math.round(44*scale), bowTintH = Math.round(30*scale);
-  html += `<div style="position:absolute;left:${Math.round(cx-bowTintW/2)}px;top:${Math.round(bowY-bowTintH*0.5)}px;width:${bowTintW}px;height:${bowTintH}px;z-index:11;pointer-events:none;mix-blend-mode:multiply;background-color:${ribbonColor}"></div>`;
+  html += `<div style="position:absolute;left:${Math.round(cx-bowTintW/2)}px;top:${bowTintTop}px;width:${bowTintW}px;height:${bowTintH}px;z-index:11;pointer-events:none;mix-blend-mode:multiply;background-color:${ribbonColor}"></div>`;
   html += `</div>`;
   return html;
 }
@@ -1041,14 +1044,16 @@ function initBouquetPreview() {
   // Envelope scaled to fit 300px canvas height exactly: W = 300*(2239/3794) = 177px
   const cx = 130, H = 300, W = 260;
   const envW = Math.round(H * 2239/3794), envLeft = Math.round((W - envW)/2);
-  const bowY = Math.round(H * 2655/3794); // ribbon at 70% of canvas height
   const openingY = Math.round(H * 1263/3794); // widest opening ≈ y=100
   const clipBottom = H - openingY - 20; // flower clip: 20px below opening
-  const bowTintW = 44, bowTintH = 30;
+  // Bow tint — pixel-measured: bow sits at image y=2920–3320, x=834–1528
+  const bowTintTop = Math.round(H * 2920/3794);
+  const bowTintH   = Math.round(H * 400/3794);
+  const bowTintW   = Math.round(envW * 0.34);
   wrap.innerHTML =
     `<div id="bp-flowers" style="position:absolute;inset:0;z-index:15;clip-path:inset(0 0 ${clipBottom}px 0)"></div>` +
     `<img src="images/envelop.png" style="position:absolute;top:0;left:${envLeft}px;width:${envW}px;height:auto;z-index:10;pointer-events:none" alt="">` +
-    `<div id="bp-ribbon-color" style="position:absolute;left:${Math.round(cx-bowTintW/2)}px;top:${Math.round(bowY-bowTintH*0.5)}px;width:${bowTintW}px;height:${bowTintH}px;z-index:11;pointer-events:none;mix-blend-mode:multiply;background-color:${state.ribbonColor}"></div>`;
+    `<div id="bp-ribbon-color" style="position:absolute;left:${Math.round(cx-bowTintW/2)}px;top:${bowTintTop}px;width:${bowTintW}px;height:${bowTintH}px;z-index:11;pointer-events:none;mix-blend-mode:multiply;background-color:${state.ribbonColor}"></div>`;
 }
 
 function addFlowerToPreview(id) {
