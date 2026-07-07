@@ -46,9 +46,13 @@ body{background:#FDF5F0;color:var(--bark);font-family:var(--font-body);font-weig
 .petal-splash{position:fixed;top:0;left:0;z-index:60;pointer-events:none;object-fit:contain;will-change:transform,opacity}
 @keyframes petalSplash{
   0%  {transform:translate(-50%,-50%) scale(0.3) rotate(0deg);opacity:0}
-  10% {opacity:1}
-  38% {transform:translate(calc(-50% + var(--dx)),calc(-50% + var(--dy))) scale(1) rotate(var(--rot1));opacity:1}
-  100%{transform:translate(calc(-50% + var(--dx2)),calc(-50% + var(--dy2))) scale(0.85) rotate(var(--rot2));opacity:0}
+  8%  {opacity:1}
+  /* burst outward from the ticket center, then drop using the same
+     vh-based fall/zigzag/rotate shape as the ambient .petal, just once */
+  22% {transform:translate(calc(-50% + var(--dx)),calc(-50% + var(--dy))) rotate(var(--rot1));opacity:1}
+  46% {transform:translate(calc(-50% + var(--dx) + var(--sway1)),calc(-50% + var(--dy) + 28vh)) rotate(var(--rot2))}
+  70% {transform:translate(calc(-50% + var(--dx) + var(--sway2)),calc(-50% + var(--dy) + 58vh)) rotate(var(--rot3));opacity:0.6}
+  100%{transform:translate(calc(-50% + var(--dx) + var(--sway3)),calc(-50% + var(--dy) + 105vh)) rotate(var(--rot4));opacity:0}
 }
 
 .page-sub{font-size:13px;color:var(--color-muted);text-align:center;margin-bottom:12px;font-weight:300;line-height:1.6}
@@ -181,9 +185,8 @@ body{background:#FDF5F0;color:var(--bark);font-family:var(--font-body);font-weig
 .result-top h2{font-family:var(--font-display);font-size:30px;font-weight:300;font-style:italic;color:#2C2725}
 .result-top p{font-size:12px;color:rgba(44,39,37,0.6);margin-top:5px}
 .ticket-wrap{position:relative;width:100%;max-width:360px;margin:0 auto;filter:drop-shadow(0 16px 48px rgba(0,0,0,0.18))}
-.ticket{background:#fff;border-radius:3px;overflow:visible;position:relative}
-.ticket-perf{height:22px;position:relative;overflow:hidden;background:repeating-linear-gradient(90deg,#fff 0,#fff 12px,transparent 12px,transparent 16px);border-bottom:1px dashed rgba(44,39,37,0.18)}
-.ticket-body{padding:20px 26px 18px}
+.ticket{background-image:url('images/ticket-bg.png');background-size:100% 100%;background-repeat:no-repeat;overflow:visible;position:relative}
+.ticket-body{padding:34px 26px 20px}
 .receipt-brand{text-align:center;margin-bottom:12px}
 .receipt-icon{font-size:24px;display:block;margin-bottom:3px}
 .receipt-name{font-family:var(--font-mono);font-size:14px;font-weight:700;letter-spacing:0.28em;color:var(--bark)}
@@ -232,7 +235,7 @@ body{background:#FDF5F0;color:var(--bark);font-family:var(--font-body);font-weig
 [dir="rtl"] .fields-2{direction:rtl}
 [dir="rtl"] .result-actions{flex-direction:row-reverse}
 
-@media(max-width:400px){.ticket-body{padding:16px 18px 14px}.result-actions{flex-direction:column}.btn-new{flex:1}}
+@media(max-width:400px){.ticket-body{padding:28px 18px 14px}.result-actions{flex-direction:column}.btn-new{flex:1}}
 </style>
 </head>
 <body>
@@ -334,7 +337,6 @@ body{background:#FDF5F0;color:var(--bark);font-family:var(--font-body);font-weig
 
   <div class="ticket-wrap" id="ticket-wrap">
     <div class="ticket" id="ticket">
-      <div class="ticket-perf"></div>
       <div class="ticket-body" id="ticket-body"></div>
     </div>
   </div>
@@ -1255,16 +1257,29 @@ function splashPetals(originEl) {
     const angle = Math.random() * Math.PI * 2;
     const burst = 70 + Math.random() * 130;
     const dx = Math.cos(angle) * burst, dy = Math.sin(angle) * burst - 30;
-    const fall = 420 + Math.random() * 380;
-    const dx2 = dx * 1.2, dy2 = dy + fall;
-    const rot1 = (Math.random() * 260 - 130).toFixed(0);
-    const rot2 = (parseFloat(rot1) + 160 + Math.random() * 160).toFixed(0);
-    const sz = (11 + Math.random() * 8).toFixed(0);
-    const dur = (1.5 + Math.random()).toFixed(2);
-    const delay = (Math.random() * 0.18).toFixed(2);
+
+    // independent left-right drift per stage — rarely lines up, which is what reads as "natural"
+    // (same idea as the ambient .petal's fixed 16px/-12px/8px zigzag, just randomized per petal)
+    const sway1 = (Math.random() * 2 - 1) * 45;
+    const sway2 = (Math.random() * 2 - 1) * 65;
+    const sway3 = (Math.random() * 2 - 1) * 85;
+
+    // each petal spins its own direction/speed, same cumulative-rotation idea as the ambient .petal
+    const rotDir = Math.random() < 0.5 ? -1 : 1;
+    let rot = rotDir * (20 + Math.random() * 50);
+    const rot1 = rot.toFixed(0);
+    rot += rotDir * (60 + Math.random() * 70); const rot2 = rot.toFixed(0);
+    rot += rotDir * (60 + Math.random() * 70); const rot3 = rot.toFixed(0);
+    rot += rotDir * (60 + Math.random() * 70); const rot4 = rot.toFixed(0);
+
+    const sz = (10 + Math.random() * 11).toFixed(0);
+    const dur = (2.6 + Math.random() * 1.6).toFixed(2);
+    const delay = (Math.random() * 0.3).toFixed(2);
     img.style.cssText = `left:${cx}px;top:${cy}px;width:${sz}px;height:${sz}px;`
-      + `--dx:${dx}px;--dy:${dy}px;--dx2:${dx2}px;--dy2:${dy2}px;--rot1:${rot1}deg;--rot2:${rot2}deg;`
-      + `animation:petalSplash ${dur}s ${delay}s cubic-bezier(.17,.67,.32,1) forwards`;
+      + `--dx:${dx}px;--dy:${dy}px;`
+      + `--sway1:${sway1}px;--sway2:${sway2}px;--sway3:${sway3}px;`
+      + `--rot1:${rot1}deg;--rot2:${rot2}deg;--rot3:${rot3}deg;--rot4:${rot4}deg;`
+      + `animation:petalSplash ${dur}s ${delay}s linear forwards`;
     document.body.appendChild(img);
     setTimeout(() => img.remove(), (parseFloat(dur) + parseFloat(delay)) * 1000 + 150);
   }
