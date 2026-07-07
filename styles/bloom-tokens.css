@@ -4,24 +4,26 @@
    Usage: @import './bloom-tokens.css';
 ═══════════════════════════════════════════ */
 
-@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&family=Jost:wght@300;400&family=Courier+Prime&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400;1,500&family=Schibsted+Grotesk:wght@400;500;600;700&family=Courier+Prime&display=swap');
 
 :root {
-  /* ── Colors ── */
-  --color-parchment:   #F5F0EC;   /* backgrounds, card fills */
-  --color-canvas:      #EDECEA;   /* page background */
-  --color-rose:        #D9C5C0;   /* primary / buttons */
-  --color-mauve:       #B89FA0;   /* accent / hover */
-  --color-sage:        #C4C5AA;   /* nature accent / tags */
-  --color-stone:       #A8A089;   /* secondary neutral */
-  --color-bark:        #2C2725;   /* body text / headings */
-  --color-muted:       #8C7F7A;   /* placeholder / captions */
-  --color-hairline:    rgba(44, 39, 37, 0.1); /* dividers / borders */
+  /* ── Colors — from Bloom Studio Figma palette ── */
+  --color-parchment:   #F7F3E8;   /* Cream — backgrounds, card fills */
+  --color-canvas:      #F7F3E8;   /* Cream — page background */
+  --color-rose:        #E2B8C8;   /* Charm Pink — primary / buttons */
+  --color-mauve:       #E086AA;   /* Phalaenopsis — accent / hover */
+  --color-sage:        #C8D44A;   /* Citronelle — nature accent / tags */
+  --color-stone:       #B6B4A7;   /* neutral derived from Ink+Cream — secondary text */
+  --color-bark:        #2C2D1E;   /* Ink — body text / headings */
+  --color-muted:       #878679;   /* neutral derived from Ink+Cream — placeholder / captions */
+  --color-hairline:    rgba(44, 45, 30, 0.1); /* dividers / borders */
   --color-error:       #C47A7A;   /* error states */
+  --color-olive:       #7D8B3C;   /* Camping Gear — success states / green accent */
+  --color-forest:      #445A3C;   /* Dark Green — deep green accent */
 
   /* ── Typography ── */
-  --font-display: 'Cormorant Garamond', serif;
-  --font-body:    'Jost', sans-serif;
+  --font-display: 'Fraunces', serif;
+  --font-body:    'Schibsted Grotesk', sans-serif;
   --font-mono:    'Courier Prime', monospace;
 
   /* ── Font sizes ── */
@@ -70,10 +72,10 @@
   --space-16:  64px;
 
   /* ── Shadows ── */
-  --shadow-sm:  0 2px 12px rgba(44, 39, 37, 0.06);
-  --shadow-md:  0 8px 28px rgba(44, 39, 37, 0.10);
-  --shadow-lg:  0 20px 48px rgba(44, 39, 37, 0.12);
-  --shadow-rose: 0 8px 24px rgba(184, 159, 160, 0.35);
+  --shadow-sm:  0 2px 12px rgba(44, 45, 30, 0.06);
+  --shadow-md:  0 8px 28px rgba(44, 45, 30, 0.10);
+  --shadow-lg:  0 20px 48px rgba(44, 45, 30, 0.12);
+  --shadow-rose: 0 8px 24px rgba(224, 134, 170, 0.35);
 
   /* ── Transitions ── */
   --ease-bloom: cubic-bezier(0.4, 0, 0.2, 1);
