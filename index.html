@@ -197,7 +197,7 @@ body{background:#F7F3E8;color:var(--bark);font-family:var(--font-body);font-weig
 .sheet-sub{font-size:12px;color:var(--muted);margin-bottom:24px}
 .field{margin-bottom:18px}
 .field label{font-size:10px;letter-spacing:0.16em;text-transform:uppercase;color:var(--stone);display:block;margin-bottom:6px}
-.field input,.field textarea{width:100%;background:var(--canvas);border:1px solid transparent;font-family:var(--font-body);font-size:13px;font-weight:300;color:var(--bark);outline:none;transition:border-color 0.2s,box-shadow 0.2s}
+.field input,.field textarea{width:100%;background:#FFFFFF;border:1px solid rgba(44,45,30,0.14);font-family:var(--font-body);font-size:16px;font-weight:300;color:var(--bark);outline:none;transition:border-color 0.2s,box-shadow 0.2s}
 .field input{border-radius:var(--radius-pill);padding:11px 20px}
 .field textarea{border-radius:var(--radius-lg);padding:13px 18px;resize:none;height:96px}
 .field input::placeholder,.field textarea::placeholder{color:var(--muted)}
@@ -222,7 +222,9 @@ body{background:#F7F3E8;color:var(--bark);font-family:var(--font-body);font-weig
   background:#F7F3E8;
   flex-direction:column;align-items:center;padding:44px 20px 80px
 }
-#screen-result.active{display:flex}
+@keyframes modalIn{from{opacity:0;transform:scale(0.98)}to{opacity:1;transform:scale(1)}}
+#screen-result.active{display:flex;animation:modalIn 0.35s var(--ease-petal) both}
+body.modal-lock{overflow:hidden;height:100vh}
 .result-top{text-align:center;margin-bottom:28px;position:relative;z-index:1}
 .result-top h2{font-family:var(--font-display);font-size:30px;font-weight:300;font-style:italic;color:#2C2D1E}
 .result-top p{font-size:12px;color:rgba(44,45,30,0.6);margin-top:5px}
@@ -1199,6 +1201,8 @@ function buildResult() {
 
 function showResult() {
   buildResult();
+  document.getElementById('screen-builder').classList.remove('active');
+  document.body.classList.add('modal-lock');
   const el = document.getElementById('screen-result');
   el.classList.add('active');
   el.scrollTop = 0;
@@ -1221,14 +1225,49 @@ function initArrows() {
 /* ════════════════
    SAVE & SHARE
 ════════════════ */
+function isMobileDevice() {
+  return window.matchMedia('(hover: none), (pointer: coarse)').matches;
+}
+
+async function renderTicketCanvas() {
+  return html2canvas(document.getElementById('ticket'), {scale:3,backgroundColor:'#FFFFFF',useCORS:true,logging:false});
+}
+
+function downloadCanvas(canvas) {
+  const link = document.createElement('a');
+  link.download = `bloom-bouquet-${Date.now()}.png`;
+  link.href = canvas.toDataURL('image/png');
+  link.click();
+}
+
+function canvasToFile(canvas) {
+  return new Promise(resolve => {
+    canvas.toBlob(blob => {
+      resolve(blob ? new File([blob], `bloom-bouquet-${Date.now()}.png`, {type:'image/png'}) : null);
+    }, 'image/png');
+  });
+}
+
+// Mobile browsers (iOS Safari especially) don't reliably persist an <a download>
+// data-URL — the OS share sheet's own "Save Image" option is the only dependable
+// way to get the file onto the device, so we route through it there.
 async function saveImage() {
   showToast(T.toastGenerating);
   try {
-    const canvas = await html2canvas(document.getElementById('ticket'), {scale:3,backgroundColor:'#FFFFFF',useCORS:true,logging:false});
-    const link = document.createElement('a');
-    link.download = `bloom-bouquet-${Date.now()}.png`;
-    link.href = canvas.toDataURL('image/png');
-    link.click();
+    const canvas = await renderTicketCanvas();
+    if (isMobileDevice() && navigator.share) {
+      const file = await canvasToFile(canvas);
+      if (file && (!navigator.canShare || navigator.canShare({files:[file]}))) {
+        try {
+          await navigator.share({files:[file], title:'A bloom for you ✿'});
+          showToast(T.toastSaved);
+          return;
+        } catch(shareErr) {
+          if (shareErr && shareErr.name === 'AbortError') return;
+        }
+      }
+    }
+    downloadCanvas(canvas);
     showToast(T.toastSaved);
   } catch(e) {
     showToast(T.toastSaveFail);
@@ -1238,15 +1277,19 @@ async function saveImage() {
 
 async function shareImage() {
   try {
-    const canvas = await html2canvas(document.getElementById('ticket'), {scale:3,backgroundColor:'#FFFFFF',useCORS:true,logging:false});
-    canvas.toBlob(async blob => {
-      if (navigator.share && blob) {
-        try {
-          await navigator.share({files:[new File([blob],'bloom-bouquet.png',{type:'image/png'})],title:'A bloom for you ✿'});
-        } catch { await saveImage(); }
-      } else { await saveImage(); }
-    }, 'image/png');
-  } catch(e) { showToast(T.toastShareFail); await saveImage(); }
+    const canvas = await renderTicketCanvas();
+    const file = await canvasToFile(canvas);
+    if (navigator.share && file && (!navigator.canShare || navigator.canShare({files:[file]}))) {
+      try {
+        await navigator.share({files:[file], title:'A bloom for you ✿'});
+        return;
+      } catch(shareErr) {
+        if (shareErr && shareErr.name === 'AbortError') return;
+      }
+    }
+    downloadCanvas(canvas);
+    showToast(T.toastSaved);
+  } catch(e) { showToast(T.toastShareFail); }
 }
 
 /* ════════════════
@@ -1402,6 +1445,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
   document.getElementById('btn-new').addEventListener('click', () => {
     document.getElementById('screen-result').classList.remove('active');
+    document.getElementById('screen-builder').classList.add('active');
+    document.body.classList.remove('modal-lock');
     state.selected = [];
     state.toName = state.fromName = state.message = '';
     document.querySelectorAll('.flower-card').forEach(c => c.classList.remove('selected','disabled'));

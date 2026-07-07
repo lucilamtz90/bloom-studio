@@ -179,12 +179,12 @@ body {
 }
 
 .bloom-input {
-  background: var(--color-parchment);
-  border: 1px solid transparent;
+  background: #FFFFFF;
+  border: 1px solid rgba(44, 45, 30, 0.14);
   border-radius: var(--radius-pill);
   padding: 11px 20px;
   font-family: var(--font-body);
-  font-size: 13px;
+  font-size: 16px;
   font-weight: var(--weight-light);
   color: var(--color-bark);
   outline: none;
@@ -202,12 +202,12 @@ body {
 }
 
 .bloom-textarea {
-  background: var(--color-parchment);
-  border: 1px solid transparent;
+  background: #FFFFFF;
+  border: 1px solid rgba(44, 45, 30, 0.14);
   border-radius: var(--radius-lg);
   padding: 14px 20px;
   font-family: var(--font-body);
-  font-size: 13px;
+  font-size: 16px;
   font-weight: var(--weight-light);
   color: var(--color-bark);
   outline: none;
@@ -225,12 +225,12 @@ body {
 .bloom-select-wrap { position: relative; }
 .bloom-select {
   appearance: none;
-  background: var(--color-parchment);
-  border: 1px solid transparent;
+  background: #FFFFFF;
+  border: 1px solid rgba(44, 45, 30, 0.14);
   border-radius: var(--radius-pill);
   padding: 11px 40px 11px 20px;
   font-family: var(--font-body);
-  font-size: 13px;
+  font-size: 16px;
   font-weight: var(--weight-light);
   color: var(--color-bark);
   outline: none;
