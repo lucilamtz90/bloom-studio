@@ -117,9 +117,6 @@ body{background:#F7F3E8;color:var(--bark);font-family:var(--font-body);font-weig
 .carousel-section{margin-bottom:32px}
 .count-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
 .count-hint{font-size:11px;color:var(--muted)}
-.count-badge{font-family:var(--font-mono);font-size:11px;background:var(--rose);color:var(--bark);padding:3px 12px;border-radius:var(--radius-pill);transition:background 0.3s,color 0.3s}
-.count-badge.ready{background:#7D8B3C;color:#fff}
-.count-badge.max{background:var(--bark);color:var(--parchment)}
 
 .carousel-outer{position:relative}
 .carousel{display:flex;gap:12px;overflow-x:auto;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;padding:6px 4px 16px;scrollbar-width:none}
@@ -134,12 +131,23 @@ body{background:#F7F3E8;color:var(--bark);font-family:var(--font-body);font-weig
 }
 .flower-card:hover{transform:translateY(-4px);box-shadow:0 12px 28px rgba(44,45,30,0.1)}
 .flower-card.selected{border-color:var(--bark);background:#F4ECE4}
-.flower-card.selected::after{
-  content:'✓';position:absolute;top:8px;right:8px;width:18px;height:18px;
-  background:var(--bark);color:var(--parchment);border-radius:50%;font-size:10px;
-  display:flex;align-items:center;justify-content:center;line-height:18px;text-align:center
+.flower-qty{
+  display:none;position:absolute;top:8px;right:8px;min-width:24px;height:24px;padding:0 8px;
+  background:var(--bark);color:var(--parchment);border:none;border-radius:var(--radius-pill);
+  font-family:var(--font-mono);font-size:11px;align-items:center;justify-content:center;gap:3px;
+  cursor:pointer;transition:transform 0.15s,background 0.15s;touch-action:manipulation
 }
-.flower-card.disabled:not(.selected){opacity:0.38;pointer-events:none}
+/* Visible pill stays small so it doesn't dominate the card, but the actual tap
+   target is expanded to 44x44 (WCAG 2.5.5 / Apple HIG minimum) via this invisible
+   pseudo-element, centered on the pill, so a finger has a real-world chance of
+   landing on "remove" without also fat-fingering the card's "add" area. */
+.flower-qty::before{
+  content:'';position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+  width:44px;height:44px
+}
+.flower-qty:hover{background:#4a4238;transform:scale(1.08)}
+.flower-qty:focus-visible{outline:2px solid var(--bark);outline-offset:2px}
+.flower-card.selected .flower-qty{display:flex}
 .flower-card .flower-img{height:108px;width:auto;max-width:76px;object-fit:contain;object-position:bottom center;display:block;margin:0 auto}
 .flower-name{font-family:var(--font-display);font-size:13px;font-style:normal;color:var(--bark);text-align:center}
 .flower-mood{font-size:9px;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);text-align:center}
@@ -273,8 +281,8 @@ body{background:#F7F3E8;color:var(--bark);font-family:var(--font-body);font-weig
 @keyframes toastin{from{opacity:0;transform:translateY(10px) scale(0.97)}to{opacity:1;transform:none}}
 .sparkle{position:fixed;pointer-events:none;z-index:200;font-size:16px;animation:sparkle 1.4s ease-out forwards}
 @keyframes sparkle{0%{opacity:0;transform:scale(0) rotate(0)}40%{opacity:1;transform:scale(1.2) rotate(90deg)}100%{opacity:0;transform:scale(0) rotate(200deg) translateY(-40px)}}
-@keyframes flowerIn  { from{opacity:0} to{opacity:1} }
-@keyframes flowerOut { from{opacity:1} to{opacity:0} }
+@keyframes flowerIn  { from{opacity:0;transform:scale(0.8) rotate(var(--rot));filter:blur(3px)} to{opacity:1;transform:scale(1) rotate(var(--rot));filter:blur(0)} }
+@keyframes flowerOut { from{opacity:1;transform:scale(1) rotate(var(--rot));filter:blur(0)} to{opacity:0;transform:scale(0.8) rotate(var(--rot));filter:blur(3px)} }
 
 /* ── RTL SUPPORT ── */
 [dir="rtl"] .step-label{flex-direction:row-reverse}
@@ -324,8 +332,7 @@ body{background:#F7F3E8;color:var(--bark);font-family:var(--font-body);font-weig
       <div class="carousel-section">
         <div class="step-label"><span class="step-num">1</span> <span id="el-step1">Choose your flowers</span></div>
         <div class="count-row">
-          <span class="count-hint" id="el-count-hint">Select up to 10 flowers for your bouquet</span>
-          <span class="count-badge" id="count-badge">0 / 10</span>
+          <span class="count-hint" id="el-count-hint">Add as many flowers as you'd like to your bouquet</span>
         </div>
         <div class="carousel-outer">
           <button class="carr-arrow left" id="arr-left" aria-label="scroll left">‹</button>
@@ -428,15 +435,12 @@ const TRANSLATIONS = {
     heroHTML:'Create your <em>bouquet</em>',
     heroSub:'Choose your flowers,<br>add a heartfelt note, create it and share it.',
     step1:'Choose your flowers', step2:'Customise colours', step3:'Finalise &amp; send',
-    countHint:'Select up to 10 flowers for your bouquet',
+    countHint:"Add as many flowers as you'd like to your bouquet",
     previewLbl:'live preview', emptyHint:'Your bouquet will appear here',
 wrapTitle:'Wrapping paper',
     todayLbl:'Today is',
     btnMsgTxt:'Write a cute message', btnMsgAdded:'Message added',
     btnCreateTxt:'Create my bouquet',
-    createHintOff:'Select at least 1 flower to create your bouquet',
-    createHintOn:(n)=>`${n} flower${n>1?'s':''} selected — ready to bloom! ✿`,
-    maxFlowers:'Maximum 10 flowers reached ✿',
     sheetTitle:'Write a cute message ✉',
     sheetSub:'Your note will appear on the bouquet card',
     lblTo:'To', lblFrom:'From', lblMsg:'Message', lblFont:'Message font',
@@ -447,7 +451,7 @@ wrapTitle:'Wrapping paper',
     receiptSub:'virtual flower atelier',
     rowFor:'FOR', rowFrom:'FROM', rowDate:'DATE', rowType:'BOUQUET TYPE',
     btnSave:'Download bouquet', btnNew:'Create another bouquet',
-    toastMsgSaved:'Message saved ✓', toastNew:'Ready for a new bouquet ✿',
+    toastMsgSaved:'Message saved ✓', toastNew:'Ready for a new bouquet ✿', ariaRemoveOne:'Remove one',
     toastGenerating:'Generating image…', toastSaved:'Image saved ✓', toastOpenedImage:'Image opened — tap and hold to save ✿',
     toastSaveFail:'Could not save — try screenshot ✿',
     flowers:{
@@ -472,15 +476,12 @@ envelopeNames:['parchment','blush','sage mist','lavender','sky','cream'],
     heroHTML:'Crea tu <em>ramo</em>',
     heroSub:'Elige tus flores,<br>agrega una dedicatoria, créalo y compártelo.',
     step1:'Elige tus flores', step2:'Personaliza los colores', step3:'Finaliza y envía',
-    countHint:'Elige hasta 10 flores para tu ramo',
+    countHint:'Agrega tantas flores como quieras a tu ramo',
     previewLbl:'vista previa', emptyHint:'Tu ramo aparecerá aquí',
 wrapTitle:'Papel de envoltura',
     todayLbl:'Hoy es',
     btnMsgTxt:'Escribe un mensaje bonito', btnMsgAdded:'Mensaje añadido',
     btnCreateTxt:'Crear mi ramo',
-    createHintOff:'Selecciona al menos 1 flor para crear tu ramo',
-    createHintOn:(n)=>`${n} flor${n>1?'es':''} seleccionada${n>1?'s':''} — ¡lista para florecer! ✿`,
-    maxFlowers:'Máximo de 10 flores alcanzado ✿',
     sheetTitle:'Escribe un mensaje bonito ✉',
     sheetSub:'Tu nota aparecerá en la tarjeta del ramo',
     lblTo:'Para', lblFrom:'De', lblMsg:'Mensaje', lblFont:'Fuente del mensaje',
@@ -491,7 +492,7 @@ wrapTitle:'Papel de envoltura',
     receiptSub:'atelier virtual de flores',
     rowFor:'PARA', rowFrom:'DE', rowDate:'FECHA', rowType:'TIPO DE RAMO',
     btnSave:'Descargar ramo', btnNew:'Crear otro ramo',
-    toastMsgSaved:'Mensaje guardado ✓', toastNew:'Listo para un nuevo ramo ✿',
+    toastMsgSaved:'Mensaje guardado ✓', toastNew:'Listo para un nuevo ramo ✿', ariaRemoveOne:'Quitar una',
     toastGenerating:'Generando imagen…', toastSaved:'Imagen guardada ✓', toastOpenedImage:'Imagen abierta — mantén presionado para guardar ✿',
     toastSaveFail:'No se pudo guardar — intenta captura de pantalla ✿',
     flowers:{
@@ -516,15 +517,12 @@ envelopeNames:['pergamino','rubor','neblina salvia','lavanda','cielo','crema'],
     heroHTML:'Crée ton <em>bouquet</em>',
     heroSub:'Choisis tes fleurs,<br>ajoute une dédicace, crée-le et partage-le.',
     step1:'Choisis tes fleurs', step2:'Personnalise les couleurs', step3:'Finalise et envoie',
-    countHint:'Choisis jusqu’à 10 fleurs pour ton bouquet',
+    countHint:'Ajoute autant de fleurs que tu veux à ton bouquet',
     previewLbl:'aperçu en direct', emptyHint:'Ton bouquet apparaîtra ici',
 wrapTitle:"Papier d'emballage",
     todayLbl:"Aujourd'hui c'est le",
     btnMsgTxt:'Écrire un joli message', btnMsgAdded:'Message ajouté',
     btnCreateTxt:'Créer mon bouquet',
-    createHintOff:'Sélectionne au moins 1 fleur pour créer ton bouquet',
-    createHintOn:(n)=>`${n} fleur${n>1?'s':''} sélectionnée${n>1?'s':''} — prête à fleurir ! ✿`,
-    maxFlowers:'Maximum de 10 fleurs atteint ✿',
     sheetTitle:'Écrire un joli message ✉',
     sheetSub:'Ta note apparaîtra sur la carte du bouquet',
     lblTo:'Pour', lblFrom:'De', lblMsg:'Message', lblFont:'Police du message',
@@ -535,7 +533,7 @@ wrapTitle:"Papier d'emballage",
     receiptSub:'atelier floral virtuel',
     rowFor:'POUR', rowFrom:'DE', rowDate:'DATE', rowType:'TYPE DE BOUQUET',
     btnSave:'Télécharger le bouquet', btnNew:'Créer un autre bouquet',
-    toastMsgSaved:'Message sauvegardé ✓', toastNew:'Prêt pour un nouveau bouquet ✿',
+    toastMsgSaved:'Message sauvegardé ✓', toastNew:'Prêt pour un nouveau bouquet ✿', ariaRemoveOne:'Retirer une',
     toastGenerating:"Génération de l'image…", toastSaved:'Image sauvegardée ✓', toastOpenedImage:'Image ouverte — appuie et maintiens pour enregistrer ✿',
     toastSaveFail:"Impossible de sauvegarder — essaie une capture d'écran ✿",
     flowers:{
@@ -560,15 +558,12 @@ envelopeNames:['parchemin','blush','brume sauge','lavande','ciel','crème'],
     heroHTML:'Crie seu <em>buquê</em>',
     heroSub:'Escolha suas flores,<br>adicione uma dedicatória, crie-o e compartilhe-o.',
     step1:'Escolha suas flores', step2:'Personalize as cores', step3:'Finalize e envie',
-    countHint:'Escolha até 10 flores para o seu buquê',
+    countHint:'Adicione quantas flores quiser ao seu buquê',
     previewLbl:'pré-visualização', emptyHint:'Seu buquê aparecerá aqui',
 wrapTitle:'Papel de embrulho',
     todayLbl:'Hoje é',
     btnMsgTxt:'Escrever uma mensagem fofa', btnMsgAdded:'Mensagem adicionada',
     btnCreateTxt:'Criar meu buquê',
-    createHintOff:'Selecione pelo menos 1 flor para criar seu buquê',
-    createHintOn:(n)=>`${n} flor${n>1?'es':''} selecionada${n>1?'s':''} — pronta para florescer! ✿`,
-    maxFlowers:'Máximo de 10 flores atingido ✿',
     sheetTitle:'Escrever uma mensagem fofa ✉',
     sheetSub:'Sua nota aparecerá no cartão do buquê',
     lblTo:'Para', lblFrom:'De', lblMsg:'Mensagem', lblFont:'Fonte da mensagem',
@@ -579,7 +574,7 @@ wrapTitle:'Papel de embrulho',
     receiptSub:'ateliê virtual de flores',
     rowFor:'PARA', rowFrom:'DE', rowDate:'DATA', rowType:'TIPO DE BUQUÊ',
     btnSave:'Baixar buquê', btnNew:'Criar outro buquê',
-    toastMsgSaved:'Mensagem salva ✓', toastNew:'Pronto para um novo buquê ✿',
+    toastMsgSaved:'Mensagem salva ✓', toastNew:'Pronto para um novo buquê ✿', ariaRemoveOne:'Remover uma',
     toastGenerating:'Gerando imagem…', toastSaved:'Imagem salva ✓', toastOpenedImage:'Imagem aberta — toque e segure para salvar ✿',
     toastSaveFail:'Não foi possível salvar — tente captura de tela ✿',
     flowers:{
@@ -604,15 +599,12 @@ envelopeNames:['pergaminho','blush','neblina sálvia','lavanda','céu','creme'],
     heroHTML:'Erstelle deinen <em>Blumenstrauß</em>',
     heroSub:'Wähle deine Blumen,<br>füge eine Widmung hinzu, erstelle ihn und teile ihn.',
     step1:'Wähle deine Blumen', step2:'Farben anpassen', step3:'Fertigstellen &amp; Senden',
-    countHint:'Wähle bis zu 10 Blumen für deinen Strauß',
+    countHint:'Füge deinem Strauß so viele Blumen hinzu, wie du möchtest',
     previewLbl:'Live-Vorschau', emptyHint:'Dein Strauß erscheint hier',
 wrapTitle:'Geschenkpapier',
     todayLbl:'Heute ist der',
     btnMsgTxt:'Eine süße Nachricht schreiben', btnMsgAdded:'Nachricht hinzugefügt',
     btnCreateTxt:'Meinen Strauß erstellen',
-    createHintOff:'Wähle mindestens 1 Blume, um deinen Strauß zu erstellen',
-    createHintOn:(n)=>`${n} Blume${n>1?'n':''} ausgewählt — bereit zu blühen! ✿`,
-    maxFlowers:'Maximal 10 Blumen erreicht ✿',
     sheetTitle:'Eine süße Nachricht schreiben ✉',
     sheetSub:'Deine Notiz erscheint auf der Straußkarte',
     lblTo:'An', lblFrom:'Von', lblMsg:'Nachricht', lblFont:'Nachrichtenschrift',
@@ -623,7 +615,7 @@ wrapTitle:'Geschenkpapier',
     receiptSub:'virtuelles Blumenatelier',
     rowFor:'FÜR', rowFrom:'VON', rowDate:'DATUM', rowType:'STRAUSSTYP',
     btnSave:'Strauß herunterladen', btnNew:'Weiteren Strauß erstellen',
-    toastMsgSaved:'Nachricht gespeichert ✓', toastNew:'Bereit für einen neuen Strauß ✿',
+    toastMsgSaved:'Nachricht gespeichert ✓', toastNew:'Bereit für einen neuen Strauß ✿', ariaRemoveOne:'Eine entfernen',
     toastGenerating:'Bild wird erstellt…', toastSaved:'Bild gespeichert ✓', toastOpenedImage:'Bild geöffnet — zum Speichern gedrückt halten ✿',
     toastSaveFail:'Speichern fehlgeschlagen — Screenshot versuchen ✿',
     flowers:{
@@ -648,15 +640,12 @@ envelopeNames:['Pergament','Erröten','Salbeinebel','Lavendel','Himmel','Creme']
     heroHTML:'Crea il tuo <em>bouquet</em>',
     heroSub:'Scegli i tuoi fiori,<br>aggiungi una dedica, crealo e condividilo.',
     step1:'Scegli i tuoi fiori', step2:'Personalizza i colori', step3:'Finalizza e invia',
-    countHint:'Scegli fino a 10 fiori per il tuo bouquet',
+    countHint:'Aggiungi tutti i fiori che vuoi al tuo bouquet',
     previewLbl:'anteprima dal vivo', emptyHint:'Il tuo bouquet apparirà qui',
 wrapTitle:'Carta da regalo',
     todayLbl:'Oggi è',
     btnMsgTxt:'Scrivi un messaggio carino', btnMsgAdded:'Messaggio aggiunto',
     btnCreateTxt:'Crea il mio bouquet',
-    createHintOff:'Seleziona almeno 1 fiore per creare il tuo bouquet',
-    createHintOn:(n)=>`${n} fior${n>1?'i':'e'} selezionat${n>1?'i':'o'} — pront${n>1?'i':'o'} a sbocciare! ✿`,
-    maxFlowers:'Massimo di 10 fiori raggiunto ✿',
     sheetTitle:'Scrivi un messaggio carino ✉',
     sheetSub:'La tua nota apparirà sulla scheda del bouquet',
     lblTo:'A', lblFrom:'Da', lblMsg:'Messaggio', lblFont:'Carattere del messaggio',
@@ -667,7 +656,7 @@ wrapTitle:'Carta da regalo',
     receiptSub:'atelier floreale virtuale',
     rowFor:'PER', rowFrom:'DA', rowDate:'DATA', rowType:'TIPO DI BOUQUET',
     btnSave:'Scarica il bouquet', btnNew:'Crea un altro bouquet',
-    toastMsgSaved:'Messaggio salvato ✓', toastNew:'Pronto per un altro bouquet ✿',
+    toastMsgSaved:'Messaggio salvato ✓', toastNew:'Pronto per un altro bouquet ✿', ariaRemoveOne:'Rimuovi uno',
     toastGenerating:'Generazione immagine…', toastSaved:'Immagine salvata ✓', toastOpenedImage:'Immagine aperta — tieni premuto per salvare ✿',
     toastSaveFail:'Impossibile salvare — prova uno screenshot ✿',
     flowers:{
@@ -692,15 +681,12 @@ envelopeNames:['pergamena','cipria','nebbia salvia','lavanda','cielo','crema'],
     heroHTML:'<em>花束</em>を作ろう',
     heroSub:'お花を選んで、<br>メッセージを添えて、作ってシェアしよう。',
     step1:'お花を選ぶ', step2:'カラーをカスタマイズ', step3:'完成して送る',
-    countHint:'花束に最大10種類まで花を選んでください',
+    countHint:'好きなだけ花束にお花を追加しよう',
     previewLbl:'ライブプレビュー', emptyHint:'ここに花束が表示されます',
 wrapTitle:'ラッピングペーパー',
     todayLbl:'今日は',
     btnMsgTxt:'かわいいメッセージを書く', btnMsgAdded:'メッセージ追加済み',
     btnCreateTxt:'花束を作る',
-    createHintOff:'花束を作るには1種類以上の花を選んでください',
-    createHintOn:(n)=>`${n}種類の花を選択 — 咲かせる準備完了！ ✿`,
-    maxFlowers:'最大10種類の花に達しました ✿',
     sheetTitle:'かわいいメッセージを書く ✉',
     sheetSub:'メモは花束カードに表示されます',
     lblTo:'宛先', lblFrom:'送り主', lblMsg:'メッセージ', lblFont:'フォント',
@@ -711,7 +697,7 @@ wrapTitle:'ラッピングペーパー',
     receiptSub:'バーチャルフラワーアトリエ',
     rowFor:'宛先', rowFrom:'送り主', rowDate:'日付', rowType:'花束の種類',
     btnSave:'花束をダウンロード', btnNew:'別の花束を作る',
-    toastMsgSaved:'メッセージを保存しました ✓', toastNew:'新しい花束の準備完了 ✿',
+    toastMsgSaved:'メッセージを保存しました ✓', toastNew:'新しい花束の準備完了 ✿', ariaRemoveOne:'1つ削除',
     toastGenerating:'画像を生成中…', toastSaved:'画像を保存しました ✓', toastOpenedImage:'画像を開きました — 長押しで保存 ✿',
     toastSaveFail:'保存できませんでした — スクリーンショットをお試しください ✿',
     flowers:{
@@ -736,15 +722,12 @@ envelopeNames:['パーチメント','ブラッシュ','セージミスト','ラ�
     heroHTML:'创建你的<em>花束</em>',
     heroSub:'挑选你的花朵，<br>添加一句祝福语，创建并分享它。',
     step1:'挑选你的花朵', step2:'定制颜色', step3:'完成并发送',
-    countHint:'为你的花束选择最多10种花',
+    countHint:'为你的花束添加任意数量的花',
     previewLbl:'实时预览', emptyHint:'你的花束将在这里显示',
 wrapTitle:'包装纸',
     todayLbl:'今天是',
     btnMsgTxt:'写一条甜蜜的留言', btnMsgAdded:'留言已添加',
     btnCreateTxt:'创建我的花束',
-    createHintOff:'至少选择1种花来创建你的花束',
-    createHintOn:(n)=>`已选 ${n} 种花 — 准备绽放！ ✿`,
-    maxFlowers:'已达到最多10种花 ✿',
     sheetTitle:'写一条甜蜜的留言 ✉',
     sheetSub:'你的留言将显示在花束卡片上',
     lblTo:'收件人', lblFrom:'发件人', lblMsg:'留言', lblFont:'留言字体',
@@ -755,7 +738,7 @@ wrapTitle:'包装纸',
     receiptSub:'虚拟花艺工坊',
     rowFor:'收件人', rowFrom:'发件人', rowDate:'日期', rowType:'花束类型',
     btnSave:'下载花束', btnNew:'创建另一束花',
-    toastMsgSaved:'留言已保存 ✓', toastNew:'准备好创建新花束 ✿',
+    toastMsgSaved:'留言已保存 ✓', toastNew:'准备好创建新花束 ✿', ariaRemoveOne:'移除一个',
     toastGenerating:'正在生成图片…', toastSaved:'图片已保存 ✓', toastOpenedImage:'图片已打开 — 长按保存 ✿',
     toastSaveFail:'无法保存 — 请尝试截图 ✿',
     flowers:{
@@ -780,15 +763,12 @@ envelopeNames:['羊皮纸','腮红','鼠尾草雾','薰衣草','天空','奶油'
     heroHTML:'<em>꽃다발</em>을 만들어보세요',
     heroSub:'꽃을 고르고,<br>메시지를 더하고, 만들어서 공유하세요.',
     step1:'꽃 선택하기', step2:'색상 커스터마이즈', step3:'완성하고 보내기',
-    countHint:'꽃다발에 최대 10가지 꽃을 선택하세요',
+    countHint:'원하는 만큼 꽃다발에 꽃을 추가하세요',
     previewLbl:'실시간 미리보기', emptyHint:'꽃다발이 여기 표시됩니다',
 wrapTitle:'포장지',
     todayLbl:'오늘은',
     btnMsgTxt:'귀여운 메시지 쓰기', btnMsgAdded:'메시지 추가됨',
     btnCreateTxt:'꽃다발 만들기',
-    createHintOff:'꽃다발을 만들려면 최소 1가지 꽃을 선택하세요',
-    createHintOn:(n)=>`${n}가지 꽃 선택됨 — 피어날 준비 완료! ✿`,
-    maxFlowers:'최대 10가지 꽃에 도달했습니다 ✿',
     sheetTitle:'귀여운 메시지 쓰기 ✉',
     sheetSub:'메모가 꽃다발 카드에 표시됩니다',
     lblTo:'받는 분', lblFrom:'보내는 분', lblMsg:'메시지', lblFont:'메시지 폰트',
@@ -799,7 +779,7 @@ wrapTitle:'포장지',
     receiptSub:'가상 플라워 아뜰리에',
     rowFor:'받는 분', rowFrom:'보내는 분', rowDate:'날짜', rowType:'꽃다발 종류',
     btnSave:'꽃다발 다운로드', btnNew:'새 꽃다발 만들기',
-    toastMsgSaved:'메시지가 저장됐어요 ✓', toastNew:'새 꽃다발 준비 완료 ✿',
+    toastMsgSaved:'메시지가 저장됐어요 ✓', toastNew:'새 꽃다발 준비 완료 ✿', ariaRemoveOne:'하나 제거',
     toastGenerating:'이미지 생성 중…', toastSaved:'이미지가 저장됐어요 ✓', toastOpenedImage:'이미지가 열렸습니다 — 길게 눌러 저장하세요 ✿',
     toastSaveFail:'저장할 수 없어요 — 스크린샷을 시도해 보세요 ✿',
     flowers:{
@@ -825,15 +805,12 @@ envelopeNames:['양피지','블러쉬','세이지 미스트','라벤더','스카
     heroHTML:'أنشئي <em>باقتك</em>',
     heroSub:'اختاري زهورك،<br>أضيفي إهداءً، أنشئيها وشاركيها.',
     step1:'اختاري زهورك', step2:'خصّصي الألوان', step3:'أتمّي وأرسلي',
-    countHint:'اختاري حتى 10 زهور لباقتك',
+    countHint:'أضيفي أي عدد تريدينه من الزهور إلى باقتك',
     previewLbl:'معاينة مباشرة', emptyHint:'ستظهر باقتك هنا',
 wrapTitle:'ورق التغليف',
     todayLbl:'اليوم هو',
     btnMsgTxt:'اكتبي رسالة لطيفة', btnMsgAdded:'تمّت إضافة الرسالة',
     btnCreateTxt:'إنشاء باقتي',
-    createHintOff:'اختاري زهرة واحدة على الأقل لإنشاء باقتك',
-    createHintOn:(n)=>`تم اختيار ${n} زهرة — جاهزة للتفتّح! ✿`,
-    maxFlowers:'تم الوصول إلى الحد الأقصى 10 زهور ✿',
     sheetTitle:'اكتبي رسالة لطيفة ✉',
     sheetSub:'ستظهر ملاحظتك على بطاقة الباقة',
     lblTo:'إلى', lblFrom:'من', lblMsg:'الرسالة', lblFont:'خط الرسالة',
@@ -844,7 +821,7 @@ wrapTitle:'ورق التغليف',
     receiptSub:'أتيليه زهور افتراضي',
     rowFor:'إلى', rowFrom:'من', rowDate:'التاريخ', rowType:'نوع الباقة',
     btnSave:'تحميل الباقة', btnNew:'إنشاء باقة أخرى',
-    toastMsgSaved:'تم حفظ الرسالة ✓', toastNew:'جاهزة لباقة جديدة ✿',
+    toastMsgSaved:'تم حفظ الرسالة ✓', toastNew:'جاهزة لباقة جديدة ✿', ariaRemoveOne:'إزالة واحدة',
     toastGenerating:'جارٍ إنشاء الصورة…', toastSaved:'تم حفظ الصورة ✓', toastOpenedImage:'تم فتح الصورة — اضغط مطولاً للحفظ ✿',
     toastSaveFail:'تعذّر الحفظ — حاولي التقاط لقطة شاشة ✿',
     flowers:{
@@ -946,6 +923,17 @@ const POSITIONS = [
   {rot:2,z:9},
 ];
 
+// No cap on bouquet size: cycle through the 10 curated looks above, and on every
+// extra lap nudge the rotation/depth a little further so repeats of the same look
+// don't stack in an identical spot.
+function getPosition(i) {
+  const base = POSITIONS[i % POSITIONS.length];
+  const lap = Math.floor(i / POSITIONS.length);
+  if (lap === 0) return base;
+  const dir = lap % 2 === 0 ? 1 : -1;
+  return {rot: base.rot + dir * lap * 5, z: base.z + lap};
+}
+
 let positionCounter = 0;
 
 const state = {
@@ -966,7 +954,7 @@ function renderBouquet(selectedIds, envelopeColor, small=false) {
   const wrapY = Math.round(150*scale);
   const imgW = Math.round(62*scale), imgH = Math.round(175*scale);
   const bottomGap = H - wrapY;
-  const items = selectedIds.map((id,i)=>({id,pos:POSITIONS[i]})).sort((a,b)=>a.pos.z-b.pos.z);
+  const items = selectedIds.map((id,i)=>({id,pos:getPosition(i)})).sort((a,b)=>a.pos.z-b.pos.z);
   // envelop-cover.png shares envelop-full.png's pixel scale (1:1); (206,1250) is
   // its measured offset into envelop-full's 2239x3794 source space (alpha cross-correlation).
   const coverScale = H/3794;
@@ -1000,49 +988,59 @@ function renderBouquet(selectedIds, envelopeColor, small=false) {
 /* ════════════════
    INIT UI
 ════════════════ */
+function countOf(id) {
+  return state.selected.filter(x => x === id).length;
+}
+
+function setQtyPill(card, id, n) {
+  const btn = card.querySelector('.flower-qty');
+  btn.querySelector('.flower-qty-n').textContent = n;
+  btn.setAttribute('aria-label', `${T.ariaRemoveOne} ${T.flowers[id].name} (${n})`);
+}
+
 function initCarousel() {
   const el = document.getElementById('flower-carousel');
   el.innerHTML = '';
   FLOWER_IDS.forEach(id => {
     const f = T.flowers[id];
+    const n = countOf(id);
     const card = document.createElement('div');
-    card.className = 'flower-card' + (state.selected.includes(id) ? ' selected' : '');
+    card.className = 'flower-card' + (n > 0 ? ' selected' : '');
     card.dataset.id = id;
     card.innerHTML = `<img class="flower-img" src="images/flowers/${id}.png" alt="${f.name}">` +
       `<span class="flower-name">${f.name}</span>` +
-      `<span class="flower-mood">${f.mood}</span>`;
-    card.addEventListener('click', () => toggleFlower(id, card));
+      `<span class="flower-mood">${f.mood}</span>` +
+      `<button type="button" class="flower-qty">−&nbsp;<span class="flower-qty-n">${n}</span></button>`;
+    setQtyPill(card, id, n);
+    card.addEventListener('click', () => addFlower(id, card));
+    card.querySelector('.flower-qty').addEventListener('click', (e) => {
+      e.stopPropagation();
+      removeFlower(id, card);
+    });
     el.appendChild(card);
   });
 }
 
-function toggleFlower(id, card) {
-  const idx = state.selected.indexOf(id);
-  if (idx > -1) {
-    state.selected.splice(idx, 1);
-    card.classList.remove('selected');
-    removeFlowerFromPreview(id);
-  } else {
-    if (state.selected.length >= 10) { showToast(T.maxFlowers); return; }
-    state.selected.push(id);
-    card.classList.add('selected');
-    addFlowerToPreview(id);
-  }
-  updateCountBadge();
-  updateDisabled();
+// Every card click adds one more of that species — the same flower can be added
+// repeatedly, there's no cap. The small "−" pill (only shown once count>0) is the
+// one way to take a flower back out, one at a time.
+function addFlower(id, card) {
+  state.selected.push(id);
+  card.classList.add('selected');
+  setQtyPill(card, id, countOf(id));
+  addFlowerToPreview(id);
   updateCreateBtn();
 }
 
-function updateCountBadge() {
-  const n = state.selected.length, badge = document.getElementById('count-badge');
-  badge.textContent = `${n} / 10`;
-  badge.className = 'count-badge' + (n>=1&&n<10?' ready':n===10?' max':'');
-}
-
-function updateDisabled() {
-  document.querySelectorAll('.flower-card').forEach(c => {
-    c.classList.toggle('disabled', state.selected.length >= 10 && !c.classList.contains('selected'));
-  });
+function removeFlower(id, card) {
+  const idx = state.selected.lastIndexOf(id);
+  if (idx === -1) return;
+  state.selected.splice(idx, 1);
+  const n = countOf(id);
+  if (n === 0) card.classList.remove('selected');
+  else setQtyPill(card, id, n);
+  removeFlowerFromPreview(id);
+  updateCreateBtn();
 }
 
 function updateBouquetPreview() {
@@ -1078,23 +1076,29 @@ function initBouquetPreview() {
 function addFlowerToPreview(id) {
   const flowersEl = document.getElementById('bp-flowers');
   if (!flowersEl) return;
-  const pos = POSITIONS[Math.min(positionCounter, POSITIONS.length-1)];
+  const pos = getPosition(positionCounter);
   positionCounter++;
   const cx=130, wrapY=150, imgW=62, imgH=175, bottomGap=300-wrapY;
   const img = document.createElement('img');
   img.src = `images/flowers/${id}.png`;
   img.dataset.fid = id;
-  img.style.cssText = `position:absolute;bottom:${bottomGap}px;left:${cx-imgW/2}px;width:${imgW}px;height:${imgH}px;object-fit:contain;object-position:bottom center;transform:rotate(${pos.rot}deg);transform-origin:50% 100%;z-index:${pos.z};animation:flowerIn 0.45s var(--ease-petal) both`;
+  // Rotation lives in --rot so the flowerIn keyframe can animate scale/blur
+  // alongside it without clobbering the final rotated resting angle.
+  img.style.cssText = `position:absolute;bottom:${bottomGap}px;left:${cx-imgW/2}px;width:${imgW}px;height:${imgH}px;object-fit:contain;object-position:bottom center;transform-origin:50% 100%;--rot:${pos.rot}deg;z-index:${pos.z};animation:flowerIn 0.5s var(--ease-petal) both`;
   flowersEl.appendChild(img);
 }
 
 function removeFlowerFromPreview(id) {
   const flowersEl = document.getElementById('bp-flowers');
   if (!flowersEl) return;
-  const img = flowersEl.querySelector(`[data-fid="${id}"]`);
+  const matches = flowersEl.querySelectorAll(`[data-fid="${id}"]`);
+  const img = matches[matches.length - 1];
   if (!img) return;
-  img.style.animation = 'flowerOut 0.35s var(--ease-bloom) both';
-  setTimeout(() => { img.remove(); }, 370);
+  // Clear data-fid immediately (synchronously) so a rapid second removal of the
+  // same species can't also grab this node before its fade-out timeout fires.
+  delete img.dataset.fid;
+  img.style.animation = 'flowerOut 0.4s var(--ease-bloom) both';
+  setTimeout(() => img.remove(), 400);
 }
 
 
@@ -1173,6 +1177,17 @@ function initModal() {
 /* ════════════════
    RESULT SCREEN
 ════════════════ */
+// Multiple of the same species can be added, so group them ("Sunflower ×3")
+// instead of listing the same name repeatedly.
+function flowerSummary() {
+  const counts = new Map();
+  state.selected.forEach(id => counts.set(id, (counts.get(id)||0)+1));
+  return [...counts].map(([id,n]) => {
+    const name = T.flowers[id]?.name || '';
+    return n > 1 ? `${name} ×${n}` : name;
+  }).join(', ');
+}
+
 function buildResult() {
   const fontClass = {serif:'font-serif',script:'font-script',mono:'font-mono'}[state.font]||'font-serif';
   const boutSVG = renderBouquet(state.selected, state.envelopeColor, true);
@@ -1192,7 +1207,7 @@ function buildResult() {
     <div class="r-total-row">
       <div>
         <div class="r-total-lbl">${T.rowType}</div>
-        <div class="r-total-lbl" style="font-size:14px;color:var(--bark);margin-top:2px">${state.selected.map(id=>T.flowers[id]?.name||'').join(', ')}</div>
+        <div class="r-total-lbl" style="font-size:14px;color:var(--bark);margin-top:2px">${flowerSummary()}</div>
       </div>
       <div class="r-total-val">♡</div>
     </div>`;
@@ -1450,7 +1465,10 @@ document.addEventListener('DOMContentLoaded', () => {
     window.scrollTo(0, 0);
     state.selected = [];
     state.toName = state.fromName = state.message = '';
-    document.querySelectorAll('.flower-card').forEach(c => c.classList.remove('selected','disabled'));
+    document.querySelectorAll('.flower-card').forEach(c => {
+      c.classList.remove('selected');
+      setQtyPill(c, c.dataset.id, 0);
+    });
     const btn = document.getElementById('btn-open-msg');
     btn.classList.remove('has-msg');
     document.getElementById('el-btn-msg-txt').textContent = T.btnMsgTxt;
@@ -1461,7 +1479,6 @@ document.addEventListener('DOMContentLoaded', () => {
     positionCounter = 0;
     const flowersEl = document.getElementById('bp-flowers');
     if (flowersEl) flowersEl.innerHTML = '';
-    updateCountBadge();
     updateCreateBtn();
     showToast(T.toastNew);
   });
