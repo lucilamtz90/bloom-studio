@@ -15,6 +15,15 @@
 <link rel="stylesheet" href="styles/bloom-components.css?v=3">
 <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@400;600;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://cdn.jsdelivr.net/npm/three@0.169.0/build/three.module.js",
+    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.169.0/examples/jsm/"
+  }
+}
+</script>
+<script type="module" src="bouquet3d.js"></script>
 <style>
 :root {
   /* Shorthand aliases → Bloom design tokens */
@@ -255,6 +264,13 @@ body{background:#F7F3E8;color:var(--bark);font-family:var(--font-body);font-weig
 @keyframes resultFadeIn{from{opacity:0}to{opacity:1}}
 #screen-result.active{display:flex;animation:resultFadeIn 0.4s var(--ease-petal) both}
 .result-top{text-align:center;margin-bottom:12px;position:relative;z-index:1}
+.bouquet3d-wrap{width:100%;max-width:360px;margin:0 auto 18px;padding:14px 14px 16px;position:relative;z-index:1}
+.bouquet3d-wrap:hover{transform:none;box-shadow:none}
+.bouquet3d-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px;flex-wrap:wrap}
+.bouquet3d-canvas{position:relative;width:100%;aspect-ratio:1/1;border-radius:var(--radius-md);overflow:hidden;background:radial-gradient(circle at 50% 40%,var(--canvas) 0%,var(--parchment) 75%);touch-action:none;cursor:grab}
+.bouquet3d-canvas:active{cursor:grabbing}
+.bouquet3d-canvas canvas{display:block;width:100%!important;height:100%!important}
+#btn-3d-autorotate.active{background:var(--color-rose)}
 .ticket-wrap{position:relative;z-index:1;width:100%;max-width:360px;margin:0 auto;filter:drop-shadow(0 16px 48px rgba(0,0,0,0.18))}
 .ticket{background-image:url('images/ticket-bg.png');background-size:100% 100%;background-repeat:no-repeat;overflow:visible;position:relative}
 .ticket-body{padding:34px 26px 20px}
@@ -436,6 +452,16 @@ body{background:#F7F3E8;color:var(--bark);font-family:var(--font-body);font-weig
     <h1 class="bloom-h1" style="text-align:center;margin:0 0 12px" id="el-result-title">Your bouquet is ready</h1>
   </div>
 
+  <div class="bouquet3d-wrap bloom-card" id="bouquet3d-wrap">
+    <div class="bouquet3d-head">
+      <span class="bloom-eyebrow" id="el-view3d-hint">Drag to rotate your bouquet</span>
+      <button type="button" class="bloom-btn bloom-btn--outline bloom-btn--sm" id="btn-3d-autorotate" aria-pressed="false">
+        <span id="el-btn-autorotate">Auto-rotate</span>
+      </button>
+    </div>
+    <div class="bouquet3d-canvas" id="bouquet3d-canvas"></div>
+  </div>
+
   <div class="ticket-wrap" id="ticket-wrap">
     <div class="ticket" id="ticket">
       <div class="ticket-body" id="ticket-body"></div>
@@ -482,6 +508,7 @@ wrapTitle:'Wrapping paper',
     btnSaveMsg:'Save message',
     resultTitle:'Your bouquet is ready',
     receiptSub:'virtual flower atelier',
+    view3dHint:'Drag to rotate your bouquet ✿', btnAutoRotate:'Auto-rotate',
     rowFor:'FOR', rowFrom:'FROM', rowDate:'DATE', rowType:'BOUQUET TYPE',
     btnSave:'Download bouquet', btnNew:'Create another bouquet',
     toastMsgSaved:'Message saved ✓', toastNew:'Ready for a new bouquet ✿', ariaRemoveOne:'Remove one',
@@ -529,6 +556,7 @@ wrapTitle:'Papel de envoltura',
     btnSaveMsg:'Guardar mensaje',
     resultTitle:'Tu ramo está listo',
     receiptSub:'atelier virtual de flores',
+    view3dHint:'Arrastra para girar tu ramo ✿', btnAutoRotate:'Girar automáticamente',
     rowFor:'PARA', rowFrom:'DE', rowDate:'FECHA', rowType:'TIPO DE RAMO',
     btnSave:'Descargar ramo', btnNew:'Crear otro ramo',
     toastMsgSaved:'Mensaje guardado ✓', toastNew:'Listo para un nuevo ramo ✿', ariaRemoveOne:'Quitar una',
@@ -576,6 +604,7 @@ wrapTitle:"Papier d'emballage",
     btnSaveMsg:'Sauvegarder le message',
     resultTitle:'Ton bouquet est prêt',
     receiptSub:'atelier floral virtuel',
+    view3dHint:'Fais glisser pour faire pivoter ton bouquet ✿', btnAutoRotate:'Rotation automatique',
     rowFor:'POUR', rowFrom:'DE', rowDate:'DATE', rowType:'TYPE DE BOUQUET',
     btnSave:'Télécharger le bouquet', btnNew:'Créer un autre bouquet',
     toastMsgSaved:'Message sauvegardé ✓', toastNew:'Prêt pour un nouveau bouquet ✿', ariaRemoveOne:'Retirer une',
@@ -623,6 +652,7 @@ wrapTitle:'Papel de embrulho',
     btnSaveMsg:'Salvar mensagem',
     resultTitle:'Seu buquê está pronto',
     receiptSub:'ateliê virtual de flores',
+    view3dHint:'Arraste para girar seu buquê ✿', btnAutoRotate:'Girar automaticamente',
     rowFor:'PARA', rowFrom:'DE', rowDate:'DATA', rowType:'TIPO DE BUQUÊ',
     btnSave:'Baixar buquê', btnNew:'Criar outro buquê',
     toastMsgSaved:'Mensagem salva ✓', toastNew:'Pronto para um novo buquê ✿', ariaRemoveOne:'Remover uma',
@@ -670,6 +700,7 @@ wrapTitle:'Geschenkpapier',
     btnSaveMsg:'Nachricht speichern',
     resultTitle:'Dein Strauß ist fertig',
     receiptSub:'virtuelles Blumenatelier',
+    view3dHint:'Ziehen, um deinen Strauß zu drehen ✿', btnAutoRotate:'Automatisch drehen',
     rowFor:'FÜR', rowFrom:'VON', rowDate:'DATUM', rowType:'STRAUSSTYP',
     btnSave:'Strauß herunterladen', btnNew:'Weiteren Strauß erstellen',
     toastMsgSaved:'Nachricht gespeichert ✓', toastNew:'Bereit für einen neuen Strauß ✿', ariaRemoveOne:'Eine entfernen',
@@ -717,6 +748,7 @@ wrapTitle:'Carta da regalo',
     btnSaveMsg:'Salva messaggio',
     resultTitle:'Il tuo bouquet è pronto',
     receiptSub:'atelier floreale virtuale',
+    view3dHint:'Trascina per ruotare il tuo bouquet ✿', btnAutoRotate:'Rotazione automatica',
     rowFor:'PER', rowFrom:'DA', rowDate:'DATA', rowType:'TIPO DI BOUQUET',
     btnSave:'Scarica il bouquet', btnNew:'Crea un altro bouquet',
     toastMsgSaved:'Messaggio salvato ✓', toastNew:'Pronto per un altro bouquet ✿', ariaRemoveOne:'Rimuovi uno',
@@ -764,6 +796,7 @@ wrapTitle:'ラッピングペーパー',
     btnSaveMsg:'メッセージを保存',
     resultTitle:'花束の完成',
     receiptSub:'バーチャルフラワーアトリエ',
+    view3dHint:'ドラッグして花束を回転 ✿', btnAutoRotate:'自動回転',
     rowFor:'宛先', rowFrom:'送り主', rowDate:'日付', rowType:'花束の種類',
     btnSave:'花束をダウンロード', btnNew:'別の花束を作る',
     toastMsgSaved:'メッセージを保存しました ✓', toastNew:'新しい花束の準備完了 ✿', ariaRemoveOne:'1つ削除',
@@ -811,6 +844,7 @@ wrapTitle:'包装纸',
     btnSaveMsg:'保存留言',
     resultTitle:'你的花束准备好了',
     receiptSub:'虚拟花艺工坊',
+    view3dHint:'拖动即可旋转花束 ✿', btnAutoRotate:'自动旋转',
     rowFor:'收件人', rowFrom:'发件人', rowDate:'日期', rowType:'花束类型',
     btnSave:'下载花束', btnNew:'创建另一束花',
     toastMsgSaved:'留言已保存 ✓', toastNew:'准备好创建新花束 ✿', ariaRemoveOne:'移除一个',
@@ -858,6 +892,7 @@ wrapTitle:'포장지',
     btnSaveMsg:'메시지 저장',
     resultTitle:'꽃다발이 완성됐어요',
     receiptSub:'가상 플라워 아뜰리에',
+    view3dHint:'드래그하여 꽃다발을 돌려보세요 ✿', btnAutoRotate:'자동 회전',
     rowFor:'받는 분', rowFrom:'보내는 분', rowDate:'날짜', rowType:'꽃다발 종류',
     btnSave:'꽃다발 다운로드', btnNew:'새 꽃다발 만들기',
     toastMsgSaved:'메시지가 저장됐어요 ✓', toastNew:'새 꽃다발 준비 완료 ✿', ariaRemoveOne:'하나 제거',
@@ -906,6 +941,7 @@ wrapTitle:'ورق التغليف',
     btnSaveMsg:'حفظ الرسالة',
     resultTitle:'باقتك جاهزة',
     receiptSub:'أتيليه زهور افتراضي',
+    view3dHint:'اسحب لتدوير باقتك ✿', btnAutoRotate:'دوران تلقائي',
     rowFor:'إلى', rowFrom:'من', rowDate:'التاريخ', rowType:'نوع الباقة',
     btnSave:'تحميل الباقة', btnNew:'إنشاء باقة أخرى',
     toastMsgSaved:'تم حفظ الرسالة ✓', toastNew:'جاهزة لباقة جديدة ✿', ariaRemoveOne:'إزالة واحدة',
@@ -982,6 +1018,8 @@ function applyTranslations() {
   s('el-font-typewriter', t.fontTypewriter);
   s('btn-save-msg', t.btnSaveMsg);
   s('el-result-title', t.resultTitle);
+  s('el-view3d-hint', t.view3dHint);
+  s('el-btn-autorotate', t.btnAutoRotate);
   s('el-btn-save', t.btnSave);
   s('el-btn-new', t.btnNew);
 
@@ -1414,6 +1452,21 @@ function showResult() {
     const bouquet = document.getElementById('receipt-bouquet');
     if (bouquet) bouquet.classList.add('visible');
   }, 650);
+  // Wait a frame so #bouquet3d-canvas has its laid-out size (the result screen
+  // was just switched to display:flex) before the renderer measures it.
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    window.Bouquet3D?.render(state.selected, state.ribbonColor);
+  }));
+}
+
+function initBouquet3DControls() {
+  const btn = document.getElementById('btn-3d-autorotate');
+  if (!btn) return;
+  btn.addEventListener('click', () => {
+    const on = window.Bouquet3D?.toggleAutoRotate();
+    btn.classList.toggle('active', !!on);
+    btn.setAttribute('aria-pressed', on ? 'true' : 'false');
+  });
 }
 
 /* ════════════════
@@ -1654,10 +1707,13 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   document.getElementById('btn-save-img').addEventListener('click', saveImage);
 
+  initBouquet3DControls();
+
   document.getElementById('btn-new').addEventListener('click', () => {
     document.getElementById('screen-result').classList.remove('active');
     document.getElementById('screen-builder').classList.add('active');
     window.scrollTo(0, 0);
+    window.Bouquet3D?.pause();
     state.selected = [];
     state.toName = state.fromName = state.message = '';
     document.querySelectorAll('.flower-card').forEach(c => {
