@@ -2,10 +2,10 @@
    BOUQUET 3D — procedural flowers rendered with Three.js
    Exposes window.Bouquet3D = { render(selectedIds, ribbonColor),
    toggleAutoRotate(), pause(), resume() }, wired from index.html's
-   showResult(). Builds every flower head as real dimensional
-   geometry (no photo textures — none of the 12 species have a 3D
-   model or texture to source), so the look is a stylised, elegant
-   rendering rather than a photoreal one.
+   showResult(). Every flower head is built as real geometry — smooth,
+   rounded "clay toy" petals (no photo textures, no external 3D
+   models), so the look is a bright, glossy stylised rendering rather
+   than a photoreal one.
 ════════════════════════════════════════════════════════════════ */
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
@@ -17,21 +17,15 @@ function cssVar(name, fallback) {
 
 const PALETTE = {
   parchment: cssVar('--color-parchment', '#F5F0EC'),
-  canvas:    cssVar('--color-canvas',    '#EDECEA'),
   rose:      cssVar('--color-rose',      '#D9C5C0'),
-  mauve:     cssVar('--color-mauve',     '#B89FA0'),
-  sage:      cssVar('--color-sage',      '#C4C5AA'),
-  stone:     cssVar('--color-stone',     '#A8A089'),
   bark:      cssVar('--color-bark',      '#2C2725'),
-  muted:     cssVar('--color-muted',     '#8C7F7A'),
 };
-// The Bloom token set is a neutral backdrop palette — it has no botanical
-// greens or saturated petal hues (same reason RIBBON_COLORS in index.html
-// defines its own swatches). These two greens are the only colours here
-// that aren't sourced from a token.
-const STEM_GREEN = '#5E7350';
-const LEAF_GREEN = '#6B8058';
-const SPADIX_YELLOW = '#F4C542';
+// The Bloom token set is a neutral backdrop palette — it has no bright
+// saturated petal/foliage hues (same reason RIBBON_COLORS in index.html
+// defines its own swatches). Everything below is a toy-bright "clay
+// render" palette chosen to match that look, not sourced from tokens.
+const STEM_GREEN = '#7FBF63';
+const SPADIX_YELLOW = '#FFC93F';
 
 // Deterministic pseudo-random so the same bouquet always looks the same
 // between renders instead of re-jittering.
@@ -39,216 +33,171 @@ function prand(seed) {
   const x = Math.sin(seed * 12.9898) * 43758.5453;
   return x - Math.floor(x);
 }
+function smoothstep(x, a, b) {
+  const t = THREE.MathUtils.clamp((x - a) / (b - a), 0, 1);
+  return t * t * (3 - 2 * t);
+}
 
-/* ── SPECIES TABLE ───────────────────────────────────────────── */
+/* ── SPECIES TABLE ───────────────────────────────────────────────
+   `form` picks the builder: 'daisy' (flat, big rounded petals + a
+   bright disc centre), 'tulip' (closed, cupped petals, no visible
+   centre), 'trumpet' (calla/lily funnel), 'foliage' (small rounded
+   leaves) or 'bud' (a sprig of small rounded buds). */
 const SPECIES = {
-  sunflower:  {type:'sunflower', petal:'#F4C542', center:'#5C3E22', size:1.05},
-  peony:      {type:'round', petal:'#EFB9C7', inner:'#F7D9E1', stamen:'#E8C468', layers:4, petals:7, curl:0.5, size:0.95},
-  rose:       {type:'round', petal:'#C2415C', inner:'#DE7A93', stamen:null, layers:3, petals:6, curl:0.62, size:0.85},
-  margarite:  {type:'daisy', petal:PALETTE.parchment, center:'#EFC94C', petals:13, size:0.8},
-  'pink-alcatraz': {type:'trumpet', color:'#E7A9C0', size:1.0},
-  ranunculus: {type:'round', petal:'#E8834B', inner:'#F2A868', stamen:'#8A5A2B', layers:4, petals:8, curl:0.58, size:0.85},
-  sunies:     {type:'daisy', petal:'#F6D65C', center:'#8A6B2E', petals:11, size:0.65},
-  dolar:      {type:'foliage', color:'#9FB39B', size:0.9},
-  liry:       {type:'trumpet', color:PALETTE.parchment, size:1.1},
-  alcatraz:   {type:'trumpet', color:PALETTE.parchment, size:1.0},
-  anemone:    {type:'daisy', petal:PALETTE.parchment, center:PALETTE.bark, petals:9, size:0.75},
-  'baby-hair':{type:'spray', color:'#FBF8F0', size:0.55},
+  sunflower:  {form:'daisy',  petal:'#FFC63A', center:'#B9631F', petals:8, size:1.05},
+  peony:      {form:'tulip',  petal:'#FF8FAE', inner:'#FFB5C9', petals:6, size:0.95},
+  rose:       {form:'tulip',  petal:'#FF5D73', inner:'#FF8797', petals:6, size:0.85},
+  margarite:  {form:'daisy',  petal:'#FFFFFF', center:'#FFC93F', petals:7, size:0.8},
+  'pink-alcatraz': {form:'trumpet', color:'#FF8FC6', size:1.0},
+  ranunculus: {form:'tulip',  petal:'#FFA23F', inner:'#FFBE71', petals:7, size:0.85},
+  sunies:     {form:'daisy',  petal:'#FFD93F', center:'#E8891A', petals:7, size:0.62},
+  dolar:      {form:'foliage', color:'#8FCB6B', size:0.9},
+  liry:       {form:'trumpet', color:'#FFF6EA', size:1.1},
+  alcatraz:   {form:'trumpet', color:'#FFFFFF', size:1.0},
+  anemone:    {form:'daisy',  petal:'#FFFFFF', center:PALETTE.bark, petals:7, size:0.75},
+  'baby-hair':{form:'bud',    color:'#FFF6E8', size:0.55},
 };
 
 /* ── GEOMETRY HELPERS ────────────────────────────────────────── */
-// A petal starts as a flat plane and gets displaced into a tapered,
-// gently cupped/curled blade — no external shape/texture needed.
-function petalGeometry(width, length, curl, wSeg = 5, hSeg = 7) {
-  const geo = new THREE.PlaneGeometry(width, length, wSeg, hSeg);
+// A smooth, puffy "clay" petal: a sphere tapered to a point at its base
+// (where it attaches) and left full and rounded toward the tip — no flat
+// faces, no visible polygon edges.
+function petalBlobGeometry(width, length, thickness) {
+  const geo = new THREE.SphereGeometry(0.5, 16, 12);
   const pos = geo.attributes.position;
   for (let i = 0; i < pos.count; i++) {
-    const x = pos.getX(i), y = pos.getY(i);
-    const t = y / length + 0.5; // 0 base .. 1 tip
-    const taper = Math.pow(Math.sin(Math.PI * Math.min(Math.max(t, 0.001), 1)), 0.6);
-    const nx = x * taper;
-    const cup = curl * t * t * length * 0.55;
-    const fold = -Math.pow((width ? nx / (width / 2) : 0), 2) * curl * length * 0.22;
-    pos.setX(i, nx);
-    pos.setZ(i, cup + fold);
+    const x = pos.getX(i), y = pos.getY(i), z = pos.getZ(i);
+    const t = smoothstep(y, -0.5, 0.05); // 0 at base .. 1 by a bit above centre
+    const widthScale = 0.1 + 0.9 * t;
+    pos.setXYZ(i, x * widthScale * width, (y + 0.5) * length, z * widthScale * thickness);
   }
   geo.computeVertexNormals();
-  geo.translate(0, length / 2, 0); // base at local origin, tip pointing +Y
   return geo;
 }
 
 function petalMaterial(color) {
   return new THREE.MeshPhysicalMaterial({
-    color, side: THREE.DoubleSide, roughness: 0.55, metalness: 0,
-    clearcoat: 0.12, clearcoatRoughness: 0.6, sheen: 0.35, sheenColor: 0xffffff,
+    color, side: THREE.DoubleSide, roughness: 0.3, metalness: 0,
+    clearcoat: 0.35, clearcoatRoughness: 0.2,
   });
 }
 
-function bumpyCenter(radius, color, detail = 1) {
-  const geo = new THREE.IcosahedronGeometry(radius, detail);
-  const pos = geo.attributes.position;
-  for (let i = 0; i < pos.count; i++) {
-    const n = 1 + (prand(i * 3.7) - 0.5) * 0.14;
-    pos.setXYZ(i, pos.getX(i) * n, pos.getY(i) * n, pos.getZ(i) * n);
-  }
-  geo.computeVertexNormals();
-  geo.scale(1, 0.62, 1);
-  const mesh = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({ color, roughness: 0.8 }));
-  mesh.castShadow = true;
+function smoothCenter(radius, color) {
+  const geo = new THREE.SphereGeometry(radius, 20, 14);
+  geo.scale(1, 0.6, 1);
+  const mesh = new THREE.Mesh(geo, petalMaterial(color));
   return mesh;
 }
 
 // One pivot per petal: rotate around Y for placement, tilt around X to
-// open/close the ring, then the petal mesh sits at the pivot's local origin
-// with its base already at y=0 (see petalGeometry's translate above).
-// `tilt` is the angle from vertical: 0 = petal tip points straight up (a
-// closed bud), Math.PI/2 = petal points straight outward (a fully open,
-// flat bloom).
-function addPetalRing(group, { count, tilt, radius, width, length, curl, color, yOffset = 0, jitterSeed = 0 }) {
-  const geo = petalGeometry(width, length, curl);
+// open/close the ring. `tilt` is the angle from vertical: 0 = petal tip
+// points straight up (closed bud), ~1.4 = petal points outward (flat,
+// open bloom). Petals don't cast/receive shadows on each other — at this
+// scale that just muddies the bright, flat "clay" look.
+function addPetalRing(group, { count, tilt, radius, width, length, thickness, color, yOffset = 0, jitterSeed = 0 }) {
+  const geo = petalBlobGeometry(width, length, thickness);
   const mat = petalMaterial(color);
   for (let i = 0; i < count; i++) {
     const pivot = new THREE.Object3D();
-    const angle = (i / count) * Math.PI * 2 + prand(jitterSeed + i) * 0.15;
+    const angle = (i / count) * Math.PI * 2 + prand(jitterSeed + i) * 0.1;
     pivot.rotation.y = angle;
     pivot.position.y = yOffset;
     const petal = new THREE.Mesh(geo, mat);
     petal.position.z = radius;
-    petal.rotation.x = -tilt + (prand(jitterSeed + i * 2.2) - 0.5) * 0.12;
-    petal.castShadow = true;
+    petal.rotation.x = -tilt + (prand(jitterSeed + i * 2.2) - 0.5) * 0.06;
     pivot.add(petal);
     group.add(pivot);
   }
 }
 
 /* ── FLOWER HEAD BUILDERS ────────────────────────────────────── */
-function buildRoundBloom(sp, seed) {
-  const group = new THREE.Group();
-  const layers = sp.layers, size = sp.size;
-  for (let L = 0; L < layers; L++) {
-    const t = L / Math.max(layers - 1, 1);
-    const layerSize = size * (0.55 + t * 0.45);
-    const count = Math.max(4, sp.petals - (layers - 1 - L));
-    addPetalRing(group, {
-      count,
-      tilt: 0.12 + t * 1.35,
-      radius: 0.03 + t * 0.05,
-      width: layerSize * 0.34,
-      length: layerSize * 0.58,
-      curl: sp.curl - t * 0.12,
-      color: L === layers - 1 ? sp.petal : (sp.inner || sp.petal),
-      yOffset: (layers - L) * size * 0.03,
-      jitterSeed: seed + L * 11,
-    });
-  }
-  if (sp.stamen) {
-    const stamens = bumpyCenter(size * 0.08, sp.stamen, 1);
-    stamens.position.y = size * layers * 0.03 + size * 0.02;
-    group.add(stamens);
-  }
-  return group;
-}
-
-function buildDaisyBloom(sp, seed) {
+function buildDaisyForm(sp, seed) {
   const group = new THREE.Group();
   addPetalRing(group, {
-    count: sp.petals, tilt: 1.48, radius: sp.size * 0.1,
-    width: sp.size * 0.14, length: sp.size * 0.5, curl: 0.14,
+    count: sp.petals, tilt: 1.3, radius: sp.size * 0.1,
+    width: sp.size * 0.42, length: sp.size * 0.56, thickness: sp.size * 0.18,
     color: sp.petal, jitterSeed: seed,
   });
-  const center = bumpyCenter(sp.size * 0.16, sp.center, 1);
-  center.position.y = sp.size * 0.03;
+  const center = smoothCenter(sp.size * 0.22, sp.center);
+  center.position.y = sp.size * 0.06;
   group.add(center);
   return group;
 }
 
-function buildSunflowerBloom(sp, seed) {
+function buildTulipForm(sp, seed) {
   const group = new THREE.Group();
   addPetalRing(group, {
-    count: 21, tilt: 1.46, radius: sp.size * 0.16,
-    width: sp.size * 0.1, length: sp.size * 0.62, curl: 0.16,
+    count: sp.petals, tilt: 0.34, radius: sp.size * 0.05,
+    width: sp.size * 0.48, length: sp.size * 0.72, thickness: sp.size * 0.24,
     color: sp.petal, jitterSeed: seed,
   });
-  const center = bumpyCenter(sp.size * 0.24, sp.center, 2);
-  center.position.y = sp.size * 0.04;
-  group.add(center);
+  addPetalRing(group, {
+    count: Math.max(4, sp.petals - 2), tilt: 0.15, radius: sp.size * 0.02,
+    width: sp.size * 0.34, length: sp.size * 0.5, thickness: sp.size * 0.2,
+    color: sp.inner || sp.petal, jitterSeed: seed + 50,
+  });
   return group;
 }
 
-function buildTrumpetBloom(sp, seed) {
+function buildTrumpetForm(sp, seed) {
   const group = new THREE.Group();
   const s = sp.size;
   const pts = [
-    [0.015, 0], [0.05, 0.22 * s], [0.09, 0.5 * s],
-    [0.17, 0.8 * s], [0.32, 1.0 * s], [0.36, 1.08 * s],
+    [0.02, 0], [0.06, 0.22 * s], [0.11, 0.5 * s],
+    [0.2, 0.8 * s], [0.34, 1.0 * s], [0.38, 1.06 * s],
   ].map(([r, y]) => new THREE.Vector2(r * s, y));
-  const geo = new THREE.LatheGeometry(pts, 22);
+  const geo = new THREE.LatheGeometry(pts, 28);
   geo.computeVertexNormals();
   const mesh = new THREE.Mesh(geo, new THREE.MeshPhysicalMaterial({
-    color: sp.color, side: THREE.DoubleSide, roughness: 0.45, sheen: 0.3, sheenColor: 0xffffff,
+    color: sp.color, side: THREE.DoubleSide, roughness: 0.3, clearcoat: 0.35, clearcoatRoughness: 0.2,
   }));
-  mesh.rotation.x = 0.55 + (prand(seed) - 0.5) * 0.2;
-  mesh.castShadow = true;
+  mesh.rotation.x = 0.5 + (prand(seed) - 0.5) * 0.15;
   group.add(mesh);
   const spadix = new THREE.Mesh(
-    new THREE.CylinderGeometry(0.02 * s, 0.03 * s, 0.5 * s, 8),
-    new THREE.MeshStandardMaterial({ color: SPADIX_YELLOW, roughness: 0.7 })
+    new THREE.CapsuleGeometry(0.025 * s, 0.4 * s, 4, 8),
+    new THREE.MeshPhysicalMaterial({ color: SPADIX_YELLOW, roughness: 0.35, clearcoat: 0.3 })
   );
   spadix.position.copy(mesh.position);
   spadix.rotation.copy(mesh.rotation);
-  spadix.translateY(0.75 * s);
-  spadix.rotateX(-0.35);
+  spadix.translateY(0.7 * s);
+  spadix.rotateX(-0.3);
   group.add(spadix);
   return group;
 }
 
-function leafGeometry(size) {
-  return petalGeometry(size * 0.22, size * 0.55, 0.28, 3, 5);
-}
-
-function buildFoliageCluster(sp, seed) {
+function buildFoliageForm(sp) {
   const group = new THREE.Group();
-  const geo = new THREE.CircleGeometry(sp.size * 0.11, 10);
-  const mat = new THREE.MeshStandardMaterial({ color: sp.color, side: THREE.DoubleSide, roughness: 0.7 });
-  const n = 7;
+  const mat = petalMaterial(sp.color);
+  const n = 6;
   for (let i = 0; i < n; i++) {
     const t = i / (n - 1);
-    const leaf = new THREE.Mesh(geo, mat);
+    const leaf = new THREE.Mesh(petalBlobGeometry(sp.size * 0.32, sp.size * 0.32, sp.size * 0.14), mat);
     const side = i % 2 === 0 ? 1 : -1;
-    leaf.position.set(side * sp.size * 0.13 * (0.3 + t), t * sp.size * 0.7, side * 0.01);
-    leaf.rotation.set(Math.PI / 2 - 0.3, 0, side * 0.5 + (prand(seed + i) - 0.5) * 0.3);
-    leaf.castShadow = true;
+    leaf.position.set(side * sp.size * 0.16 * (0.3 + t), t * sp.size * 0.68, 0);
+    leaf.rotation.z = side * (Math.PI / 2 - 0.35);
     group.add(leaf);
   }
   return group;
 }
 
-function buildSpray(sp, seed) {
+function buildBudForm(sp, seed) {
   const group = new THREE.Group();
-  const mat = new THREE.MeshStandardMaterial({ color: sp.color, roughness: 0.6 });
-  const branches = 6;
-  for (let i = 0; i < branches; i++) {
-    const a = (i / branches) * Math.PI * 2 + prand(seed + i) * 0.6;
-    const h = sp.size * (0.35 + prand(seed + i * 3) * 0.35);
-    const twig = new THREE.Mesh(
-      new THREE.CylinderGeometry(0.006, 0.01, h, 4),
-      mat
-    );
-    twig.position.set(Math.cos(a) * sp.size * 0.1, h / 2, Math.sin(a) * sp.size * 0.1);
-    twig.rotation.z = Math.cos(a) * 0.4;
-    twig.rotation.x = -Math.sin(a) * 0.4;
+  const petalMat = petalMaterial(sp.color);
+  const stemMat = new THREE.MeshPhysicalMaterial({ color: STEM_GREEN, roughness: 0.4, clearcoat: 0.25 });
+  const n = 5;
+  for (let i = 0; i < n; i++) {
+    const t = i / (n - 1);
+    const h = sp.size * (0.3 + t * 0.7);
+    const side = i % 2 === 0 ? 1 : -1;
+    const lean = side * sp.size * 0.14 * t;
+    const twig = new THREE.Mesh(new THREE.CylinderGeometry(0.01 * sp.size, 0.014 * sp.size, h, 6), stemMat);
+    twig.position.set(lean / 2, h / 2, 0);
+    twig.rotation.z = -side * 0.18 * t;
     group.add(twig);
-    const clusters = 2 + Math.floor(prand(seed + i * 5) * 3);
-    for (let c = 0; c < clusters; c++) {
-      const bud = new THREE.Mesh(new THREE.SphereGeometry(sp.size * 0.05, 6, 6), mat);
-      bud.position.set(
-        Math.cos(a) * sp.size * 0.1 + (prand(seed + i + c) - 0.5) * sp.size * 0.12,
-        h * (0.6 + c * 0.18),
-        Math.sin(a) * sp.size * 0.1 + (prand(seed + i * 2 + c) - 0.5) * sp.size * 0.12
-      );
-      bud.castShadow = true;
-      group.add(bud);
-    }
+    const bud = new THREE.Mesh(petalBlobGeometry(sp.size * 0.26, sp.size * 0.34, sp.size * 0.26), petalMat);
+    bud.position.set(lean, h, 0);
+    bud.rotation.z = Math.PI + prand(seed + i) * 0.3;
+    group.add(bud);
   }
   return group;
 }
@@ -256,14 +205,13 @@ function buildSpray(sp, seed) {
 function buildFlowerHead(id, seed) {
   const sp = SPECIES[id];
   if (!sp) return new THREE.Group();
-  switch (sp.type) {
-    case 'round':     return buildRoundBloom(sp, seed);
-    case 'daisy':      return buildDaisyBloom(sp, seed);
-    case 'sunflower':  return buildSunflowerBloom(sp, seed);
-    case 'trumpet':    return buildTrumpetBloom(sp, seed);
-    case 'foliage':    return buildFoliageCluster(sp, seed);
-    case 'spray':      return buildSpray(sp, seed);
-    default:           return new THREE.Group();
+  switch (sp.form) {
+    case 'daisy':   return buildDaisyForm(sp, seed);
+    case 'tulip':   return buildTulipForm(sp, seed);
+    case 'trumpet': return buildTrumpetForm(sp, seed);
+    case 'foliage': return buildFoliageForm(sp);
+    case 'bud':     return buildBudForm(sp, seed);
+    default:        return new THREE.Group();
   }
 }
 
@@ -281,7 +229,7 @@ function buildWrap() {
   ];
   const geo = new THREE.LatheGeometry(pts, 32);
   geo.computeVertexNormals();
-  const mat = new THREE.MeshStandardMaterial({ color: PALETTE.parchment, side: THREE.DoubleSide, roughness: 0.85 });
+  const mat = new THREE.MeshPhysicalMaterial({ color: PALETTE.parchment, side: THREE.DoubleSide, roughness: 0.55, clearcoat: 0.15 });
   const mesh = new THREE.Mesh(geo, mat);
   mesh.receiveShadow = true;
   mesh.castShadow = true;
@@ -291,22 +239,22 @@ function buildWrap() {
 function buildRibbonBow(color, neckY) {
   const group = new THREE.Group();
   const s = WRAP_NECK_R;
-  const mat = new THREE.MeshStandardMaterial({ color, roughness: 0.5 });
-  const ring = new THREE.Mesh(new THREE.TorusGeometry(s, s * 0.2, 10, 32), mat);
+  const mat = new THREE.MeshPhysicalMaterial({ color, roughness: 0.32, clearcoat: 0.35, clearcoatRoughness: 0.2 });
+  const ring = new THREE.Mesh(new THREE.TorusGeometry(s, s * 0.2, 12, 32), mat);
   ring.rotation.x = Math.PI / 2;
   ring.position.y = neckY;
   group.add(ring);
   [-1, 1].forEach(side => {
-    const loop = new THREE.Mesh(new THREE.TorusGeometry(s * 0.55, s * 0.16, 8, 20, Math.PI * 1.5), mat);
+    const loop = new THREE.Mesh(new THREE.TorusGeometry(s * 0.55, s * 0.18, 10, 24, Math.PI * 1.5), mat);
     loop.position.set(side * s * 0.55, neckY + s * 0.06, s * 0.85);
     loop.rotation.set(0.3, 0, side * 0.9);
     group.add(loop);
-    const tail = new THREE.Mesh(new THREE.BoxGeometry(s * 0.35, s * 1.1, 0.02), mat);
+    const tail = new THREE.Mesh(new THREE.CapsuleGeometry(s * 0.13, s * 0.85, 4, 8), mat);
     tail.position.set(side * s * 0.32, neckY - s * 0.65, s * 0.95);
     tail.rotation.set(0.2, 0, side * 0.15);
     group.add(tail);
   });
-  const knot = new THREE.Mesh(new THREE.SphereGeometry(s * 0.3, 12, 10), mat);
+  const knot = new THREE.Mesh(new THREE.SphereGeometry(s * 0.32, 14, 12), mat);
   knot.scale.set(1, 0.7, 0.8);
   knot.position.set(0, neckY + s * 0.06, s * 0.9);
   group.add(knot);
@@ -322,7 +270,7 @@ function bouquetSlot(i, total, spread) {
   const angle = i * GOLDEN_ANGLE;
   const radiusNorm = total === 1 ? 0 : Math.sqrt((i + 0.5) / total);
   const radius = radiusNorm * spread;
-  const height = 1.15 + Math.cos(radiusNorm * Math.PI * 0.5) * spread * 0.9;
+  const height = 1.15 + Math.cos(radiusNorm * Math.PI * 0.5) * spread * 0.75;
   return {
     x: Math.cos(angle) * radius,
     y: height,
@@ -334,10 +282,10 @@ function bouquetSlot(i, total, spread) {
 function buildStem(origin, target, radius) {
   const mid = origin.clone().lerp(target, 0.55);
   const out = new THREE.Vector3(target.x, 0, target.z).normalize();
-  mid.add(out.multiplyScalar(0.08)).add(new THREE.Vector3(0, 0.1, 0));
+  mid.add(out.multiplyScalar(0.06)).add(new THREE.Vector3(0, 0.08, 0));
   const curve = new THREE.CatmullRomCurve3([origin, mid, target]);
-  const geo = new THREE.TubeGeometry(curve, 10, radius, 6, false);
-  const mesh = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({ color: STEM_GREEN, roughness: 0.65 }));
+  const geo = new THREE.TubeGeometry(curve, 12, radius, 8, false);
+  const mesh = new THREE.Mesh(geo, new THREE.MeshPhysicalMaterial({ color: STEM_GREEN, roughness: 0.4, clearcoat: 0.25, clearcoatRoughness: 0.3 }));
   mesh.castShadow = true;
   return mesh;
 }
@@ -349,34 +297,23 @@ function buildBouquetGroup(selectedIds, ribbonColor) {
 
   const ids = selectedIds.slice(0, MAX_3D_FLOWERS);
   const total = ids.length || 1;
-  const spread = 0.5 + 0.15 * Math.sqrt(total);
+  const spread = 0.36 + 0.11 * Math.sqrt(total);
 
   ids.forEach((id, i) => {
     const seed = i * 7.13 + id.length * 3.1;
     const slot = bouquetSlot(i, total, spread);
     const target = new THREE.Vector3(slot.x, slot.y, slot.z);
     const originJitter = new THREE.Vector3(
-      (prand(seed) - 0.5) * 0.12, 0, (prand(seed + 1) - 0.5) * 0.12
+      (prand(seed) - 0.5) * 0.08, 0, (prand(seed + 1) - 0.5) * 0.08
     );
     const origin = new THREE.Vector3(0, neckY - 0.05, 0).add(originJitter);
 
-    group.add(buildStem(origin, target, 0.014));
-
-    // Occasional leaf on the stem, skipped for species that are already
-    // foliage/spray shapes.
-    if (SPECIES[id] && !['foliage', 'spray'].includes(SPECIES[id].type) && prand(seed + 2) > 0.4) {
-      const leaf = new THREE.Mesh(leafGeometry(SPECIES[id].size || 1), new THREE.MeshStandardMaterial({ color: LEAF_GREEN, side: THREE.DoubleSide, roughness: 0.65 }));
-      const leafPt = origin.clone().lerp(target, 0.4 + prand(seed + 3) * 0.2);
-      leaf.position.copy(leafPt);
-      leaf.rotation.set(-Math.PI / 2 + 0.4, prand(seed + 4) * Math.PI * 2, 0);
-      leaf.castShadow = true;
-      group.add(leaf);
-    }
+    group.add(buildStem(origin, target, 0.02));
 
     const head = buildFlowerHead(id, seed);
     head.position.copy(target);
     const dir = new THREE.Vector3(slot.x, 0, slot.z).normalize();
-    const tiltAmount = 0.25 + slot.outward * 0.5;
+    const tiltAmount = 0.15 + slot.outward * 0.4;
     const headUp = new THREE.Vector3(0, 1, 0).lerp(dir, tiltAmount).normalize();
     head.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), headUp);
     head.rotateOnWorldAxis(headUp, prand(seed + 5) * Math.PI * 2);
@@ -424,15 +361,15 @@ class BouquetScene {
     renderer.shadowMap.enabled = true;
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    renderer.toneMappingExposure = 1.05;
+    renderer.toneMappingExposure = 1.1;
     this.container.appendChild(renderer.domElement);
 
     this.scene = new THREE.Scene();
     this.camera = new THREE.PerspectiveCamera(35, 1, 0.1, 100);
 
-    const hemi = new THREE.HemisphereLight(0xfff6ea, PALETTE.bark, 0.85);
+    const hemi = new THREE.HemisphereLight(0xfffaf0, PALETTE.bark, 1.05);
     this.scene.add(hemi);
-    const key = new THREE.DirectionalLight(0xfff6e8, 1.25);
+    const key = new THREE.DirectionalLight(0xfffaf0, 1.05);
     key.position.set(2.2, 3.2, 2.4);
     key.castShadow = true;
     key.shadow.mapSize.set(1024, 1024);
@@ -442,7 +379,7 @@ class BouquetScene {
     key.shadow.radius = 6;
     key.shadow.bias = -0.002;
     this.scene.add(key);
-    const fill = new THREE.DirectionalLight(0xdce8ee, 0.7);
+    const fill = new THREE.DirectionalLight(0xe8f0f4, 0.6);
     fill.position.set(-2.5, 1.5, -1.5);
     this.scene.add(fill);
 
@@ -450,7 +387,7 @@ class BouquetScene {
     // _frame()'s bounding-box fit measures only the bouquet, not this plane.
     const shadowMesh = new THREE.Mesh(
       new THREE.PlaneGeometry(6, 6),
-      new THREE.ShadowMaterial({ opacity: 0.2 })
+      new THREE.ShadowMaterial({ opacity: 0.16 })
     );
     shadowMesh.rotation.x = -Math.PI / 2;
     shadowMesh.position.y = -0.02;
