@@ -392,12 +392,19 @@ body.music-bar-active{padding-top:44px}
 .font-serif{font-family:var(--font-display);font-size:15px;font-style:normal}
 .font-script{font-family:var(--font-script);font-size:16px}
 .font-mono{font-family:var(--font-mono);font-size:16px;font-weight:500;letter-spacing:0.04em;text-transform:uppercase}
-.result-actions{display:flex;gap:12px;margin-top:24px;width:100%;max-width:360px;position:relative;z-index:1}
-.btn-act{flex:1;min-width:0;padding:14px 10px;line-height:1.3;text-align:center;border-radius:0;font-family:var(--font-body);font-size:13px;font-weight:400;letter-spacing:0.14em;text-transform:uppercase;cursor:pointer;transition:background 0.2s,color 0.2s;border:none;display:flex;align-items:center;justify-content:center;gap:7px}
-.btn-save{background:var(--color-rose);color:var(--parchment)}
-.btn-save:hover{background:var(--color-mauve)}
-.btn-new{background:transparent;color:var(--bark);border:1px solid var(--bark)}
-.btn-new:hover{background:var(--bark);color:var(--parchment)}
+/* Floating circular action buttons on the result screen — see .bloom-btn--circle and its
+   variants in bloom-components.css for the buttons themselves. Mobile: a row centered below
+   the ticket (no room to the side). Desktop: a column floating off the ticket's right edge —
+   nested inside .booth (position:relative) so left:100% resolves against the booth's own
+   rendered width instead of the viewport. */
+.ticket-fab-group{display:flex;flex-direction:row;gap:22px;justify-content:center;margin-top:28px;position:relative;z-index:1}
+.ticket-fab{display:flex;flex-direction:column;align-items:center;gap:8px}
+/* Same font styling as .swatch-label (the colour-swatch names), just always visible instead
+   of a hover reveal. */
+.ticket-fab-label{font-size:11px;color:var(--muted);letter-spacing:0.06em;white-space:nowrap}
+@media(min-width:700px){
+  .ticket-fab-group{position:absolute;top:auto;bottom:10%;left:100%;margin-left:28px;flex-direction:column;gap:22px}
+}
 
 /* ── TOASTS & SPARKLES ── */
 .toast-zone{position:fixed;bottom:28px;left:50%;transform:translateX(-50%);z-index:300;display:flex;flex-direction:column;gap:8px;align-items:center;pointer-events:none}
@@ -418,7 +425,8 @@ body.music-bar-active{padding-top:44px}
 
 [dir="rtl"] .r-row{flex-direction:row-reverse}
 [dir="rtl"] .fields-2{direction:rtl}
-[dir="rtl"] .result-actions{flex-direction:row-reverse}
+[dir="rtl"] .ticket-fab-group{flex-direction:row-reverse}
+@media(min-width:700px){[dir="rtl"] .ticket-fab-group{flex-direction:column}}
 
 @media(max-width:400px){.ticket-body{padding:28px 18px 8px}}
 </style>
@@ -599,11 +607,27 @@ body.music-bar-active{padding-top:44px}
         </div>
       </div>
     </div>
-  </div>
 
-  <div class="result-actions">
-    <button class="btn-act btn-save" id="btn-save-img"><span id="el-btn-save">Share bouquet</span></button>
-    <button class="btn-act btn-new" id="btn-new"><span id="el-btn-new">Create another bouquet</span></button>
+    <div class="ticket-fab-group">
+      <div class="ticket-fab">
+        <button type="button" class="bloom-btn bloom-btn--circle bloom-btn--primary" id="btn-save-img" aria-label="Share bouquet">
+          <svg viewBox="0 0 11.5337 17.2191" width="14" height="21" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path fill-rule="evenodd" clip-rule="evenodd" d="M8.95286 12.2302C9.40434 12.2315 9.84692 12.356 10.2329 12.5902H10.2229C11.3864 13.2842 11.7816 14.7812 11.1121 15.9591C10.4427 17.137 8.95431 17.5634 7.76265 16.9188C6.57098 16.2742 6.11339 14.7951 6.73286 13.5902L3.80286 10.6002C3.59129 10.729 3.36227 10.8267 3.12286 10.8902C2.9235 10.9414 2.71868 10.9683 2.51286 10.9702C1.24414 10.9767 0.171771 10.0317 0.0184914 8.77229C-0.134788 7.51284 0.67963 6.33829 1.91286 6.04023C2.10923 5.99233 2.31074 5.96882 2.51286 5.97023C3.02893 5.97063 3.53213 6.13137 3.95286 6.43023L6.73286 3.65023C6.31869 2.87635 6.34443 1.94119 6.80054 1.19127C7.25666 0.441348 8.0752 -0.0116146 8.95286 0.000226595C9.40347 -0.00204827 9.84611 0.118987 10.2329 0.350227C11.0188 0.782518 11.5145 1.60129 11.5331 2.49812C11.5517 3.39495 11.0905 4.23358 10.3231 4.69812C9.55575 5.16265 8.59884 5.18252 7.81286 4.75023L4.87286 7.69023C4.9055 7.76125 4.93225 7.83483 4.95286 7.91023C5.0857 8.44846 5.03285 9.01579 4.80286 9.52023L7.80286 12.5202C8.15807 12.3345 8.55206 12.2352 8.95286 12.2302ZM8.95286 1.50023C8.60181 1.49818 8.2754 1.68037 8.09286 1.98023C7.95651 2.20882 7.91692 2.48235 7.98286 2.74023C8.04059 2.99771 8.20389 3.21907 8.43286 3.35023C8.58621 3.44532 8.76244 3.49716 8.94286 3.50023C9.29592 3.50016 9.62279 3.31393 9.80286 3.01023C10.0862 2.53786 9.93416 1.92532 9.46286 1.64023C9.30976 1.54571 9.13275 1.49712 8.95286 1.50023ZM2.51286 9.47023C2.04216 9.48394 1.62568 9.16741 1.51286 8.71023C1.4499 8.45103 1.4931 8.17742 1.63286 7.95023C1.76926 7.72599 1.98835 7.56436 2.24286 7.50023H2.48286C2.95356 7.48651 3.37004 7.80304 3.48286 8.26023C3.54604 8.51497 3.50653 8.78435 3.37286 9.01023L3.31286 9.08023C3.1802 9.26998 2.98581 9.40781 2.76286 9.47023H2.51286ZM8.94286 15.6802C9.2939 15.6823 9.62031 15.5001 9.80286 15.2002C10.0534 14.7392 9.90496 14.1629 9.46286 13.8802C9.3095 13.7851 9.13328 13.7333 8.95286 13.7302C8.59979 13.7303 8.27292 13.9165 8.09286 14.2202C7.80954 14.6926 7.96155 15.3051 8.43286 15.5902C8.59108 15.6674 8.76778 15.6986 8.94286 15.6802Z" fill="currentColor"/></svg>
+        </button>
+        <span class="ticket-fab-label" id="el-fab-share">Share</span>
+      </div>
+      <div class="ticket-fab">
+        <button type="button" class="bloom-btn bloom-btn--circle bloom-btn--tertiary" id="btn-customize" aria-label="Customize">
+          <svg viewBox="0 0 19.0745 19.0303" width="20" height="20" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><g><path fill-rule="evenodd" clip-rule="evenodd" d="M5.71 12.3803L6.44 8.97028C6.54627 8.49641 6.78566 8.06274 7.13 7.72028L13.8 1.11028C14.4764 0.421256 15.3947 0.023063 16.36 0.000280562C17.088 -0.0101505 17.79 0.270654 18.31 0.780281C19.4462 2.12275 19.2995 4.1275 17.98 5.29028L11.31 11.9603C10.9675 12.3046 10.5339 12.544 10.06 12.6503L6.65 13.3803H6.46C6.21071 13.3898 5.97261 13.2764 5.82292 13.0768C5.67324 12.8773 5.63103 12.6169 5.71 12.3803ZM8.19 8.79028C8.04988 8.92606 7.95255 9.09987 7.91 9.29028L7.42 11.6203L9.75 11.1203C9.94041 11.0777 10.1142 10.9804 10.25 10.8403L16.92 4.17028C17.6507 3.5853 17.7957 2.53076 17.25 1.77028C17.0111 1.54199 16.6903 1.41945 16.36 1.43028C15.7906 1.45315 15.2525 1.69708 14.86 2.11028L8.19 8.79028Z" fill="currentColor"/><path d="M17.83 8.04028C17.418 8.04567 17.0854 8.37832 17.08 8.79028V14.4803C17.0934 15.2846 16.7833 16.0605 16.2192 16.634C15.6551 17.2075 14.8844 17.5304 14.08 17.5303H4.55C2.88737 17.4977 1.55511 16.1432 1.55 14.4803V4.99028C1.5773 3.32537 2.93487 1.99006 4.6 1.99028H10.29C10.7042 1.99028 11.04 1.65449 11.04 1.24028C11.04 0.826067 10.7042 0.490281 10.29 0.490281H4.55C2.0565 0.49013 0.0274011 2.49693 0 4.99028V14.4803C0 16.9932 2.0371 19.0303 4.55 19.0303H14.04C16.549 19.0248 18.58 16.9893 18.58 14.4803V8.79028C18.5746 8.37832 18.242 8.04567 17.83 8.04028Z" fill="currentColor"/></g></svg>
+        </button>
+        <span class="ticket-fab-label" id="el-fab-customize">Customize</span>
+      </div>
+      <div class="ticket-fab">
+        <button type="button" class="bloom-btn bloom-btn--circle bloom-btn--outline" id="btn-new" aria-label="Create another bouquet">
+          <svg viewBox="0 0 17.5 17.5" width="18" height="18" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M16.75 8H9.5V0.75C9.5 0.335786 9.16421 0 8.75 0C8.33579 0 8 0.335786 8 0.75V8H0.75C0.335786 8 0 8.33579 0 8.75C0 9.16421 0.335786 9.5 0.75 9.5H8V16.75C8 17.1642 8.33579 17.5 8.75 17.5C9.16421 17.5 9.5 17.1642 9.5 16.75V9.5H16.75C17.1642 9.5 17.5 9.16421 17.5 8.75C17.5 8.33579 17.1642 8 16.75 8Z" fill="currentColor"/></svg>
+        </button>
+        <span class="ticket-fab-label" id="el-fab-new">New</span>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -651,13 +675,14 @@ wrapTitle:'Wrapping paper',
     resultSub:'Share it or take a screenshot.',
     receiptSub:'virtual flower atelier',
     btnShare:'Share bouquet',
+    fabShare:'Share', fabCustomize:'Customize', fabNew:'New',
     shareTitle:'I made this for you 💕',
     defaultUser:'Guest',
     jewelsLabel:'Add jewels to your bouquet', jewelsOff:'OFF', jewelsOn:'ON', creditsBuiltBy:'Built by', creditsWith:'with Claude Code in React', musicLabel:'Music', musicOnRepeat:'On repeat lately:', musicLoading:'Loading…', musicUnavailable:'Music unavailable',
     ariaScrollLeft:'scroll left', ariaScrollRight:'scroll right', ariaLivePreview:'live preview', ariaClose:'close', ariaPlayPause:'Play/pause', ariaToggleMusic:'Toggle music', secMsgTitle:'Personalise and add a message', btnAddMsg:'Add message', btnFinalize:'Finish bouquet', btnRestart:'Start over',
     rowFor:'FOR', rowFrom:'FROM', rowDate:'DATE', rowType:'BOUQUET TYPE',
     btnSave:'Download bouquet', btnNew:'Create another',
-    toastMsgSaved:'Message saved ✓', toastNew:'Ready for a new bouquet ✿', ariaRemoveOne:'Remove one',
+    toastMsgSaved:'Message saved ✓', toastNew:'Ready for a new bouquet ✿', ariaRemoveOne:'Remove one', toastCustomizeSoon:'Customize is coming soon ✿',
     toastGenerating:'Generating image…', toastSaved:'Image saved ✓', toastOpenedImage:'Image opened — tap and hold to save ✿',
     toastSaveFail:'Could not save — try screenshot ✿',
     flowers:{
@@ -704,13 +729,14 @@ wrapTitle:'Papel de envoltura',
     resultSub:'Compártelo o toma screenshot.',
     receiptSub:'atelier virtual de flores',
     btnShare:'Compartir ramo',
+    fabShare:'Compartir', fabCustomize:'Personalizar', fabNew:'Nuevo',
     shareTitle:'Lo hice para ti 💕',
     defaultUser:'Usuario',
     jewelsLabel:'Agregar joyas a tu ramo', jewelsOff:'NO', jewelsOn:'SÍ', creditsBuiltBy:'Construido por', creditsWith:'con Claude Code en React', musicLabel:'Música', musicOnRepeat:'Sonando ahora:', musicLoading:'Cargando…', musicUnavailable:'Música no disponible',
     ariaScrollLeft:'desplazar a la izquierda', ariaScrollRight:'desplazar a la derecha', ariaLivePreview:'vista previa en vivo', ariaClose:'cerrar', ariaPlayPause:'reproducir o pausar', ariaToggleMusic:'activar o desactivar música', secMsgTitle:'Personaliza y agrega un mensaje', btnAddMsg:'Agregar mensaje', btnFinalize:'Finalizar ramo', btnRestart:'Volver a iniciar',
     rowFor:'PARA', rowFrom:'DE', rowDate:'FECHA', rowType:'TIPO DE RAMO',
     btnSave:'Descargar ramo', btnNew:'Crear otro',
-    toastMsgSaved:'Mensaje guardado ✓', toastNew:'Listo para un nuevo ramo ✿', ariaRemoveOne:'Quitar una',
+    toastMsgSaved:'Mensaje guardado ✓', toastNew:'Listo para un nuevo ramo ✿', ariaRemoveOne:'Quitar una', toastCustomizeSoon:'Personalizar llega pronto ✿',
     toastGenerating:'Generando imagen…', toastSaved:'Imagen guardada ✓', toastOpenedImage:'Imagen abierta — mantén presionado para guardar ✿',
     toastSaveFail:'No se pudo guardar — intenta captura de pantalla ✿',
     flowers:{
@@ -757,13 +783,14 @@ wrapTitle:"Papier d'emballage",
     resultSub:'Partage-le ou fais une capture d’écran.',
     receiptSub:'atelier floral virtuel',
     btnShare:'Partager le bouquet',
+    fabShare:'Partager', fabCustomize:'Personnaliser', fabNew:'Nouveau',
     shareTitle:'Je l’ai fait pour toi 💕',
     defaultUser:'Invité',
     jewelsLabel:'Ajouter des bijoux à ton bouquet', jewelsOff:'NON', jewelsOn:'OUI', creditsBuiltBy:'Conçu par', creditsWith:'avec Claude Code en React', musicLabel:'Musique', musicOnRepeat:'En boucle en ce moment :', musicLoading:'Chargement…', musicUnavailable:'Musique indisponible',
     ariaScrollLeft:'défiler à gauche', ariaScrollRight:'défiler à droite', ariaLivePreview:'aperçu en direct', ariaClose:'fermer', ariaPlayPause:'lecture/pause', ariaToggleMusic:'activer la musique', secMsgTitle:'Personnalise et ajoute un message', btnAddMsg:'Ajouter un message', btnFinalize:'Terminer le bouquet', btnRestart:'Recommencer',
     rowFor:'POUR', rowFrom:'DE', rowDate:'DATE', rowType:'TYPE DE BOUQUET',
     btnSave:'Télécharger le bouquet', btnNew:'Créer un autre',
-    toastMsgSaved:'Message sauvegardé ✓', toastNew:'Prêt pour un nouveau bouquet ✿', ariaRemoveOne:'Retirer une',
+    toastMsgSaved:'Message sauvegardé ✓', toastNew:'Prêt pour un nouveau bouquet ✿', ariaRemoveOne:'Retirer une', toastCustomizeSoon:'Personnaliser arrive bientôt ✿',
     toastGenerating:"Génération de l'image…", toastSaved:'Image sauvegardée ✓', toastOpenedImage:'Image ouverte — appuie et maintiens pour enregistrer ✿',
     toastSaveFail:"Impossible de sauvegarder — essaie une capture d'écran ✿",
     flowers:{
@@ -810,13 +837,14 @@ wrapTitle:'Papel de embrulho',
     resultSub:'Compartilhe ou tire um print.',
     receiptSub:'ateliê virtual de flores',
     btnShare:'Compartilhar buquê',
+    fabShare:'Compartilhar', fabCustomize:'Personalizar', fabNew:'Novo',
     shareTitle:'Eu fiz isso para você 💕',
     defaultUser:'Convidado',
     jewelsLabel:'Adicionar joias ao seu buquê', jewelsOff:'NÃO', jewelsOn:'SIM', creditsBuiltBy:'Feito por', creditsWith:'com Claude Code em React', musicLabel:'Música', musicOnRepeat:'Tocando agora:', musicLoading:'Carregando…', musicUnavailable:'Música indisponível',
     ariaScrollLeft:'rolar para a esquerda', ariaScrollRight:'rolar para a direita', ariaLivePreview:'pré-visualização ao vivo', ariaClose:'fechar', ariaPlayPause:'reproduzir/pausar', ariaToggleMusic:'ativar música', secMsgTitle:'Personalize e adicione uma mensagem', btnAddMsg:'Adicionar mensagem', btnFinalize:'Finalizar buquê', btnRestart:'Recomeçar',
     rowFor:'PARA', rowFrom:'DE', rowDate:'DATA', rowType:'TIPO DE BUQUÊ',
     btnSave:'Baixar buquê', btnNew:'Criar outro',
-    toastMsgSaved:'Mensagem salva ✓', toastNew:'Pronto para um novo buquê ✿', ariaRemoveOne:'Remover uma',
+    toastMsgSaved:'Mensagem salva ✓', toastNew:'Pronto para um novo buquê ✿', ariaRemoveOne:'Remover uma', toastCustomizeSoon:'Personalizar em breve ✿',
     toastGenerating:'Gerando imagem…', toastSaved:'Imagem salva ✓', toastOpenedImage:'Imagem aberta — toque e segure para salvar ✿',
     toastSaveFail:'Não foi possível salvar — tente captura de tela ✿',
     flowers:{
@@ -863,13 +891,14 @@ wrapTitle:'Geschenkpapier',
     resultSub:'Teile ihn oder mach einen Screenshot.',
     receiptSub:'virtuelles Blumenatelier',
     btnShare:'Strauß teilen',
+    fabShare:'Teilen', fabCustomize:'Anpassen', fabNew:'Neu',
     shareTitle:'Für dich gemacht 💕',
     defaultUser:'Gast',
     jewelsLabel:'Schmucksteine zum Strauß hinzufügen', jewelsOff:'AUS', jewelsOn:'AN', creditsBuiltBy:'Erstellt von', creditsWith:'mit Claude Code in React', musicLabel:'Musik', musicOnRepeat:'Gerade in Dauerschleife:', musicLoading:'Wird geladen…', musicUnavailable:'Musik nicht verfügbar',
     ariaScrollLeft:'nach links scrollen', ariaScrollRight:'nach rechts scrollen', ariaLivePreview:'Live-Vorschau', ariaClose:'schließen', ariaPlayPause:'Wiedergabe/Pause', ariaToggleMusic:'Musik umschalten', secMsgTitle:'Gestalte und füge eine Nachricht hinzu', btnAddMsg:'Nachricht hinzufügen', btnFinalize:'Strauß fertigstellen', btnRestart:'Neu beginnen',
     rowFor:'FÜR', rowFrom:'VON', rowDate:'DATUM', rowType:'STRAUSSTYP',
     btnSave:'Strauß herunterladen', btnNew:'Neuen erstellen',
-    toastMsgSaved:'Nachricht gespeichert ✓', toastNew:'Bereit für einen neuen Strauß ✿', ariaRemoveOne:'Eine entfernen',
+    toastMsgSaved:'Nachricht gespeichert ✓', toastNew:'Bereit für einen neuen Strauß ✿', ariaRemoveOne:'Eine entfernen', toastCustomizeSoon:'Anpassen kommt bald ✿',
     toastGenerating:'Bild wird erstellt…', toastSaved:'Bild gespeichert ✓', toastOpenedImage:'Bild geöffnet — zum Speichern gedrückt halten ✿',
     toastSaveFail:'Speichern fehlgeschlagen — Screenshot versuchen ✿',
     flowers:{
@@ -916,13 +945,14 @@ wrapTitle:'Carta da regalo',
     resultSub:'Condividilo o fai uno screenshot.',
     receiptSub:'atelier floreale virtuale',
     btnShare:'Condividi il bouquet',
+    fabShare:'Condividi', fabCustomize:'Personalizza', fabNew:'Nuovo',
     shareTitle:'L’ho fatto per te 💕',
     defaultUser:'Ospite',
     jewelsLabel:'Aggiungi gioielli al bouquet', jewelsOff:'NO', jewelsOn:'SÌ', creditsBuiltBy:'Creato da', creditsWith:'con Claude Code in React', musicLabel:'Musica', musicOnRepeat:'In riproduzione:', musicLoading:'Caricamento…', musicUnavailable:'Musica non disponibile',
     ariaScrollLeft:'scorri a sinistra', ariaScrollRight:'scorri a destra', ariaLivePreview:'anteprima dal vivo', ariaClose:'chiudi', ariaPlayPause:'riproduci/pausa', ariaToggleMusic:'attiva musica', secMsgTitle:'Personalizza e aggiungi un messaggio', btnAddMsg:'Aggiungi messaggio', btnFinalize:'Completa il bouquet', btnRestart:'Ricomincia',
     rowFor:'PER', rowFrom:'DA', rowDate:'DATA', rowType:'TIPO DI BOUQUET',
     btnSave:'Scarica il bouquet', btnNew:'Crea un altro',
-    toastMsgSaved:'Messaggio salvato ✓', toastNew:'Pronto per un altro bouquet ✿', ariaRemoveOne:'Rimuovi uno',
+    toastMsgSaved:'Messaggio salvato ✓', toastNew:'Pronto per un altro bouquet ✿', ariaRemoveOne:'Rimuovi uno', toastCustomizeSoon:'Personalizza arriva presto ✿',
     toastGenerating:'Generazione immagine…', toastSaved:'Immagine salvata ✓', toastOpenedImage:'Immagine aperta — tieni premuto per salvare ✿',
     toastSaveFail:'Impossibile salvare — prova uno screenshot ✿',
     flowers:{
@@ -969,13 +999,14 @@ wrapTitle:'ラッピングペーパー',
     resultSub:'シェアするか、スクリーンショットを撮ってね。',
     receiptSub:'バーチャルフラワーアトリエ',
     btnShare:'花束をシェア',
+    fabShare:'シェア', fabCustomize:'カスタマイズ', fabNew:'新規',
     shareTitle:'あなたのために作りました 💕',
     defaultUser:'ゲスト',
     jewelsLabel:'花束にジュエリーを追加', jewelsOff:'オフ', jewelsOn:'オン', creditsBuiltBy:'制作:', creditsWith:'Claude CodeとReactで', musicLabel:'音楽', musicOnRepeat:'今リピート中:', musicLoading:'読み込み中…', musicUnavailable:'音楽を利用できません',
     ariaScrollLeft:'左にスクロール', ariaScrollRight:'右にスクロール', ariaLivePreview:'ライブプレビュー', ariaClose:'閉じる', ariaPlayPause:'再生/一時停止', ariaToggleMusic:'音楽を切り替え', secMsgTitle:'カスタマイズしてメッセージを追加', btnAddMsg:'メッセージを追加', btnFinalize:'花束を完成させる', btnRestart:'最初からやり直す',
     rowFor:'宛先', rowFrom:'送り主', rowDate:'日付', rowType:'花束の種類',
     btnSave:'花束をダウンロード', btnNew:'新しく作る',
-    toastMsgSaved:'メッセージを保存しました ✓', toastNew:'新しい花束の準備完了 ✿', ariaRemoveOne:'1つ削除',
+    toastMsgSaved:'メッセージを保存しました ✓', toastNew:'新しい花束の準備完了 ✿', ariaRemoveOne:'1つ削除', toastCustomizeSoon:'カスタマイズは近日公開 ✿',
     toastGenerating:'画像を生成中…', toastSaved:'画像を保存しました ✓', toastOpenedImage:'画像を開きました — 長押しで保存 ✿',
     toastSaveFail:'保存できませんでした — スクリーンショットをお試しください ✿',
     flowers:{
@@ -1022,13 +1053,14 @@ wrapTitle:'包装纸',
     resultSub:'分享出去，或者截图保存吧。',
     receiptSub:'虚拟花艺工坊',
     btnShare:'分享花束',
+    fabShare:'分享', fabCustomize:'定制', fabNew:'新建',
     shareTitle:'这是为你做的 💕',
     defaultUser:'访客',
     jewelsLabel:'给花束添加宝石', jewelsOff:'关', jewelsOn:'开', creditsBuiltBy:'制作者：', creditsWith:'用 Claude Code（React）制作', musicLabel:'音乐', musicOnRepeat:'最近单曲循环:', musicLoading:'加载中…', musicUnavailable:'音乐不可用',
     ariaScrollLeft:'向左滚动', ariaScrollRight:'向右滚动', ariaLivePreview:'实时预览', ariaClose:'关闭', ariaPlayPause:'播放/暂停', ariaToggleMusic:'切换音乐', secMsgTitle:'个性化并添加留言', btnAddMsg:'添加留言', btnFinalize:'完成花束', btnRestart:'重新开始',
     rowFor:'收件人', rowFrom:'发件人', rowDate:'日期', rowType:'花束类型',
     btnSave:'下载花束', btnNew:'再创建一束',
-    toastMsgSaved:'留言已保存 ✓', toastNew:'准备好创建新花束 ✿', ariaRemoveOne:'移除一个',
+    toastMsgSaved:'留言已保存 ✓', toastNew:'准备好创建新花束 ✿', ariaRemoveOne:'移除一个', toastCustomizeSoon:'定制功能即将上线 ✿',
     toastGenerating:'正在生成图片…', toastSaved:'图片已保存 ✓', toastOpenedImage:'图片已打开 — 长按保存 ✿',
     toastSaveFail:'无法保存 — 请尝试截图 ✿',
     flowers:{
@@ -1075,13 +1107,14 @@ wrapTitle:'포장지',
     resultSub:'공유하거나 스크린샷으로 남겨보세요.',
     receiptSub:'가상 플라워 아뜰리에',
     btnShare:'꽃다발 공유하기',
+    fabShare:'공유', fabCustomize:'커스터마이즈', fabNew:'새로',
     shareTitle:'너를 위해 만들었어 💕',
     defaultUser:'게스트',
     jewelsLabel:'꽃다발에 보석 추가하기', jewelsOff:'꺼짐', jewelsOn:'켜짐', creditsBuiltBy:'제작:', creditsWith:'Claude Code와 React로', musicLabel:'음악', musicOnRepeat:'요즘 반복 재생 중:', musicLoading:'불러오는 중…', musicUnavailable:'음악을 사용할 수 없어요',
     ariaScrollLeft:'왼쪽으로 스크롤', ariaScrollRight:'오른쪽으로 스크롤', ariaLivePreview:'실시간 미리보기', ariaClose:'닫기', ariaPlayPause:'재생/일시정지', ariaToggleMusic:'음악 전환', secMsgTitle:'꾸미고 메시지 추가하기', btnAddMsg:'메시지 추가', btnFinalize:'꽃다발 완성하기', btnRestart:'처음부터 다시',
     rowFor:'받는 분', rowFrom:'보내는 분', rowDate:'날짜', rowType:'꽃다발 종류',
     btnSave:'꽃다발 다운로드', btnNew:'새로 만들기',
-    toastMsgSaved:'메시지가 저장됐어요 ✓', toastNew:'새 꽃다발 준비 완료 ✿', ariaRemoveOne:'하나 제거',
+    toastMsgSaved:'메시지가 저장됐어요 ✓', toastNew:'새 꽃다발 준비 완료 ✿', ariaRemoveOne:'하나 제거', toastCustomizeSoon:'커스터마이즈는 곧 만나요 ✿',
     toastGenerating:'이미지 생성 중…', toastSaved:'이미지가 저장됐어요 ✓', toastOpenedImage:'이미지가 열렸습니다 — 길게 눌러 저장하세요 ✿',
     toastSaveFail:'저장할 수 없어요 — 스크린샷을 시도해 보세요 ✿',
     flowers:{
@@ -1129,13 +1162,14 @@ wrapTitle:'ورق التغليف',
     resultSub:'شاركيها أو التقطي لقطة شاشة.',
     receiptSub:'أتيليه زهور افتراضي',
     btnShare:'مشاركة الباقة',
+    fabShare:'مشاركة', fabCustomize:'تخصيص', fabNew:'جديد',
     shareTitle:'صنعتها من أجلك 💕',
     defaultUser:'ضيف',
     jewelsLabel:'أضيفي جواهر إلى باقتك', jewelsOff:'إيقاف', jewelsOn:'تشغيل', creditsBuiltBy:'بواسطة', creditsWith:'باستخدام Claude Code في React', musicLabel:'موسيقى', musicOnRepeat:'يتكرر الآن:', musicLoading:'جارٍ التحميل…', musicUnavailable:'الموسيقى غير متاحة',
     ariaScrollLeft:'التمرير لليسار', ariaScrollRight:'التمرير لليمين', ariaLivePreview:'معاينة مباشرة', ariaClose:'إغلاق', ariaPlayPause:'تشغيل / إيقاف مؤقت', ariaToggleMusic:'تبديل الموسيقى', secMsgTitle:'خصّصي وأضيفي رسالة', btnAddMsg:'إضافة رسالة', btnFinalize:'إنهاء الباقة', btnRestart:'البدء من جديد',
     rowFor:'إلى', rowFrom:'من', rowDate:'التاريخ', rowType:'نوع الباقة',
     btnSave:'تحميل الباقة', btnNew:'إنشاء أخرى',
-    toastMsgSaved:'تم حفظ الرسالة ✓', toastNew:'جاهزة لباقة جديدة ✿', ariaRemoveOne:'إزالة واحدة',
+    toastMsgSaved:'تم حفظ الرسالة ✓', toastNew:'جاهزة لباقة جديدة ✿', ariaRemoveOne:'إزالة واحدة', toastCustomizeSoon:'التخصيص قريبًا ✿',
     toastGenerating:'جارٍ إنشاء الصورة…', toastSaved:'تم حفظ الصورة ✓', toastOpenedImage:'تم فتح الصورة — اضغط مطولاً للحفظ ✿',
     toastSaveFail:'تعذّر الحفظ — حاولي التقاط لقطة شاشة ✿',
     flowers:{
@@ -1205,8 +1239,9 @@ function applyTranslations() {
   s('btn-save-msg', t.btnSaveMsg);
   s('el-result-title', t.resultTitle);
   s('el-result-sub', t.resultSub);
-  s('el-btn-save', t.btnShare);
-  s('el-btn-new', t.btnNew);
+  s('el-fab-share', t.fabShare);
+  s('el-fab-customize', t.fabCustomize);
+  s('el-fab-new', t.fabNew);
   refreshMsgBtn();
   renderLiveTicket();
 
@@ -1218,6 +1253,9 @@ function applyTranslations() {
   aria('music-play-pause', t.ariaPlayPause);
   aria('music-toggle', t.ariaToggleMusic);
   aria('jewels-toggle', t.jewelsLabel);
+  aria('btn-save-img', t.btnShare);
+  aria('btn-new', t.btnNew);
+  aria('btn-customize', t.fabCustomize);
 
   p('input-to', t.phTo);
   p('input-from', t.phFrom);
@@ -1829,7 +1867,7 @@ function layoutGems() {
   const H = Math.max(document.documentElement.scrollHeight, window.innerHeight);
   layer.style.height = H + 'px';
   const sx = window.scrollX, sy = window.scrollY, PAD = 12;
-  const blockers = [...screen.querySelectorAll('.site-header > *, .sec, .action-row, .ticket-tilt, .result-top > *, .booth, .result-actions')]
+  const blockers = [...screen.querySelectorAll('.site-header > *, .sec, .action-row, .ticket-tilt, .result-top > *, .booth, .ticket-fab-group')]
     .map(el => el.getBoundingClientRect())
     .filter(r => r.width && r.height)
     .map(r => ({l:r.left+sx-PAD, r:r.right+sx+PAD, t:r.top+sy-PAD, b:r.bottom+sy+PAD}));
@@ -2434,6 +2472,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     resetBuilder();
     layoutGems();
     showToast(T.toastNew);
+  });
+
+  // Placeholder only — the actual frame-picker customization is a separate feature still to
+  // come. This just keeps the button from feeling dead while it's visible on its own.
+  document.getElementById('btn-customize').addEventListener('click', () => {
+    showToast(T.toastCustomizeSoon);
   });
 });
 </script>
