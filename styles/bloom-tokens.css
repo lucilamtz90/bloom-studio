@@ -4,55 +4,56 @@
    Usage: @import './bloom-tokens.css';
 ═══════════════════════════════════════════ */
 
-/* Fraunces' SOFT/WONK axes must be requested explicitly in the URL — Google Fonts
-   otherwise serves a static instance with them pinned at their defaults (WONK 0),
-   silently ignoring any font-variation-settings CSS asking for WONK 1. */
-@import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,SOFT,WONK,wght@0,9..144,0..100,0..1,300..900;1,9..144,0..100,0..1,300..900&family=Schibsted+Grotesk:wght@400;500;600;700&family=Courier+Prime&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Gabarito:wght@400;500&family=Momo+Trust+Display&family=Lobster&display=swap');
 
 :root {
-  /* ── Colors — from Bloom Studio Figma palette ── */
-  --color-parchment:   #F7F3E8;   /* Cream — backgrounds, card fills */
-  --color-canvas:      #F7F3E8;   /* Cream — page background */
-  --color-rose:        #E2B8C8;   /* Charm Pink — primary / buttons */
-  --color-mauve:       #E086AA;   /* Phalaenopsis — accent / hover */
-  --color-sage:        #C8D44A;   /* Citronelle — nature accent / tags */
-  --color-bark:        #2C2D1E;   /* Ink — body text / headings, the only dark text color on the site */
-  /* Secondary text isn't a separate color — it's Ink itself at reduced opacity,
-     so every dark tone on the site traces back to the one Figma Ink swatch. */
-  --color-stone:       rgba(44, 45, 30, 0.42);  /* Ink — secondary text */
-  --color-muted:       rgba(44, 45, 30, 0.58);  /* Ink — placeholder / captions */
-  --color-hairline:    rgba(44, 45, 30, 0.1);   /* Ink — dividers / borders */
-  --color-error:       #C47A7A;   /* error states */
-  --color-olive:       #7D8B3C;   /* Camping Gear — success states / green accent */
-  --color-forest:      #445A3C;   /* Dark Green — deep green accent */
+  /* ── Colors — editorial monochrome: warm greige + ink, one raspberry accent ──
+     Token names are kept from the original kit so every component keeps working;
+     only the values changed. rose/mauve are now the accent (buttons, small touches),
+     sage is a neutral warm grey used for panels and tags. */
+  --color-parchment:   #F6F3EE;   /* Paper — card fills */
+  --color-canvas:      #EFEBE5;   /* Greige — page background */
+  --color-rose:        #B5395A;   /* Raspberry — accent / primary buttons */
+  --color-mauve:       #8F2D47;   /* Deep raspberry — accent hover */
+  --color-sage:        #DDD7CD;   /* Warm grey — panels / neutral tags */
+  --color-blush:       #EBD3D7;   /* Soft pink — ticket stub */
+  --color-bark:        #1E1A19;   /* Ink — body text / headings, the only dark text color */
+  /* Secondary text is Ink at reduced opacity, so every dark tone traces to one swatch. */
+  --color-stone:       rgba(30, 26, 25, 0.5);   /* Ink — secondary text */
+  --color-muted:       rgba(30, 26, 25, 0.62);  /* Ink — placeholder / captions */
+  --color-hairline:    rgba(30, 26, 25, 0.16);  /* Ink — dividers */
+  --color-line:        rgba(30, 26, 25, 0.4);   /* Ink — 1px borders on inputs, cards, outlines */
+  --color-error:       #B5395A;   /* error states (same as accent) */
+  --color-olive:       #1E1A19;   /* success states — ink, no extra hue */
+  --color-forest:      #1E1A19;
+
+  /* ── Paper texture — hand-drawn grid notebook paper with tiny hearts (seamless 720px SVG tile) ── */
+  --texture-paper: url('../images/grid-paper.svg?v=2');
 
   /* ── Typography ── */
-  --font-display: 'Fraunces', serif;
-  --font-body:    'Schibsted Grotesk', sans-serif;
-  --font-mono:    'Courier Prime', monospace;
+  --font-display: 'Momo Trust Display', sans-serif;   /* headers / titles only */
+  --font-body:    'Gabarito', sans-serif;   /* everything else, regular weight */
+  --font-script:  'Lobster', cursive;   /* "Script" message font */
+  --font-mono:    'Gabarito', sans-serif;   /* a Gabarito variant — no monospace face on this site any more */
 
   /* ── Font sizes ── */
   --text-hero:    48px;
-  --text-h1:      32px;
-  --text-h2:      22px;
-  --text-body:    14px;
-  --text-sm:      12px;
-  --text-xs:      10px;
-  --text-label:   11px;
+  --text-h1:      34px;
+  --text-h2:      18px;   /* every config/page title (bloom-h2, switch-row__label) is this size */
+  --text-body:    15px;
+  --text-sm:      13px;
+  --text-xs:      11px;
+  --text-label:   12px;
   --text-mono:    13px;
 
-  /* ── Font weights ──
-     Matches the exact registered text styles pulled from Figma (not just the
-     annotation labels, which had drifted from the actual applied styles in a
-     couple of spots): Heading/Display=Bold, Heading/H2=SemiBold,
-     Heading/H3=Regular, Body/Caption=Medium, Body=Regular, UI/Button=SemiBold,
-     UI/Label=ExtraBold. */
-  --weight-light:     300;
+  /* ── Font weights ── both faces are used at regular (400) only; the scale is kept
+     so existing components resolve, but every step maps to 400. */
+  --weight-light:     400;
   --weight-regular:   400;
-  --weight-medium:    500;
-  --weight-semibold:  600;
-  --weight-bold:      700;
-  --weight-extrabold: 800;
+  --weight-medium:    400;
+  --weight-semibold:  400;
+  --weight-bold:      400;
+  --weight-extrabold: 400;
 
   /* ── Line heights ── */
   --leading-tight:  1.1;
@@ -68,10 +69,10 @@
   --tracking-widest:  0.22em;
 
   /* ── Border radius ── */
-  --radius-sm:   8px;
-  --radius-md:   16px;
-  --radius-lg:   24px;
-  --radius-pill: 999px;
+  --radius-sm:   0;
+  --radius-md:   0;
+  --radius-lg:   0;
+  --radius-pill: 0;   /* square everything — names kept so components need no edits */
 
   /* ── Spacing scale ── */
   --space-1:   4px;
@@ -85,11 +86,11 @@
   --space-12:  48px;
   --space-16:  64px;
 
-  /* ── Shadows ── */
-  --shadow-sm:  0 2px 12px rgba(44, 45, 30, 0.06);
-  --shadow-md:  0 8px 28px rgba(44, 45, 30, 0.10);
-  --shadow-lg:  0 20px 48px rgba(44, 45, 30, 0.12);
-  --shadow-rose: 0 8px 24px rgba(224, 134, 170, 0.35);
+  /* ── Shadows — flat design: separation comes from hairlines, not shadow ── */
+  --shadow-sm:   none;
+  --shadow-md:   none;
+  --shadow-lg:   none;
+  --shadow-rose: none;
 
   /* ── Transitions ── */
   --ease-bloom: cubic-bezier(0.4, 0, 0.2, 1);
