@@ -151,6 +151,37 @@ body {
   color: var(--color-parchment);
 }
 
+/* Pale pink, same tone as the ticket stub / music bar / footer washi tape. */
+.bloom-btn--tertiary {
+  background: var(--color-blush);
+  color: var(--color-bark);
+}
+.bloom-btn--tertiary:hover {
+  background: var(--color-mauve);
+  color: var(--color-parchment);
+}
+
+/* Circular icon-only shape modifier — combine with a colour variant above, e.g.
+   `bloom-btn bloom-btn--circle bloom-btn--primary`. Icons are inlined <svg fill="currentColor">
+   so they pick up whichever variant's `color` they're placed in; this just keeps them from
+   overflowing the circle regardless of each icon's own native aspect ratio. */
+.bloom-btn--circle {
+  width: 48px;
+  height: 48px;
+  padding: 0;
+  flex-shrink: 0;
+  /* A deliberate exception to the square-corners rule (--radius-pill is 0 everywhere else) —
+     same reasoning as the .bloom-switch pill: the shape itself is the thing being made. */
+  border-radius: 50%;
+}
+.bloom-btn--circle svg {
+  max-width: 20px;
+  max-height: 20px;
+  width: auto;
+  height: auto;
+  display: block;
+}
+
 /* Arrow icon inside button */
 .bloom-btn__arrow {
   font-size: 16px;

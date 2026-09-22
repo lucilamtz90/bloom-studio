@@ -34,11 +34,26 @@ buttons/labels. The page background is hand-drawn grid journaling paper with tin
 Site credits live in a pink "washi tape" footer (`.site-footer`/`.washi-tape`, deckle-edge
 clip-path, same `--color-blush` tone as the ticket stub / music bar) — not in the header.
 
-Three deliberate exceptions to the square-corners rule — don't "fix" these back to square:
+Four deliberate exceptions to the square-corners rule — don't "fix" these back to square:
 the photo-booth machine front (`.booth-panel`/`.booth-bezel`/`.booth-opening`) around the
 result-screen ticket; the pill-shaped `.bloom-switch` toggle (used for the "add jewels" and
-"music" switches), which copies the two-option track shape from lucilamtz90's portfolio; and
-the washi-tape footer's deckled clip-path edges + slight rotation.
+"music" switches), which copies the two-option track shape from lucilamtz90's portfolio; the
+washi-tape footer's deckled clip-path edges + slight rotation; and the `.bloom-btn--circle`
+floating action buttons (share/customize/new) on the result screen.
+
+### Circular buttons (`.bloom-btn--circle`)
+
+Combine with a colour variant, e.g. `bloom-btn bloom-btn--circle bloom-btn--primary`:
+- `bloom-btn--primary` (rose) — the primary action
+- `bloom-btn--outline` (transparent, bark border) — the secondary action
+- `bloom-btn--tertiary` (pale pink, `--color-blush` — same tone as the ticket stub/music
+  bar/footer) — the tertiary action
+
+Icons are inlined `<svg fill="currentColor">` (not `<img>`) so they inherit the variant's
+`color` — an outlined-style icon from the Figma icon library
+(figma.com/design/slBEDifQOEQ50FATyBAr8Z, node 144:201 "Icons"), saved to `images/icons/` for
+reference. A label below each button uses `.ticket-fab-label`, the same font styling as
+`.swatch-label` (the colour-swatch names) but always visible rather than a hover reveal.
 
 ### Component classes
 

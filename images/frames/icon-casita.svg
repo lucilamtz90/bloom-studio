@@ -1,0 +1,16 @@
+<svg preserveAspectRatio="none" overflow="visible" style="display: block;" width="112" height="112" viewBox="0 0 112 112" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g id="icon-casita">
+<rect id="Cuerpo" x="21" y="51" width="70" height="52" rx="2" fill="#FFFCF7" stroke="#3D4552" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<g id="Chimenea">
+<mask id="path-2-inside-1_0_4" fill="white">
+<rect x="73" y="14" width="12" height="29" rx="1"/>
+</mask>
+<rect x="73" y="14" width="12" height="29" rx="1" fill="#9EC7F0" stroke="#3D4552" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" mask="url(#path-2-inside-1_0_4)"/>
+</g>
+<path id="Techo" d="M8 51L56 12L104 51V60H8V51Z" fill="#9EC7F0" stroke="#3D4552" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<rect id="Puerta" x="48.8" y="73.8" width="15.4" height="29.4" rx="1.2" fill="#FFB5CF" stroke="#3D4552" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+<rect id="Ventana izquierda" x="29.75" y="67.75" width="11.5" height="12.5" rx="1.25" fill="#9EC7F0" stroke="#5C8CBA" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<rect id="Ventana derecha" x="70.75" y="67.75" width="11.5" height="12.5" rx="1.25" fill="#9EC7F0" stroke="#5C8CBA" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<circle id="Pomo" cx="60.5" cy="88.5" r="1.5" fill="#3D4552"/>
+</g>
+</svg>

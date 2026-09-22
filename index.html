@@ -298,6 +298,16 @@ body.music-bar-active{padding-top:44px}
 .char-bar.warn{color:var(--color-error)}
 .fields-2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
 @media(max-width:400px){.fields-2{grid-template-columns:1fr}}
+
+/* ── FRAME PICKER (Customize modal) ── */
+.frame-preview{display:flex;justify-content:center;padding:12px 0 20px}
+.frame-preview .ticket-frame,.frame-preview__plain{width:150px}
+.frame-preview__plain{position:relative;aspect-ratio:260/470;display:flex;align-items:center;justify-content:center}
+.frame-preview__plain .ticket-frame__slot{position:relative;inset:auto;width:100%;height:100%}
+.frame-picker{display:flex;gap:12px;justify-content:center;margin-bottom:22px}
+.frame-card{width:auto;flex:1;max-width:150px;padding:14px 8px 10px}
+.frame-card .flower-img{height:56px}
+.frame-card .flower-name{font-size:12px}
 .font-pick{display:flex;gap:10px;margin-top:2px}
 .font-opt{flex:1;padding:11px 8px;border-radius:0;background:var(--color-parchment);border:1px solid var(--color-line);cursor:pointer;text-align:center;transition:border-color 0.18s,background 0.18s}
 .font-opt:hover{border-color:var(--bark)}
@@ -328,6 +338,9 @@ body.music-bar-active{padding-top:44px}
 /* Photo-booth print-out: the ticket comes out of a slot in stepped bursts, like a strip
    being printed. The window clips it while it slides, then opens up so the tilt isn't cut off. */
 .booth{width:100%;max-width:460px;margin:0 auto;position:relative;z-index:1}
+.result-frame{width:100%;max-width:460px;margin:0 auto;position:relative;z-index:1}
+/* No decoration at all — just #ticket-wrap at its normal size, centered. */
+.result-plain{width:100%;max-width:460px;margin:0 auto;position:relative;z-index:1;display:flex;justify-content:center}
 /* Brushed-metal machine front with a recessed, rounded bezel and a black opening. Colours are
    mixes of the Bloom tokens so the machine stays inside the warm-grey palette. */
 .booth-panel{position:relative;z-index:1;height:104px;
@@ -358,6 +371,12 @@ body.music-bar-active{padding-top:44px}
   100%{transform:translateY(0)}
 }
 .ticket-wrap{position:relative;z-index:1;width:88%;max-width:330px;margin:0 auto}
+/* Scale target for fitting the ticket into a frame's photo slot — see fitToSlot(). Plain in
+   the booth (no inline transform); once a frame is chosen, this element moves into that
+   frame's .ticket-frame__slot on its own (JS moves .ticket-fab-group into the frame's own box
+   instead, not the tightly-clipped slot, so the buttons floating past the ticket's edge don't
+   get cut off) and gets a transform:scale() to fit. */
+.ticket-scale{display:block}
 .ticket{position:relative}
 /* The paper outline (with the perforation notches) is an inline SVG drawn by JS, not a CSS
    border/clip-path, so html2canvas can export it. Everything else sits above it. */
@@ -392,12 +411,89 @@ body.music-bar-active{padding-top:44px}
 .font-serif{font-family:var(--font-display);font-size:15px;font-style:normal}
 .font-script{font-family:var(--font-script);font-size:16px}
 .font-mono{font-family:var(--font-mono);font-size:16px;font-weight:500;letter-spacing:0.04em;text-transform:uppercase}
-.result-actions{display:flex;gap:12px;margin-top:24px;width:100%;max-width:360px;position:relative;z-index:1}
-.btn-act{flex:1;min-width:0;padding:14px 10px;line-height:1.3;text-align:center;border-radius:0;font-family:var(--font-body);font-size:13px;font-weight:400;letter-spacing:0.14em;text-transform:uppercase;cursor:pointer;transition:background 0.2s,color 0.2s;border:none;display:flex;align-items:center;justify-content:center;gap:7px}
-.btn-save{background:var(--color-rose);color:var(--parchment)}
-.btn-save:hover{background:var(--color-mauve)}
-.btn-new{background:transparent;color:var(--bark);border:1px solid var(--bark)}
-.btn-new:hover{background:var(--bark);color:var(--parchment)}
+/* Floating circular action buttons on the result screen — see .bloom-btn--circle and its
+   variants in bloom-components.css for the buttons themselves. Nested inside .ticket-wrap
+   (position:relative) — NOT .booth — so the 32px gap below/beside measures from the ticket's
+   own actual edge, not the wider photo-booth machine frame around it. .ticket-wrap sits inside
+   .booth-window, which clips it (overflow:hidden) until printing finishes, so it's naturally
+   held back until then; the opacity transition on top gives that reveal a gentle dissolve
+   instead of a hard cut when .booth-window's overflow switches to visible.
+   Mobile: a row centered below the ticket. Desktop (700px+): a column floating off its
+   right edge, vertically centered. */
+.ticket-fab-group{
+  display:flex;flex-direction:row;gap:22px;justify-content:center;
+  position:absolute;z-index:1;left:50%;top:100%;margin-top:32px;transform:translateX(-50%);
+  /* visibility:hidden is a hard, non-animatable backstop alongside opacity:0 — the group also
+     rides along with .ticket-wrap's own boothPrint transform (it's a child of it), and on at
+     least one real device the buttons briefly flashed mid print-out despite opacity staying at
+     0 in every check here. visibility can't have that kind of single-frame compositing glitch. */
+  opacity:0;visibility:hidden;pointer-events:none;transition:opacity 0.8s var(--ease-bloom),visibility 0s linear 0.8s;
+}
+.ticket-fab-group.visible{opacity:1;visibility:visible;pointer-events:auto;transition:opacity 0.8s var(--ease-bloom)}
+.ticket-fab{display:flex;flex-direction:column;align-items:center;gap:8px}
+/* Same font styling as .swatch-label (the colour-swatch names), just always visible instead
+   of a hover reveal. */
+.ticket-fab-label{font-size:11px;color:var(--muted);letter-spacing:0.06em;white-space:nowrap}
+@media(min-width:700px){
+  .ticket-fab-group{top:50%;left:100%;margin-top:0;margin-left:32px;transform:translateY(-50%);flex-direction:column;gap:22px}
+}
+@media(prefers-reduced-motion:reduce){.ticket-fab-group{transition:none}}
+
+/* ── TICKET FRAMES ──
+   Two decorative sticker-frames the ticket can be "customized" into (see the Customize
+   button/modal). Illustration assets + exact layout from Figma (qg1XzBbLzy0hamoMZaB7OB,
+   node 104:407) — colours here are specific to these two illustrations, not reusable Bloom
+   tokens, so they're literal hex rather than var()s. Every piece is positioned as a % of the
+   frame's own reference canvas (207x385 for casita, 204x385 for puntos) so the whole frame
+   scales cleanly between the small modal preview and the full size on the result screen —
+   just set .ticket-frame's width and aspect-ratio keeps height in proportion.
+   Layer order (back → slot → front) matches the Figma z-order: elements listed under
+   __back sat behind the "FOTO 1" placeholder layer in Figma, __front sat in front of it. */
+.ticket-frame{position:relative;width:260px;margin:0 auto;container-type:inline-size}
+.ticket-frame__back,.ticket-frame__front{position:absolute;inset:0;overflow:hidden}
+.ticket-frame__front{pointer-events:none}
+.ticket-frame__piece{position:absolute;display:block;max-width:none}
+.ticket-frame__slot{position:absolute;display:flex;align-items:center;justify-content:center;overflow:hidden}
+
+.ticket-frame--casita{aspect-ratio:207/385;background:#f7d9e8;border:1.5px solid #3d4552}
+.ticket-frame--casita .ticket-frame__slot{left:14.34%;top:19.65%;width:69.86%;height:64.69%;border-radius:3%/1.6%}
+.tfc-hill{left:-0.73%;top:80.4%;width:100.48%;height:18.96%}
+.tfc-cloud-l{left:-4.11%;top:3.51%;width:20.29%;height:5.1%}
+.tfc-cloud-r{left:80.92%;top:4.29%;width:20.77%;height:5.1%}
+.tfc-chimney{left:65.46%;top:4.81%;width:6.76%;height:8.83%;background:#9ec7f0;border:1.2px solid #3d4552;border-radius:1px}
+.tfc-roof{left:7.97%;top:2.99%;width:82.13%;height:14.03%}
+.tfc-heart-roof{left:44.16%;top:7.51%;width:10.72%;height:5.73%}
+.tfc-photo-bg{left:9.42%;top:16.23%;width:79.71%;height:72.21%;background:#9ec7f0;border:1.3px solid #3d4552;border-radius:2px}
+.tfc-star-top{left:12.17%;top:10.38%;width:6.82%;height:3.49%}
+.tfc-lock-arc{left:87.17%;top:21.87%;width:4.83%;height:2.66%}
+.tfc-lock-body{left:85.24%;top:24.53%;width:8.7%;height:3.9%;background:#badb7a;border:1px solid #3d4552;border-radius:3px}
+.tfc-heart-red{left:48.36%;top:87.33%;width:4.16%;height:2.23%}
+.tfc-heart-pink{left:86.09%;top:70.81%;width:4.16%;height:2.23%}
+.tfc-badge-heart{left:3.71%;top:78.13%;width:10.63%;height:5.71%;background:#ffe038;border:1px solid #3d4552;border-radius:3px}
+.tfc-badge-heart-icon{left:6.12%;top:79.36%;width:6.05%;height:3.24%}
+.tfc-star-br{left:76.37%;top:81.02%;width:11.03%;height:5.64%}
+.tfc-badge-gear{left:81.88%;top:52.6%;width:10.63%;height:5.71%;background:#ffc7db;border:1px solid #3d4552;border-radius:2px}
+.tfc-badge-gear-icon{left:84.21%;top:53.62%;width:6.17%;height:3.16%}
+.tfc-caption{left:34.25%;top:90.85%;font-family:var(--font-display);font-size:6.5cqw;color:#404240;white-space:nowrap}
+
+.ticket-frame--puntos{aspect-ratio:204/385;background:#faf7eb;border:1.4px solid #404240}
+.ticket-frame--puntos .ticket-frame__slot{left:7.25%;top:7.14%;width:84.62%;height:77.23%;border-radius:3%/1.6%}
+.tfp-dots{left:3.01%;top:2.32%;width:92.75%;height:152.52%;opacity:0.7}
+.tfp-heart-top{left:11.71%;top:5.44%;width:8.37%;height:4.41%}
+.tfp-star-badge-bg{left:81.12%;top:5.67%;width:10.75%;height:5.7%}
+.tfp-star-badge-icon{left:83.94%;top:7.18%;width:5.29%;height:2.67%}
+.tfp-star-yellow{left:3.01%;top:79.82%;width:10.3%;height:5.19%}
+.tfp-star-blue{left:87.11%;top:54.64%;width:9.53%;height:4.8%}
+.tfp-badge-heart{left:3.01%;top:39.26%;width:10.3%;height:4.71%;background:#addb6e;border:1px solid #404240;border-radius:3px}
+.tfp-badge-heart-icon{left:5.14%;top:40.01%;width:5.84%;height:3.08%}
+.tfp-tag-the{left:22.84%;top:87.51%;width:19.12%;height:6.49%;background:#ffc7db;border:1px solid #404240;border-radius:1px}
+.tfp-tag-moment{left:45.39%;top:87.51%;width:25.79%;height:6.49%;background:#ffc7db;border:1px solid #404240;border-radius:1px}
+.tfp-tag-the-txt{left:25.78%;top:88.81%;font-family:var(--font-display);font-size:6.5cqw;color:#404240;white-space:nowrap}
+.tfp-tag-moment-txt{left:49.31%;top:88.81%;font-family:var(--font-display);font-size:6.5cqw;color:#404240;white-space:nowrap}
+
+/* Larger on the result screen than in the modal's compact preview. */
+.result-frame .ticket-frame{width:280px}
+@media(min-width:480px){.result-frame .ticket-frame{width:320px}}
 
 /* ── TOASTS & SPARKLES ── */
 .toast-zone{position:fixed;bottom:28px;left:50%;transform:translateX(-50%);z-index:300;display:flex;flex-direction:column;gap:8px;align-items:center;pointer-events:none}
@@ -418,7 +514,8 @@ body.music-bar-active{padding-top:44px}
 
 [dir="rtl"] .r-row{flex-direction:row-reverse}
 [dir="rtl"] .fields-2{direction:rtl}
-[dir="rtl"] .result-actions{flex-direction:row-reverse}
+[dir="rtl"] .ticket-fab-group{flex-direction:row-reverse}
+@media(min-width:700px){[dir="rtl"] .ticket-fab-group{flex-direction:column}}
 
 @media(max-width:400px){.ticket-body{padding:28px 18px 8px}}
 </style>
@@ -572,6 +669,52 @@ body.music-bar-active{padding-top:44px}
   </div>
 </div>
 
+<!-- MODAL: CUSTOMIZE / FRAME PICKER — same .overlay/.sheet component as the message modal. -->
+<div id="modal-frame" class="overlay" role="dialog" aria-modal="true" aria-labelledby="el-frame-sheet-title">
+  <div class="sheet">
+    <button type="button" class="sheet-close" id="btn-close-frame" aria-label="close">×</button>
+    <h2 class="sheet-title bloom-h2" id="el-frame-sheet-title">Choose a frame for your ticket</h2>
+    <p class="sheet-sub" id="el-frame-sheet-sub">Pick a frame to wrap your bouquet in.</p>
+
+    <div class="frame-preview" id="frame-preview">
+      <div class="frame-preview__plain" id="fp-plain">
+        <div class="ticket-frame__slot" id="fp-plain-slot"></div>
+      </div>
+      <div class="ticket-frame ticket-frame--casita" id="fp-casita" style="display:none">
+        <div class="ticket-frame__back" id="fp-casita-back"></div>
+        <div class="ticket-frame__slot" id="fp-casita-slot"></div>
+        <div class="ticket-frame__front" id="fp-casita-front"></div>
+      </div>
+      <div class="ticket-frame ticket-frame--puntos" id="fp-puntos" style="display:none">
+        <div class="ticket-frame__back" id="fp-puntos-back"></div>
+        <div class="ticket-frame__slot" id="fp-puntos-slot"></div>
+        <div class="ticket-frame__front" id="fp-puntos-front"></div>
+      </div>
+    </div>
+
+    <div class="frame-picker" id="frame-picker">
+      <div class="flower-card frame-card" data-frame="casita" id="frame-card-casita" tabindex="0" role="button" aria-pressed="false">
+        <img class="flower-img" src="images/frames/icon-casita.svg" alt="">
+        <span class="flower-name" id="el-frame-casita">Casita</span>
+      </div>
+      <div class="flower-card frame-card" data-frame="puntos" id="frame-card-puntos" tabindex="0" role="button" aria-pressed="false">
+        <img class="flower-img" src="images/frames/icon-puntos.svg" alt="">
+        <span class="flower-name" id="el-frame-puntos">Puntos</span>
+      </div>
+      <div class="flower-card frame-card selected" data-frame="none" id="frame-card-none" tabindex="0" role="button" aria-pressed="true">
+        <svg class="flower-img" viewBox="0 0 36 48" width="36" height="48" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <path d="M0.5 0.5 H35.5 V33 A5 5 0 0 0 35.5 43 V47.5 H0.5 V43 A5 5 0 0 0 0.5 33 Z" fill="var(--color-parchment)" stroke="var(--color-line)"/>
+          <rect x="0.5" y="38.5" width="35" height="9" fill="var(--color-blush)"/>
+          <path d="M0.5 38.5 H35.5" stroke="var(--color-line)"/>
+        </svg>
+        <span class="flower-name" id="el-frame-none">Ticket</span>
+      </div>
+    </div>
+
+    <button class="btn-sheet-save bloom-btn bloom-btn--primary bloom-btn--lg" id="btn-choose-frame">Choose frame</button>
+  </div>
+</div>
+
 <!-- SCREEN 2: RESULT -->
 <div id="screen-result" class="screen">
   <div class="gradient-orbs" id="ticket-gradient" aria-hidden="true">
@@ -590,21 +733,68 @@ body.music-bar-active{padding-top:44px}
     </div>
     <div class="booth-window" id="booth-window">
       <div class="ticket-wrap" id="ticket-wrap">
-        <div class="ticket-tilt" id="result-tilt">
-          <div class="ticket" id="ticket">
-            <div class="ticket-body" id="ticket-body"></div>
-            <div id="ticket-footer"></div>
+        <!-- #ticket-scale is what moves into a frame's photo slot and gets scaled to fit (see
+             fitToSlot / applyFrameToResult in the frame JS) — .ticket-fab-group moves
+             separately, into the chosen frame's own box rather than its slot, so buttons
+             floating past the ticket's edge don't get clipped by the slot's overflow:hidden.
+             Both come back here (and .booth reappears) when frame is set back to 'none'. -->
+        <div class="ticket-scale" id="ticket-scale">
+          <div class="ticket-tilt" id="result-tilt">
+            <div class="ticket" id="ticket">
+              <div class="ticket-body" id="ticket-body"></div>
+              <div id="ticket-footer"></div>
+            </div>
+            <div class="ticket-glare" aria-hidden="true"></div>
           </div>
-          <div class="ticket-glare" aria-hidden="true"></div>
+        </div>
+
+        <div class="ticket-fab-group" id="ticket-fab-group">
+          <div class="ticket-fab">
+            <button type="button" class="bloom-btn bloom-btn--circle bloom-btn--primary" id="btn-save-img" aria-label="Share bouquet">
+              <svg viewBox="0 0 11.5337 17.2191" width="14" height="21" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path fill-rule="evenodd" clip-rule="evenodd" d="M8.95286 12.2302C9.40434 12.2315 9.84692 12.356 10.2329 12.5902H10.2229C11.3864 13.2842 11.7816 14.7812 11.1121 15.9591C10.4427 17.137 8.95431 17.5634 7.76265 16.9188C6.57098 16.2742 6.11339 14.7951 6.73286 13.5902L3.80286 10.6002C3.59129 10.729 3.36227 10.8267 3.12286 10.8902C2.9235 10.9414 2.71868 10.9683 2.51286 10.9702C1.24414 10.9767 0.171771 10.0317 0.0184914 8.77229C-0.134788 7.51284 0.67963 6.33829 1.91286 6.04023C2.10923 5.99233 2.31074 5.96882 2.51286 5.97023C3.02893 5.97063 3.53213 6.13137 3.95286 6.43023L6.73286 3.65023C6.31869 2.87635 6.34443 1.94119 6.80054 1.19127C7.25666 0.441348 8.0752 -0.0116146 8.95286 0.000226595C9.40347 -0.00204827 9.84611 0.118987 10.2329 0.350227C11.0188 0.782518 11.5145 1.60129 11.5331 2.49812C11.5517 3.39495 11.0905 4.23358 10.3231 4.69812C9.55575 5.16265 8.59884 5.18252 7.81286 4.75023L4.87286 7.69023C4.9055 7.76125 4.93225 7.83483 4.95286 7.91023C5.0857 8.44846 5.03285 9.01579 4.80286 9.52023L7.80286 12.5202C8.15807 12.3345 8.55206 12.2352 8.95286 12.2302ZM8.95286 1.50023C8.60181 1.49818 8.2754 1.68037 8.09286 1.98023C7.95651 2.20882 7.91692 2.48235 7.98286 2.74023C8.04059 2.99771 8.20389 3.21907 8.43286 3.35023C8.58621 3.44532 8.76244 3.49716 8.94286 3.50023C9.29592 3.50016 9.62279 3.31393 9.80286 3.01023C10.0862 2.53786 9.93416 1.92532 9.46286 1.64023C9.30976 1.54571 9.13275 1.49712 8.95286 1.50023ZM2.51286 9.47023C2.04216 9.48394 1.62568 9.16741 1.51286 8.71023C1.4499 8.45103 1.4931 8.17742 1.63286 7.95023C1.76926 7.72599 1.98835 7.56436 2.24286 7.50023H2.48286C2.95356 7.48651 3.37004 7.80304 3.48286 8.26023C3.54604 8.51497 3.50653 8.78435 3.37286 9.01023L3.31286 9.08023C3.1802 9.26998 2.98581 9.40781 2.76286 9.47023H2.51286ZM8.94286 15.6802C9.2939 15.6823 9.62031 15.5001 9.80286 15.2002C10.0534 14.7392 9.90496 14.1629 9.46286 13.8802C9.3095 13.7851 9.13328 13.7333 8.95286 13.7302C8.59979 13.7303 8.27292 13.9165 8.09286 14.2202C7.80954 14.6926 7.96155 15.3051 8.43286 15.5902C8.59108 15.6674 8.76778 15.6986 8.94286 15.6802Z" fill="currentColor"/></svg>
+            </button>
+            <span class="ticket-fab-label" id="el-fab-share">Share</span>
+          </div>
+          <div class="ticket-fab">
+            <button type="button" class="bloom-btn bloom-btn--circle bloom-btn--tertiary" id="btn-customize" aria-label="Customize">
+              <svg viewBox="0 0 19.0745 19.0303" width="20" height="20" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><g><path fill-rule="evenodd" clip-rule="evenodd" d="M5.71 12.3803L6.44 8.97028C6.54627 8.49641 6.78566 8.06274 7.13 7.72028L13.8 1.11028C14.4764 0.421256 15.3947 0.023063 16.36 0.000280562C17.088 -0.0101505 17.79 0.270654 18.31 0.780281C19.4462 2.12275 19.2995 4.1275 17.98 5.29028L11.31 11.9603C10.9675 12.3046 10.5339 12.544 10.06 12.6503L6.65 13.3803H6.46C6.21071 13.3898 5.97261 13.2764 5.82292 13.0768C5.67324 12.8773 5.63103 12.6169 5.71 12.3803ZM8.19 8.79028C8.04988 8.92606 7.95255 9.09987 7.91 9.29028L7.42 11.6203L9.75 11.1203C9.94041 11.0777 10.1142 10.9804 10.25 10.8403L16.92 4.17028C17.6507 3.5853 17.7957 2.53076 17.25 1.77028C17.0111 1.54199 16.6903 1.41945 16.36 1.43028C15.7906 1.45315 15.2525 1.69708 14.86 2.11028L8.19 8.79028Z" fill="currentColor"/><path d="M17.83 8.04028C17.418 8.04567 17.0854 8.37832 17.08 8.79028V14.4803C17.0934 15.2846 16.7833 16.0605 16.2192 16.634C15.6551 17.2075 14.8844 17.5304 14.08 17.5303H4.55C2.88737 17.4977 1.55511 16.1432 1.55 14.4803V4.99028C1.5773 3.32537 2.93487 1.99006 4.6 1.99028H10.29C10.7042 1.99028 11.04 1.65449 11.04 1.24028C11.04 0.826067 10.7042 0.490281 10.29 0.490281H4.55C2.0565 0.49013 0.0274011 2.49693 0 4.99028V14.4803C0 16.9932 2.0371 19.0303 4.55 19.0303H14.04C16.549 19.0248 18.58 16.9893 18.58 14.4803V8.79028C18.5746 8.37832 18.242 8.04567 17.83 8.04028Z" fill="currentColor"/></g></svg>
+            </button>
+            <span class="ticket-fab-label" id="el-fab-customize">Customize</span>
+          </div>
+          <div class="ticket-fab">
+            <button type="button" class="bloom-btn bloom-btn--circle bloom-btn--outline" id="btn-new" aria-label="Create another bouquet">
+              <svg viewBox="0 0 17.5 17.5" width="18" height="18" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M16.75 8H9.5V0.75C9.5 0.335786 9.16421 0 8.75 0C8.33579 0 8 0.335786 8 0.75V8H0.75C0.335786 8 0 8.33579 0 8.75C0 9.16421 0.335786 9.5 0.75 9.5H8V16.75C8 17.1642 8.33579 17.5 8.75 17.5C9.16421 17.5 9.5 17.1642 9.5 16.75V9.5H16.75C17.1642 9.5 17.5 9.16421 17.5 8.75C17.5 8.33579 17.1642 8 16.75 8Z" fill="currentColor"/></svg>
+            </button>
+            <span class="ticket-fab-label" id="el-fab-new">New</span>
+          </div>
         </div>
       </div>
     </div>
   </div>
 
-  <div class="result-actions">
-    <button class="btn-act btn-save" id="btn-save-img"><span id="el-btn-save">Share bouquet</span></button>
-    <button class="btn-act btn-new" id="btn-new"><span id="el-btn-new">Create another bouquet</span></button>
+  <!-- Alternate homes for #ticket-wrap once a frame is chosen (see applyFrame()) — hidden
+       until then. Each frame's decorative pieces are filled in by JS (buildFrameLayer()) from
+       the same piece list the modal preview uses, so the markup isn't duplicated by hand. -->
+  <div class="result-frame" id="result-frame-casita" style="display:none">
+    <div class="ticket-frame ticket-frame--casita" id="rf-casita-frame">
+      <div class="ticket-frame__back" id="rf-casita-back"></div>
+      <div class="ticket-frame__slot" id="rf-casita-slot"></div>
+      <div class="ticket-frame__front" id="rf-casita-front"></div>
+    </div>
   </div>
+  <div class="result-frame" id="result-frame-puntos" style="display:none">
+    <div class="ticket-frame ticket-frame--puntos" id="rf-puntos-frame">
+      <div class="ticket-frame__back" id="rf-puntos-back"></div>
+      <div class="ticket-frame__slot" id="rf-puntos-slot"></div>
+      <div class="ticket-frame__front" id="rf-puntos-front"></div>
+    </div>
+  </div>
+
+  <!-- Picking "Ticket" (no frame) from Customize lands here, NOT back in the photo booth —
+       the booth's print-out is a one-time reveal for when the bouquet is first finished, not
+       something that should replay every time the frame choice changes. Just #ticket-wrap,
+       at its normal size, with nothing decorative around it. -->
+  <div class="result-plain" id="result-plain" style="display:none"></div>
 </div>
 
 <footer class="site-footer">
@@ -643,6 +833,8 @@ wrapTitle:'Wrapping paper',
     btnCreateTxt:'Create my bouquet',
     sheetTitle:'Write a cute message ✉',
     sheetSub:'Your note will appear on the bouquet card',
+    frameSheetTitle:'Choose a frame for your ticket', frameSheetSub:'Pick a frame to wrap your bouquet in.',
+    frameCasita:'House', framePuntos:'Dots', frameNone:'Ticket', btnChooseFrame:'Choose frame',
     lblTo:'To', lblFrom:'From', lblMsg:'Message', lblFont:'Message font',
     phTo:"Recipient's name", phFrom:'Your name', phMsg:'Write something sweet… ♡',
     fontElegant:'Elegant', fontScript:'Script', fontTypewriter:'Typewriter',
@@ -651,6 +843,7 @@ wrapTitle:'Wrapping paper',
     resultSub:'Share it or take a screenshot.',
     receiptSub:'virtual flower atelier',
     btnShare:'Share bouquet',
+    fabShare:'Share', fabCustomize:'Customize', fabNew:'New',
     shareTitle:'I made this for you 💕',
     defaultUser:'Guest',
     jewelsLabel:'Add jewels to your bouquet', jewelsOff:'OFF', jewelsOn:'ON', creditsBuiltBy:'Built by', creditsWith:'with Claude Code in React', musicLabel:'Music', musicOnRepeat:'On repeat lately:', musicLoading:'Loading…', musicUnavailable:'Music unavailable',
@@ -696,6 +889,8 @@ wrapTitle:'Papel de envoltura',
     btnCreateTxt:'Crear mi ramo',
     sheetTitle:'Escribe un mensaje bonito ✉',
     sheetSub:'Tu nota aparecerá en la tarjeta del ramo',
+    frameSheetTitle:'Elige un frame para tu ticket', frameSheetSub:'Selecciona un marco para enmarcar tu ramo.',
+    frameCasita:'Casita', framePuntos:'Puntos', frameNone:'Ticket', btnChooseFrame:'Elegir frame',
     lblTo:'Para', lblFrom:'De', lblMsg:'Mensaje', lblFont:'Fuente del mensaje',
     phTo:'Nombre del destinatario', phFrom:'Tu nombre', phMsg:'Escribe algo dulce… ♡',
     fontElegant:'Elegante', fontScript:'Cursiva', fontTypewriter:'Máquina de escribir',
@@ -704,6 +899,7 @@ wrapTitle:'Papel de envoltura',
     resultSub:'Compártelo o toma screenshot.',
     receiptSub:'atelier virtual de flores',
     btnShare:'Compartir ramo',
+    fabShare:'Compartir', fabCustomize:'Personalizar', fabNew:'Nuevo',
     shareTitle:'Lo hice para ti 💕',
     defaultUser:'Usuario',
     jewelsLabel:'Agregar joyas a tu ramo', jewelsOff:'NO', jewelsOn:'SÍ', creditsBuiltBy:'Construido por', creditsWith:'con Claude Code en React', musicLabel:'Música', musicOnRepeat:'Sonando ahora:', musicLoading:'Cargando…', musicUnavailable:'Música no disponible',
@@ -749,6 +945,8 @@ wrapTitle:"Papier d'emballage",
     btnCreateTxt:'Créer mon bouquet',
     sheetTitle:'Écrire un joli message ✉',
     sheetSub:'Ta note apparaîtra sur la carte du bouquet',
+    frameSheetTitle:'Choisis un cadre pour ton ticket', frameSheetSub:'Sélectionne un cadre pour habiller ton bouquet.',
+    frameCasita:'Maisonnette', framePuntos:'Pois', frameNone:'Ticket', btnChooseFrame:'Choisir ce cadre',
     lblTo:'Pour', lblFrom:'De', lblMsg:'Message', lblFont:'Police du message',
     phTo:'Nom du destinataire', phFrom:'Ton nom', phMsg:'Écris quelque chose de doux… ♡',
     fontElegant:'Élégant', fontScript:'Manuscrit', fontTypewriter:'Machine à écrire',
@@ -757,6 +955,7 @@ wrapTitle:"Papier d'emballage",
     resultSub:'Partage-le ou fais une capture d’écran.',
     receiptSub:'atelier floral virtuel',
     btnShare:'Partager le bouquet',
+    fabShare:'Partager', fabCustomize:'Personnaliser', fabNew:'Nouveau',
     shareTitle:'Je l’ai fait pour toi 💕',
     defaultUser:'Invité',
     jewelsLabel:'Ajouter des bijoux à ton bouquet', jewelsOff:'NON', jewelsOn:'OUI', creditsBuiltBy:'Conçu par', creditsWith:'avec Claude Code en React', musicLabel:'Musique', musicOnRepeat:'En boucle en ce moment :', musicLoading:'Chargement…', musicUnavailable:'Musique indisponible',
@@ -802,6 +1001,8 @@ wrapTitle:'Papel de embrulho',
     btnCreateTxt:'Criar meu buquê',
     sheetTitle:'Escrever uma mensagem fofa ✉',
     sheetSub:'Sua nota aparecerá no cartão do buquê',
+    frameSheetTitle:'Escolha uma moldura para o seu ticket', frameSheetSub:'Selecione uma moldura para envolver seu buquê.',
+    frameCasita:'Casinha', framePuntos:'Bolinhas', frameNone:'Ticket', btnChooseFrame:'Escolher moldura',
     lblTo:'Para', lblFrom:'De', lblMsg:'Mensagem', lblFont:'Fonte da mensagem',
     phTo:'Nome do destinatário', phFrom:'Seu nome', phMsg:'Escreva algo doce… ♡',
     fontElegant:'Elegante', fontScript:'Manuscrito', fontTypewriter:'Máquina de escrever',
@@ -810,6 +1011,7 @@ wrapTitle:'Papel de embrulho',
     resultSub:'Compartilhe ou tire um print.',
     receiptSub:'ateliê virtual de flores',
     btnShare:'Compartilhar buquê',
+    fabShare:'Compartilhar', fabCustomize:'Personalizar', fabNew:'Novo',
     shareTitle:'Eu fiz isso para você 💕',
     defaultUser:'Convidado',
     jewelsLabel:'Adicionar joias ao seu buquê', jewelsOff:'NÃO', jewelsOn:'SIM', creditsBuiltBy:'Feito por', creditsWith:'com Claude Code em React', musicLabel:'Música', musicOnRepeat:'Tocando agora:', musicLoading:'Carregando…', musicUnavailable:'Música indisponível',
@@ -855,6 +1057,8 @@ wrapTitle:'Geschenkpapier',
     btnCreateTxt:'Meinen Strauß erstellen',
     sheetTitle:'Eine süße Nachricht schreiben ✉',
     sheetSub:'Deine Notiz erscheint auf der Straußkarte',
+    frameSheetTitle:'Wähle einen Rahmen für dein Ticket', frameSheetSub:'Wähle einen Rahmen, der deinen Strauß umgibt.',
+    frameCasita:'Häuschen', framePuntos:'Punkte', frameNone:'Ticket', btnChooseFrame:'Rahmen wählen',
     lblTo:'An', lblFrom:'Von', lblMsg:'Nachricht', lblFont:'Nachrichtenschrift',
     phTo:'Name des Empfängers', phFrom:'Dein Name', phMsg:'Schreibe etwas Süßes… ♡',
     fontElegant:'Elegant', fontScript:'Schreibschrift', fontTypewriter:'Schreibmaschine',
@@ -863,6 +1067,7 @@ wrapTitle:'Geschenkpapier',
     resultSub:'Teile ihn oder mach einen Screenshot.',
     receiptSub:'virtuelles Blumenatelier',
     btnShare:'Strauß teilen',
+    fabShare:'Teilen', fabCustomize:'Anpassen', fabNew:'Neu',
     shareTitle:'Für dich gemacht 💕',
     defaultUser:'Gast',
     jewelsLabel:'Schmucksteine zum Strauß hinzufügen', jewelsOff:'AUS', jewelsOn:'AN', creditsBuiltBy:'Erstellt von', creditsWith:'mit Claude Code in React', musicLabel:'Musik', musicOnRepeat:'Gerade in Dauerschleife:', musicLoading:'Wird geladen…', musicUnavailable:'Musik nicht verfügbar',
@@ -908,6 +1113,8 @@ wrapTitle:'Carta da regalo',
     btnCreateTxt:'Crea il mio bouquet',
     sheetTitle:'Scrivi un messaggio carino ✉',
     sheetSub:'La tua nota apparirà sulla scheda del bouquet',
+    frameSheetTitle:'Scegli una cornice per il tuo ticket', frameSheetSub:'Seleziona una cornice per avvolgere il tuo bouquet.',
+    frameCasita:'Casetta', framePuntos:'Pois', frameNone:'Ticket', btnChooseFrame:'Scegli cornice',
     lblTo:'A', lblFrom:'Da', lblMsg:'Messaggio', lblFont:'Carattere del messaggio',
     phTo:'Nome del destinatario', phFrom:'Il tuo nome', phMsg:'Scrivi qualcosa di dolce… ♡',
     fontElegant:'Elegante', fontScript:'Corsivo', fontTypewriter:'Macchina da scrivere',
@@ -916,6 +1123,7 @@ wrapTitle:'Carta da regalo',
     resultSub:'Condividilo o fai uno screenshot.',
     receiptSub:'atelier floreale virtuale',
     btnShare:'Condividi il bouquet',
+    fabShare:'Condividi', fabCustomize:'Personalizza', fabNew:'Nuovo',
     shareTitle:'L’ho fatto per te 💕',
     defaultUser:'Ospite',
     jewelsLabel:'Aggiungi gioielli al bouquet', jewelsOff:'NO', jewelsOn:'SÌ', creditsBuiltBy:'Creato da', creditsWith:'con Claude Code in React', musicLabel:'Musica', musicOnRepeat:'In riproduzione:', musicLoading:'Caricamento…', musicUnavailable:'Musica non disponibile',
@@ -961,6 +1169,8 @@ wrapTitle:'ラッピングペーパー',
     btnCreateTxt:'花束を作る',
     sheetTitle:'かわいいメッセージを書く ✉',
     sheetSub:'メモは花束カードに表示されます',
+    frameSheetTitle:'チケットのフレームを選んでね', frameSheetSub:'花束を包むフレームを選んでください。',
+    frameCasita:'おうち', framePuntos:'ドット', frameNone:'チケット', btnChooseFrame:'このフレームにする',
     lblTo:'宛先', lblFrom:'送り主', lblMsg:'メッセージ', lblFont:'フォント',
     phTo:'受取人のお名前', phFrom:'あなたのお名前', phMsg:'甘いメッセージを書いて… ♡',
     fontElegant:'エレガント', fontScript:'手書き風', fontTypewriter:'タイプライター',
@@ -969,6 +1179,7 @@ wrapTitle:'ラッピングペーパー',
     resultSub:'シェアするか、スクリーンショットを撮ってね。',
     receiptSub:'バーチャルフラワーアトリエ',
     btnShare:'花束をシェア',
+    fabShare:'シェア', fabCustomize:'カスタマイズ', fabNew:'新規',
     shareTitle:'あなたのために作りました 💕',
     defaultUser:'ゲスト',
     jewelsLabel:'花束にジュエリーを追加', jewelsOff:'オフ', jewelsOn:'オン', creditsBuiltBy:'制作:', creditsWith:'Claude CodeとReactで', musicLabel:'音楽', musicOnRepeat:'今リピート中:', musicLoading:'読み込み中…', musicUnavailable:'音楽を利用できません',
@@ -1014,6 +1225,8 @@ wrapTitle:'包装纸',
     btnCreateTxt:'创建我的花束',
     sheetTitle:'写一条甜蜜的留言 ✉',
     sheetSub:'你的留言将显示在花束卡片上',
+    frameSheetTitle:'为你的票据选一个相框', frameSheetSub:'选一个相框来装饰你的花束。',
+    frameCasita:'小屋', framePuntos:'圆点', frameNone:'票据', btnChooseFrame:'选择相框',
     lblTo:'收件人', lblFrom:'发件人', lblMsg:'留言', lblFont:'留言字体',
     phTo:'收件人姓名', phFrom:'你的姓名', phMsg:'写点甜蜜的话… ♡',
     fontElegant:'优雅', fontScript:'手写体', fontTypewriter:'打字机',
@@ -1022,6 +1235,7 @@ wrapTitle:'包装纸',
     resultSub:'分享出去，或者截图保存吧。',
     receiptSub:'虚拟花艺工坊',
     btnShare:'分享花束',
+    fabShare:'分享', fabCustomize:'定制', fabNew:'新建',
     shareTitle:'这是为你做的 💕',
     defaultUser:'访客',
     jewelsLabel:'给花束添加宝石', jewelsOff:'关', jewelsOn:'开', creditsBuiltBy:'制作者：', creditsWith:'用 Claude Code（React）制作', musicLabel:'音乐', musicOnRepeat:'最近单曲循环:', musicLoading:'加载中…', musicUnavailable:'音乐不可用',
@@ -1067,6 +1281,8 @@ wrapTitle:'포장지',
     btnCreateTxt:'꽃다발 만들기',
     sheetTitle:'귀여운 메시지 쓰기 ✉',
     sheetSub:'메모가 꽃다발 카드에 표시됩니다',
+    frameSheetTitle:'티켓에 넣을 프레임을 골라주세요', frameSheetSub:'꽃다발을 감쌀 프레임을 선택하세요.',
+    frameCasita:'하우스', framePuntos:'도트', frameNone:'티켓', btnChooseFrame:'이 프레임으로 하기',
     lblTo:'받는 분', lblFrom:'보내는 분', lblMsg:'메시지', lblFont:'메시지 폰트',
     phTo:'받는 분 이름', phFrom:'보내는 분 이름', phMsg:'달콤한 메시지를 써주세요… ♡',
     fontElegant:'우아한', fontScript:'손글씨', fontTypewriter:'타자기',
@@ -1075,6 +1291,7 @@ wrapTitle:'포장지',
     resultSub:'공유하거나 스크린샷으로 남겨보세요.',
     receiptSub:'가상 플라워 아뜰리에',
     btnShare:'꽃다발 공유하기',
+    fabShare:'공유', fabCustomize:'커스터마이즈', fabNew:'새로',
     shareTitle:'너를 위해 만들었어 💕',
     defaultUser:'게스트',
     jewelsLabel:'꽃다발에 보석 추가하기', jewelsOff:'꺼짐', jewelsOn:'켜짐', creditsBuiltBy:'제작:', creditsWith:'Claude Code와 React로', musicLabel:'음악', musicOnRepeat:'요즘 반복 재생 중:', musicLoading:'불러오는 중…', musicUnavailable:'음악을 사용할 수 없어요',
@@ -1121,6 +1338,8 @@ wrapTitle:'ورق التغليف',
     btnCreateTxt:'إنشاء باقتي',
     sheetTitle:'اكتبي رسالة لطيفة ✉',
     sheetSub:'ستظهر ملاحظتك على بطاقة الباقة',
+    frameSheetTitle:'اختاري إطارًا لتذكرتك', frameSheetSub:'اختاري إطارًا لتزيين باقتك.',
+    frameCasita:'بيت صغير', framePuntos:'نقاط', frameNone:'تذكرة', btnChooseFrame:'اختيار الإطار',
     lblTo:'إلى', lblFrom:'من', lblMsg:'الرسالة', lblFont:'خط الرسالة',
     phTo:'اسم المستلم', phFrom:'اسمك', phMsg:'اكتبي شيئاً رقيقاً… ♡',
     fontElegant:'أنيق', fontScript:'خط يدوي', fontTypewriter:'آلة كاتبة',
@@ -1129,6 +1348,7 @@ wrapTitle:'ورق التغليف',
     resultSub:'شاركيها أو التقطي لقطة شاشة.',
     receiptSub:'أتيليه زهور افتراضي',
     btnShare:'مشاركة الباقة',
+    fabShare:'مشاركة', fabCustomize:'تخصيص', fabNew:'جديد',
     shareTitle:'صنعتها من أجلك 💕',
     defaultUser:'ضيف',
     jewelsLabel:'أضيفي جواهر إلى باقتك', jewelsOff:'إيقاف', jewelsOn:'تشغيل', creditsBuiltBy:'بواسطة', creditsWith:'باستخدام Claude Code في React', musicLabel:'موسيقى', musicOnRepeat:'يتكرر الآن:', musicLoading:'جارٍ التحميل…', musicUnavailable:'الموسيقى غير متاحة',
@@ -1205,8 +1425,15 @@ function applyTranslations() {
   s('btn-save-msg', t.btnSaveMsg);
   s('el-result-title', t.resultTitle);
   s('el-result-sub', t.resultSub);
-  s('el-btn-save', t.btnShare);
-  s('el-btn-new', t.btnNew);
+  s('el-fab-share', t.fabShare);
+  s('el-fab-customize', t.fabCustomize);
+  s('el-fab-new', t.fabNew);
+  s('el-frame-sheet-title', t.frameSheetTitle);
+  s('el-frame-sheet-sub', t.frameSheetSub);
+  s('el-frame-casita', t.frameCasita);
+  s('el-frame-puntos', t.framePuntos);
+  s('el-frame-none', t.frameNone);
+  s('btn-choose-frame', t.btnChooseFrame);
   refreshMsgBtn();
   renderLiveTicket();
 
@@ -1218,6 +1445,9 @@ function applyTranslations() {
   aria('music-play-pause', t.ariaPlayPause);
   aria('music-toggle', t.ariaToggleMusic);
   aria('jewels-toggle', t.jewelsLabel);
+  aria('btn-save-img', t.btnShare);
+  aria('btn-new', t.btnNew);
+  aria('btn-customize', t.fabCustomize);
 
   p('input-to', t.phTo);
   p('input-from', t.phFrom);
@@ -1311,6 +1541,7 @@ let positionCounter = 0;
 const state = {
   selected:[], ribbonColor:'#FFFFFF', jewelsOn:false,
   toName:'', fromName:'', message:'', font:'serif',
+  frame:'none', // 'none' | 'casita' | 'puntos' — see the Customize modal / FRAME PICKER section
 };
 
 
@@ -1757,16 +1988,263 @@ function showResult() {
   // Restart the photo-booth print: the ticket slides out of the slot in stepped bursts.
   const win = document.getElementById('booth-window');
   const wrap = document.getElementById('ticket-wrap');
+  const fabGroup = document.getElementById('ticket-fab-group');
   win.classList.remove('printed');
   wrap.classList.remove('print');
+  fabGroup.classList.remove('visible');
   void wrap.offsetWidth;
   wrap.classList.add('print');
-  wrap.addEventListener('animationend', () => win.classList.add('printed'), {once:true});
+  // The circular action buttons dissolve in once the ticket has fully printed, not before.
+  wrap.addEventListener('animationend', () => { win.classList.add('printed'); fabGroup.classList.add('visible'); }, {once:true});
   playShutterSound();
   const bouquet = document.getElementById('receipt-bouquet');
   if (bouquet) bouquet.classList.add('visible');
   setTimeout(() => splashPetals(document.getElementById('ticket')), prefersReducedMotion() ? 0 : 2600);
   prerenderTicketCanvas();
+}
+
+
+/* ════════════════
+   FRAME PICKER — "Customize" modal + the two decorative ticket frames it offers.
+   Illustration assets + exact layout from Figma (qg1XzBbLzy0hamoMZaB7OB, node 104:407).
+   Each frame is two layers (__back / __front) around a __slot — see the .ticket-frame CSS
+   for how the pieces are positioned (as a % of the frame's own reference canvas, so it
+   scales cleanly between the modal's small preview and the full size on the result screen).
+════════════════ */
+// Same numbers as the .ticket-frame--casita/puntos .ticket-frame__slot CSS rules — reused by
+// the share-image composition (buildShareFrameBox), which draws the frame with plain <img>
+// PNGs instead of live CSS (see the comment there for why).
+const FRAME_SLOT_PCT = {
+  casita: {left: 14.34, top: 19.65, width: 69.86, height: 64.69},
+  puntos: {left: 7.25, top: 7.14, width: 84.62, height: 77.23},
+};
+const FRAME_ASPECT = {casita: 207 / 385, puntos: 204 / 385};
+
+const FRAME_ASSETS = {
+  casita: {
+    back: [
+      ['tfc-hill','hill.svg'],['tfc-cloud-l','cloud-left.svg'],['tfc-cloud-r','cloud-right.svg'],
+      ['tfc-chimney',null],['tfc-roof','roof.svg'],['tfc-heart-roof','heart-roof.svg'],
+      ['tfc-photo-bg',null],['tfc-star-top','star-top.svg'],['tfc-lock-arc','lock-arc.svg'],
+      ['tfc-lock-body',null],['tfc-heart-red','heart-red.svg'],['tfc-heart-pink','heart-pink.svg'],
+    ],
+    front: [
+      ['tfc-badge-heart',null],['tfc-badge-heart-icon','heart-badge-bl.svg'],['tfc-star-br','star-br.svg'],
+      ['tfc-badge-gear',null],['tfc-badge-gear-icon','star-badge-mid.svg'],
+    ],
+    // The "nice day :)" caption is Figma's own decorative flourish text, not functional
+    // copy — left as-is rather than translated, same treatment as a decorative emoji.
+    frontExtra: '<div class="ticket-frame__piece tfc-caption">nice day :)</div>',
+  },
+  puntos: {
+    back: [['tfp-dots','dots-pattern.svg']],
+    front: [
+      ['tfp-heart-top','heart-top.svg'],['tfp-star-badge-bg','star-badge.svg'],['tfp-star-badge-icon','star-badge-icon.svg'],
+      ['tfp-star-yellow','star-yellow.svg'],['tfp-star-blue','star-blue.svg'],
+      ['tfp-badge-heart',null],['tfp-badge-heart-icon','heart-bottom.svg'],
+      ['tfp-tag-the',null],['tfp-tag-moment',null],
+    ],
+    frontExtra: '<div class="ticket-frame__piece tfp-tag-the-txt">nice</div><div class="ticket-frame__piece tfp-tag-moment-txt">day :)</div>',
+  },
+};
+
+function frameLayerHTML(type, layer) {
+  const def = FRAME_ASSETS[type];
+  let html = def[layer].map(([cls, file]) => file
+    ? `<img class="ticket-frame__piece ${cls}" src="images/frames/${type}/${file}" alt="">`
+    : `<div class="ticket-frame__piece ${cls}"></div>`
+  ).join('');
+  if (layer === 'front' && def.frontExtra) html += def.frontExtra;
+  return html;
+}
+
+// Fills both the result-screen frame containers (rf-*) and the modal preview's own copies
+// (fp-*) from the same piece list, so the ~20 decorative images per frame are only
+// described once instead of hand-written twice.
+function initFrameAssets() {
+  ['rf', 'fp'].forEach(prefix => {
+    ['casita', 'puntos'].forEach(type => {
+      const back = document.getElementById(`${prefix}-${type}-back`);
+      const front = document.getElementById(`${prefix}-${type}-front`);
+      if (back) back.innerHTML = frameLayerHTML(type, 'back');
+      if (front) front.innerHTML = frameLayerHTML(type, 'front');
+    });
+  });
+}
+
+// Scales an element down to fit inside a flex-centered slot, preserving aspect ratio. Used
+// both for the modal's disposable preview clone and for the real #ticket-scale on the result
+// screen — in both cases the element being scaled has no percentage-based width of its own
+// (a plain block that just fills whatever it's given), so its "natural" size can be measured
+// directly once detached from whatever was constraining it, no reference width needed.
+function fitToSlot(el, slotEl, retriesLeft = 3) {
+  if (!el || !slotEl) return;
+  el.style.transform = 'none';
+  const naturalW = el.offsetWidth, naturalH = el.offsetHeight;
+  const slotW = slotEl.clientWidth, slotH = slotEl.clientHeight;
+  if (!naturalW || !naturalH || !slotW || !slotH) {
+    // A 0 here usually just means the browser hasn't finished laying out el/slotEl yet (e.g.
+    // right after appendChild in the same tick) — silently giving up left the ticket at full,
+    // untransformed size in whatever broke this way. Retry a couple of times on the next
+    // frame instead, by which point layout has normally settled.
+    if (retriesLeft > 0) requestAnimationFrame(() => fitToSlot(el, slotEl, retriesLeft - 1));
+    return;
+  }
+  el.style.transform = `scale(${Math.min(slotW / naturalW, slotH / naturalH)})`;
+}
+
+// Hides every alternate home for #ticket-wrap (the booth, both frames, the plain container)
+// so callers can just show the one they want without repeating this list everywhere.
+function hideAllTicketHomes() {
+  document.querySelector('.booth').style.display = 'none';
+  document.getElementById('result-frame-casita').style.display = 'none';
+  document.getElementById('result-frame-puntos').style.display = 'none';
+  document.getElementById('result-plain').style.display = 'none';
+}
+
+// Full reset back to the photo-booth's one-time reveal state — used only for a fresh bouquet
+// (resetBuilder), never by the Customize modal. showResult() re-triggers the actual print
+// animation right after this runs.
+function resetToBoothState() {
+  const wrap = document.getElementById('ticket-wrap');
+  const scaleEl = document.getElementById('ticket-scale');
+  const fabGroup = document.getElementById('ticket-fab-group');
+  const boothWindow = document.getElementById('booth-window');
+  if (scaleEl.parentElement !== wrap) wrap.insertBefore(scaleEl, wrap.firstChild);
+  if (fabGroup.parentElement !== wrap) wrap.appendChild(fabGroup);
+  if (wrap.parentElement !== boothWindow) boothWindow.appendChild(wrap);
+  scaleEl.style.transform = ''; scaleEl.style.transformOrigin = '';
+  fabGroup.classList.remove('visible');
+  hideAllTicketHomes();
+  document.querySelector('.booth').style.display = '';
+}
+
+// Picking "Ticket" (no frame) from Customize — NOT the photo booth. The booth's print-out is
+// a one-time reveal for when the bouquet is first finished; replaying it (or even just
+// bringing the machine graphic back) every time someone flips the frame choice back to "none"
+// would be a strange, repeated effect for something that already happened once. Just
+// #ticket-wrap at its own normal size, no scaling, nothing decorative around it — and
+// .ticket-fab-group is left alone (still a child of #ticket-wrap, still .visible) so the
+// buttons don't dissolve out and back in on top of everything else changing size.
+function showPlainTicket() {
+  const wrap = document.getElementById('ticket-wrap');
+  const scaleEl = document.getElementById('ticket-scale');
+  const fabGroup = document.getElementById('ticket-fab-group');
+  const plain = document.getElementById('result-plain');
+  // If a frame was showing, #ticket-scale and .ticket-fab-group are currently living inside
+  // that frame's slot/box, not #ticket-wrap — pull them back in before moving #ticket-wrap
+  // itself, or #ticket-wrap arrives at .result-plain empty and the ticket vanishes entirely
+  // (it's still sitting inside the now-hidden frame container).
+  if (scaleEl.parentElement !== wrap) wrap.insertBefore(scaleEl, wrap.firstChild);
+  if (fabGroup.parentElement !== wrap) wrap.appendChild(fabGroup);
+  scaleEl.style.transform = ''; scaleEl.style.transformOrigin = '';
+  // #ticket-wrap still carries the .print class from the original photo-booth reveal (it's
+  // never removed after that animation finishes — .ticket-wrap.print{animation:...both} just
+  // holds its resting position, which is harmless normally). But moving an element that still
+  // has an active/held CSS animation to a new parent can make the browser treat it as
+  // restarting — confirmed by sampling #ticket-wrap's transform right after this appendChild
+  // in testing, it was visibly re-running the boothPrint slide. Dropping the class first means
+  // there's no animation left to restart; the ticket was already sitting at its resting
+  // position either way, so this has no visual effect beyond stopping that replay.
+  wrap.classList.remove('print');
+  if (wrap.parentElement !== plain) plain.appendChild(wrap);
+  hideAllTicketHomes();
+  plain.style.display = '';
+}
+
+// The result screen's actual "apply" step — called once the user confirms a choice in the
+// modal (never while just browsing options in there). #ticket-scale moves into the chosen
+// frame's photo slot (clipped there, just the ticket itself); .ticket-fab-group moves into
+// the frame's own box instead (NOT the slot — the slot clips tightly to the photo, which
+// would cut off buttons meant to float past the ticket's edge). Swaps which container is
+// visible, then re-renders the gems + the cached share-image so both stay in sync.
+function applyFrameToResult(type) {
+  if (type === 'none') {
+    showPlainTicket();
+  } else {
+    hideAllTicketHomes();
+    document.getElementById(`result-frame-${type}`).style.display = '';
+    const scaleEl = document.getElementById('ticket-scale');
+    const fabGroup = document.getElementById('ticket-fab-group');
+    const frameEl = document.getElementById(`rf-${type}-frame`);
+    const slot = document.getElementById(`rf-${type}-slot`);
+    slot.appendChild(scaleEl);
+    frameEl.appendChild(fabGroup);
+    fitToSlot(scaleEl, slot);
+  }
+  layoutGems();
+  prerenderTicketCanvas();
+}
+
+let frameModalDraft = 'none';
+let frameModalClone = null;
+
+function renderFrameModalPreview(type) {
+  document.getElementById('fp-plain').style.display = type === 'none' ? '' : 'none';
+  document.getElementById('fp-casita').style.display = type === 'casita' ? '' : 'none';
+  document.getElementById('fp-puntos').style.display = type === 'puntos' ? '' : 'none';
+  const slot = document.getElementById(type === 'none' ? 'fp-plain-slot' : `fp-${type}-slot`);
+  if (!frameModalClone || !slot) return;
+  slot.appendChild(frameModalClone);
+  fitToSlot(frameModalClone, slot);
+}
+
+function selectFrameCard(type) {
+  frameModalDraft = type;
+  document.querySelectorAll('.frame-card').forEach(c => {
+    const sel = c.dataset.frame === type;
+    c.classList.toggle('selected', sel);
+    c.setAttribute('aria-pressed', String(sel));
+  });
+  renderFrameModalPreview(type);
+}
+
+function initFrameModal() {
+  initFrameAssets();
+  const overlay = document.getElementById('modal-frame');
+  const close = () => overlay.classList.remove('open');
+  document.getElementById('btn-close-frame').addEventListener('click', close);
+  overlay.addEventListener('click', e => { if (e.target === overlay) close(); });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape' && overlay.classList.contains('open')) close(); });
+
+  document.querySelectorAll('.frame-card').forEach(card => {
+    card.addEventListener('click', () => selectFrameCard(card.dataset.frame));
+    card.addEventListener('keydown', e => {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); selectFrameCard(card.dataset.frame); }
+    });
+  });
+
+  document.getElementById('btn-customize').addEventListener('click', () => {
+    // The previous session's clone (if any) is still sitting in whichever preview slot it was
+    // last shown in — reassigning frameModalClone below drops our only reference to it, but
+    // never removes it from the DOM. Left behind, a stale clone shares that slot's flex row
+    // with the new one on the 2nd+ open, and flex's default shrink-to-fit squeezes both down
+    // to a sliver — which is what "choosing Ticket after a 2nd customize" looked like.
+    if (frameModalClone) frameModalClone.remove();
+    // A fresh clone of the live ticket every time the modal opens, so the preview always
+    // matches whatever's actually on the ticket right now — just #ticket-scale, not the whole
+    // #ticket-wrap, so no cloned (non-functional) copy of the circular buttons tags along.
+    const realScale = document.getElementById('ticket-scale');
+    const clone = realScale.cloneNode(true);
+    clone.removeAttribute('id');
+    clone.querySelectorAll('[id]').forEach(el => el.removeAttribute('id'));
+    frameModalClone = clone;
+    selectFrameCard(state.frame);
+    overlay.classList.add('open');
+  });
+
+  document.getElementById('btn-choose-frame').addEventListener('click', () => {
+    state.frame = frameModalDraft;
+    close();
+    applyFrameToResult(state.frame);
+  });
+
+  window.addEventListener('resize', () => {
+    if (overlay.classList.contains('open')) renderFrameModalPreview(frameModalDraft);
+    if (state.frame !== 'none' && document.getElementById('screen-result').classList.contains('active')) {
+      fitToSlot(document.getElementById('ticket-scale'), document.getElementById(`rf-${state.frame}-slot`));
+    }
+  });
 }
 
 
@@ -1829,7 +2307,7 @@ function layoutGems() {
   const H = Math.max(document.documentElement.scrollHeight, window.innerHeight);
   layer.style.height = H + 'px';
   const sx = window.scrollX, sy = window.scrollY, PAD = 12;
-  const blockers = [...screen.querySelectorAll('.site-header > *, .sec, .action-row, .ticket-tilt, .result-top > *, .booth, .result-actions')]
+  const blockers = [...screen.querySelectorAll('.site-header > *, .sec, .action-row, .ticket-tilt, .result-top > *, .booth, .ticket-fab-group, .result-frame, .result-plain')]
     .map(el => el.getBoundingClientRect())
     .filter(r => r.width && r.height)
     .map(r => ({l:r.left+sx-PAD, r:r.right+sx+PAD, t:r.top+sy-PAD, b:r.bottom+sy+PAD}));
@@ -2062,11 +2540,44 @@ function preloadImage(src) {
   });
 }
 
+// Wraps a ticket clone in the chosen frame for the share image — plain <img> PNGs
+// (images/frames/<type>-back.png / -front.png, pre-flattened from the live CSS pieces via a
+// one-off Playwright capture), not the live SVG pieces .ticket-frame__back/front use. Same
+// reason grid-paper-tile.png replaced the live grid-paper.svg earlier: Safari can taint a
+// canvas that an SVG was drawn into, which silently broke Share/Download once already.
+// Sized around the ticket's own natural height (not the frame's default width) so a long
+// message never gets cropped by the slot — the frame grows to fit the ticket, not the other
+// way around.
+function buildShareFrameBox(type, ticketClone, ticketNaturalH) {
+  const slot = FRAME_SLOT_PCT[type];
+  const frameH = Math.round(ticketNaturalH / (slot.height / 100));
+  const frameW = Math.round(frameH * FRAME_ASPECT[type]);
+  const box = document.createElement('div');
+  box.style.cssText = `position:relative;width:${frameW}px;height:${frameH}px;margin:0 auto;flex-shrink:0;`;
+  const back = document.createElement('img');
+  back.src = `images/frames/${type}-back.png`;
+  back.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;display:block;';
+  const slotBox = document.createElement('div');
+  slotBox.style.cssText = `position:absolute;left:${slot.left}%;top:${slot.top}%;width:${slot.width}%;` +
+    `height:${slot.height}%;display:flex;align-items:center;justify-content:center;overflow:hidden;`;
+  slotBox.appendChild(ticketClone);
+  const front = document.createElement('img');
+  front.src = `images/frames/${type}-front.png`;
+  front.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;display:block;pointer-events:none;';
+  box.append(back, slotBox, front);
+  return box;
+}
+
 async function renderTicketCanvas() {
   const ticket = document.getElementById('ticket');
   const canvasColor = cssVarOr('--color-canvas', '#EFEBE5');
   try {
-    await preloadImage('images/grid-paper-tile.png');
+    const frameType = state.frame;
+    const preloads = [preloadImage('images/grid-paper-tile.png')];
+    if (frameType !== 'none') {
+      preloads.push(preloadImage(`images/frames/${frameType}-back.png`), preloadImage(`images/frames/${frameType}-front.png`));
+    }
+    await Promise.all(preloads);
     const W = ticket.offsetWidth;
     const clone = ticket.cloneNode(true);
     clone.removeAttribute('id');
@@ -2079,6 +2590,31 @@ async function renderTicketCanvas() {
     clone.style.border = `1px solid ${cssVarOr('--color-line', 'rgba(30,26,25,0.4)')}`;
     clone.style.backgroundColor = cssVarOr('--color-parchment', '#F6F3EE');
 
+    // The cloned .ticket-shape SVG carries the width/height/viewBox/path that
+    // attachTicketShape() computed for the LIVE #ticket's own box, which doesn't necessarily
+    // still match once it's reparented into this detached wrap. An earlier attempt to
+    // recompute that geometry for the clone made it render solid black on at least one real
+    // device instead — worse than the plain rectangle it was meant to improve on. Removing the
+    // SVG outright is the reliable choice: the plain border + fill set above is what actually
+    // shows, with correct colours every time, just without the perforated notches.
+    const shapeSvg = clone.querySelector('.ticket-shape');
+    if (shapeSvg) shapeSvg.remove();
+
+    // A frame can end up wider than the plain ticket (or not — depends on the ticket's own
+    // height, which drives how big the frame needs to be not to crop it) — figure out which
+    // before sizing the outer wrap, or a wide frame just overflows/gets cropped by it.
+    let content = clone;
+    let contentW = W;
+    if (frameType !== 'none') {
+      // Measure the clone's own natural (content-driven) height before it's placed inside
+      // anything that could constrain it, so the frame can be sized to fit it without cropping.
+      document.body.appendChild(clone);
+      const naturalH = clone.offsetHeight;
+      clone.remove();
+      content = buildShareFrameBox(frameType, clone, naturalH);
+      contentW = parseInt(content.style.width, 10);
+    }
+
     // Same size/weight as the site's other titles (.bloom-h2 — e.g. the "Yay! Your bouquet
     // is ready" heading right above this on the result screen), not a one-off larger size.
     const title = document.createElement('div');
@@ -2090,26 +2626,15 @@ async function renderTicketCanvas() {
     // baked onto --color-canvas) — not the live SVG. Safari can "taint" a canvas that an SVG
     // was drawn into, which threw once html2canvas tried to export it and silently broke
     // Share/Download; a same-origin PNG carries none of that risk.
-    const padX = Math.round(W * 0.14);
+    const padX = Math.round(contentW * 0.14);
     const wrap = document.createElement('div');
-    wrap.style.cssText = `position:fixed;left:-9999px;top:0;width:${W + padX * 2}px;box-sizing:border-box;` +
+    wrap.style.cssText = `position:fixed;left:-9999px;top:0;width:${contentW + padX * 2}px;box-sizing:border-box;` +
       `padding:${Math.round(padX * 1.1)}px ${padX}px ${Math.round(padX * 1.5)}px;` +
       `display:flex;flex-direction:column;align-items:center;gap:${Math.round(padX * 0.5)}px;` +
       `background-color:${canvasColor};background-image:url('images/grid-paper-tile.png');` +
       `background-size:720px 720px;background-repeat:repeat;`;
-    wrap.appendChild(title);
-    wrap.appendChild(clone);
+    wrap.append(title, content);
     document.body.appendChild(wrap);
-
-    // The cloned .ticket-shape SVG carries the width/height/viewBox/path that
-    // attachTicketShape() computed for the LIVE #ticket's own box, which doesn't necessarily
-    // still match once it's reparented into this detached wrap. An earlier attempt to
-    // recompute that geometry for the clone made it render solid black on at least one real
-    // device instead — worse than the plain rectangle it was meant to improve on. Removing the
-    // SVG outright is the reliable choice: the plain border + fill set above is what actually
-    // shows, with correct colours every time, just without the perforated notches.
-    const shapeSvg = clone.querySelector('.ticket-shape');
-    if (shapeSvg) shapeSvg.remove();
 
     try {
       return await html2canvas(wrap, {scale:3, backgroundColor:canvasColor, useCORS:true, logging:false});
@@ -2396,8 +2921,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     state.font = 'serif';
     state.ribbonColor = '#FFFFFF';
     state.jewelsOn = false;
+    state.frame = 'none';
+    resetToBoothState();
     document.getElementById('jewels-toggle').setAttribute('aria-checked', 'false');
-    document.querySelectorAll('.flower-card').forEach(c => {
+    // Scoped to the carousel — .frame-card (the Customize modal's frame picker) also carries
+    // the .flower-card class for the shared look, but has no .flower-qty pill to reset.
+    document.querySelectorAll('#flower-carousel .flower-card').forEach(c => {
       c.classList.remove('selected');
       setQtyPill(c, c.dataset.id, 0);
     });
@@ -2435,6 +2964,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     layoutGems();
     showToast(T.toastNew);
   });
+
+  initFrameModal();
 });
 </script>
 </body>
