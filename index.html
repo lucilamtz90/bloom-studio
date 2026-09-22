@@ -2037,6 +2037,14 @@ async function renderTicketCanvas() {
     clone.querySelectorAll('[id]').forEach(e => e.removeAttribute('id'));
     clone.style.width = W + 'px';
     clone.style.margin = '0';
+    // The ticket's real border/perforated-notch shape is an SVG a script draws on it (see
+    // attachTicketShape) — that script's own reference to the live #ticket is lost on a
+    // clone, and on at least one real device this off-screen composed capture has rendered
+    // with that SVG simply missing (content floating with no card outline at all). This
+    // plain CSS border+fill sits behind it as a fallback: invisible if the SVG draws fine
+    // (it paints on top, same look as before), a plain square-edged card if it doesn't.
+    clone.style.border = `1px solid ${getComputedStyle(document.documentElement).getPropertyValue('--color-line').trim()}`;
+    clone.style.backgroundColor = getComputedStyle(document.documentElement).getPropertyValue('--color-parchment').trim();
 
     const title = document.createElement('div');
     title.textContent = T.shareTitle;
