@@ -2101,30 +2101,15 @@ async function renderTicketCanvas() {
     wrap.appendChild(clone);
     document.body.appendChild(wrap);
 
-    // The cloned .ticket-shape SVG still has the width/height/viewBox/path that
-    // attachTicketShape() last computed for the LIVE #ticket's own box — reparenting the
-    // clone into this detached wrap can settle at a very slightly different height (different
-    // layout context, no ResizeObserver watching it), which was enough on at least one real
-    // device to make the shape miss the card's actual edges and effectively disappear, leaving
-    // just the plain fallback rectangle above. Recompute it here against the clone's real,
-    // now-measurable size so it matches exactly, the same way attachTicketShape's own
-    // update() does for the live ticket.
+    // The cloned .ticket-shape SVG carries the width/height/viewBox/path that
+    // attachTicketShape() computed for the LIVE #ticket's own box, which doesn't necessarily
+    // still match once it's reparented into this detached wrap. An earlier attempt to
+    // recompute that geometry for the clone made it render solid black on at least one real
+    // device instead — worse than the plain rectangle it was meant to improve on. Removing the
+    // SVG outright is the reliable choice: the plain border + fill set above is what actually
+    // shows, with correct colours every time, just without the perforated notches.
     const shapeSvg = clone.querySelector('.ticket-shape');
-    const shapePath = shapeSvg && shapeSvg.querySelector('path');
-    if (shapeSvg && shapePath) {
-      const cw = clone.offsetWidth, ch = clone.offsetHeight;
-      if (cw && ch) {
-        shapeSvg.setAttribute('width', cw);
-        shapeSvg.setAttribute('height', ch);
-        shapeSvg.setAttribute('viewBox', `0 0 ${cw} ${ch}`);
-        const perf = clone.querySelector('.ticket-perf');
-        let top = 0;
-        for (let n = perf; n && n !== clone; n = n.offsetParent) top += n.offsetTop;
-        shapePath.setAttribute('d', perf
-          ? ticketPath(cw, ch, top + perf.offsetHeight / 2, perf.offsetHeight / 2)
-          : `M0.5 0.5 H${cw - 0.5} V${ch - 0.5} H0.5 Z`);
-      }
-    }
+    if (shapeSvg) shapeSvg.remove();
 
     try {
       return await html2canvas(wrap, {scale:3, backgroundColor:canvasColor, useCORS:true, logging:false});
