@@ -2046,21 +2046,24 @@ async function renderTicketCanvas() {
     clone.style.border = `1px solid ${getComputedStyle(document.documentElement).getPropertyValue('--color-line').trim()}`;
     clone.style.backgroundColor = getComputedStyle(document.documentElement).getPropertyValue('--color-parchment').trim();
 
+    // Same size/weight as the site's other titles (.bloom-h2 — e.g. the "Yay! Your bouquet
+    // is ready" heading right above this on the result screen), not a one-off larger size.
     const title = document.createElement('div');
     title.textContent = T.shareTitle;
-    title.style.cssText = `font-family:var(--font-display);font-size:${Math.round(W * 0.09)}px;` +
-      `color:var(--bark);text-align:center;line-height:1.25;`;
+    title.style.cssText = `font-family:var(--font-display);font-size:var(--text-h2);` +
+      `font-weight:var(--weight-medium);color:var(--bark);text-align:center;line-height:1.25;`;
 
-    // Solid canvas colour, not the grid-paper SVG texture the page itself uses — Safari can
-    // "taint" a canvas that a background SVG was drawn into, which throws once html2canvas
-    // tries to export it, silently breaking Share/Download. Solid colour still reads as "the
-    // ticket sitting on the site's background" without that risk.
+    // A rasterized copy of the site's own grid-paper texture (images/grid-paper-tile.png,
+    // baked onto --color-canvas) — not the live SVG. Safari can "taint" a canvas that an SVG
+    // was drawn into, which threw once html2canvas tried to export it and silently broke
+    // Share/Download; a same-origin PNG carries none of that risk.
     const padX = Math.round(W * 0.14);
     const wrap = document.createElement('div');
     wrap.style.cssText = `position:fixed;left:-9999px;top:0;width:${W + padX * 2}px;box-sizing:border-box;` +
       `padding:${Math.round(padX * 1.1)}px ${padX}px ${Math.round(padX * 1.5)}px;` +
       `display:flex;flex-direction:column;align-items:center;gap:${Math.round(padX * 0.5)}px;` +
-      `background-color:${canvasColor};`;
+      `background-color:${canvasColor};background-image:url('images/grid-paper-tile.png');` +
+      `background-size:720px 720px;background-repeat:repeat;`;
     wrap.appendChild(title);
     wrap.appendChild(clone);
     document.body.appendChild(wrap);
