@@ -1980,9 +1980,20 @@ function initMusicBar() {
       if (bar) bar.style.backgroundColor = '';
       return;
     }
-    if (titleEl) titleEl.textContent = T.musicLoading;
-    ensureYtPlayer().then(player => { player.playVideo(); startMusicBarColorPoll(); })
-      .catch(() => { if (titleEl) titleEl.textContent = T.musicUnavailable; setPlayPauseIcon(false); });
+    // When the warm-up already finished, call playVideo() as the very first synchronous
+    // thing this handler does — no .then(), not even a microtask in between. playVideo()
+    // itself works by postMessage-ing the iframe, which is a cross-origin hop that some
+    // WebKit versions don't reliably carry "this came from a user tap" across at all, so
+    // every bit of extra delay/indirection on our side before that postMessage goes out
+    // only makes it more likely to be treated as an unrequested autoplay and get ignored.
+    if (ytPlayer) {
+      ytPlayer.playVideo();
+      startMusicBarColorPoll();
+    } else {
+      if (titleEl) titleEl.textContent = T.musicLoading;
+      ensureYtPlayer().then(player => { player.playVideo(); startMusicBarColorPoll(); })
+        .catch(() => { if (titleEl) titleEl.textContent = T.musicUnavailable; setPlayPauseIcon(false); });
+    }
   });
   document.getElementById('music-play-pause').addEventListener('click', () => {
     if (!ytPlayer || !window.YT) return;
