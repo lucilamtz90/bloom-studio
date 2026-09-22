@@ -2167,6 +2167,12 @@ function initFrameModal() {
   });
 
   document.getElementById('btn-customize').addEventListener('click', () => {
+    // The previous session's clone (if any) is still sitting in whichever preview slot it was
+    // last shown in — reassigning frameModalClone below drops our only reference to it, but
+    // never removes it from the DOM. Left behind, a stale clone shares that slot's flex row
+    // with the new one on the 2nd+ open, and flex's default shrink-to-fit squeezes both down
+    // to a sliver — which is what "choosing Ticket after a 2nd customize" looked like.
+    if (frameModalClone) frameModalClone.remove();
     // A fresh clone of the live ticket every time the modal opens, so the preview always
     // matches whatever's actually on the ticket right now — just #ticket-scale, not the whole
     // #ticket-wrap, so no cloned (non-functional) copy of the circular buttons tags along.
