@@ -2041,10 +2041,32 @@ function isMobileDevice() {
 // Composed off-screen (a plain clone of #ticket, detached from .ticket-wrap/.ticket-tilt
 // so none of their transforms/animations need resetting) and torn down right after
 // rasterizing so it never touches the live result screen.
+// A canvas left with any unpainted (transparent) pixels exports as solid BLACK once turned
+// into a JPEG (no alpha channel — canvas fills unset areas with its default black fillStyle).
+// getComputedStyle(...).getPropertyValue() returning '' for any reason at capture time would
+// silently leave a background/fill unset instead of throwing, so every colour used to compose
+// the share image falls back to its known hex from bloom-tokens.css rather than risking ''.
+function cssVarOr(name, fallbackHex) {
+  return getComputedStyle(document.documentElement).getPropertyValue(name).trim() || fallbackHex;
+}
+
+// Resolves once the background tile is actually decoded, so html2canvas never captures the
+// composition mid-fetch — a same-origin image that's still loading paints as nothing (not the
+// solid backgroundColor underneath), which is the other common way this ends up all-black.
+function preloadImage(src) {
+  return new Promise(resolve => {
+    const img = new Image();
+    img.onload = () => resolve();
+    img.onerror = () => resolve(); // don't let a failed preload block the render — background-color still covers it
+    img.src = src;
+  });
+}
+
 async function renderTicketCanvas() {
   const ticket = document.getElementById('ticket');
-  const canvasColor = getComputedStyle(document.documentElement).getPropertyValue('--color-canvas').trim();
+  const canvasColor = cssVarOr('--color-canvas', '#EFEBE5');
   try {
+    await preloadImage('images/grid-paper-tile.png');
     const W = ticket.offsetWidth;
     const clone = ticket.cloneNode(true);
     clone.removeAttribute('id');
@@ -2054,8 +2076,8 @@ async function renderTicketCanvas() {
     // Belt-and-suspenders fallback in case the SVG shape below still doesn't draw for some
     // unforeseen reason: a plain border + the ticket's own fill colour, sitting behind it —
     // invisible when the SVG draws correctly, a plain square-edged card if it doesn't.
-    clone.style.border = `1px solid ${getComputedStyle(document.documentElement).getPropertyValue('--color-line').trim()}`;
-    clone.style.backgroundColor = getComputedStyle(document.documentElement).getPropertyValue('--color-parchment').trim();
+    clone.style.border = `1px solid ${cssVarOr('--color-line', 'rgba(30,26,25,0.4)')}`;
+    clone.style.backgroundColor = cssVarOr('--color-parchment', '#F6F3EE');
 
     // Same size/weight as the site's other titles (.bloom-h2 — e.g. the "Yay! Your bouquet
     // is ready" heading right above this on the result screen), not a one-off larger size.
