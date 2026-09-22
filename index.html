@@ -2018,35 +2018,44 @@ function isMobileDevice() {
 // rasterizing so it never touches the live result screen.
 async function renderTicketCanvas() {
   const ticket = document.getElementById('ticket');
-  const W = ticket.offsetWidth;
   const canvasColor = getComputedStyle(document.documentElement).getPropertyValue('--color-canvas').trim();
-
-  const clone = ticket.cloneNode(true);
-  clone.removeAttribute('id');
-  clone.querySelectorAll('[id]').forEach(e => e.removeAttribute('id'));
-  clone.style.width = W + 'px';
-  clone.style.margin = '0';
-
-  const title = document.createElement('div');
-  title.textContent = T.shareTitle;
-  title.style.cssText = `font-family:var(--font-display);font-size:${Math.round(W * 0.09)}px;` +
-    `color:var(--bark);text-align:center;line-height:1.25;`;
-
-  const padX = Math.round(W * 0.14);
-  const wrap = document.createElement('div');
-  wrap.style.cssText = `position:fixed;left:-9999px;top:0;width:${W + padX * 2}px;box-sizing:border-box;` +
-    `padding:${Math.round(padX * 1.1)}px ${padX}px ${Math.round(padX * 1.5)}px;` +
-    `display:flex;flex-direction:column;align-items:center;gap:${Math.round(padX * 0.5)}px;` +
-    `background-color:${canvasColor};background-image:url('images/grid-paper.svg?v=2');` +
-    `background-size:720px 720px;background-repeat:repeat;`;
-  wrap.appendChild(title);
-  wrap.appendChild(clone);
-  document.body.appendChild(wrap);
-
   try {
-    return await html2canvas(wrap, {scale:3, backgroundColor:canvasColor, useCORS:true, logging:false});
-  } finally {
-    wrap.remove();
+    const W = ticket.offsetWidth;
+    const clone = ticket.cloneNode(true);
+    clone.removeAttribute('id');
+    clone.querySelectorAll('[id]').forEach(e => e.removeAttribute('id'));
+    clone.style.width = W + 'px';
+    clone.style.margin = '0';
+
+    const title = document.createElement('div');
+    title.textContent = T.shareTitle;
+    title.style.cssText = `font-family:var(--font-display);font-size:${Math.round(W * 0.09)}px;` +
+      `color:var(--bark);text-align:center;line-height:1.25;`;
+
+    // Solid canvas colour, not the grid-paper SVG texture the page itself uses — Safari can
+    // "taint" a canvas that a background SVG was drawn into, which throws once html2canvas
+    // tries to export it, silently breaking Share/Download. Solid colour still reads as "the
+    // ticket sitting on the site's background" without that risk.
+    const padX = Math.round(W * 0.14);
+    const wrap = document.createElement('div');
+    wrap.style.cssText = `position:fixed;left:-9999px;top:0;width:${W + padX * 2}px;box-sizing:border-box;` +
+      `padding:${Math.round(padX * 1.1)}px ${padX}px ${Math.round(padX * 1.5)}px;` +
+      `display:flex;flex-direction:column;align-items:center;gap:${Math.round(padX * 0.5)}px;` +
+      `background-color:${canvasColor};`;
+    wrap.appendChild(title);
+    wrap.appendChild(clone);
+    document.body.appendChild(wrap);
+
+    try {
+      return await html2canvas(wrap, {scale:3, backgroundColor:canvasColor, useCORS:true, logging:false});
+    } finally {
+      wrap.remove();
+    }
+  } catch (composeErr) {
+    // Never let the "ticket on paper" composition itself be a reason Share/Download breaks —
+    // fall back to the older plain crop of just the ticket card if it fails for any reason.
+    console.error('renderTicketCanvas: composed render failed, falling back to plain ticket', composeErr);
+    return html2canvas(ticket, {scale:3, backgroundColor:canvasColor, useCORS:true, logging:false});
   }
 }
 
@@ -2116,7 +2125,11 @@ async function shareImage() {
     // this handler can reach navigator.share()/window.open() without an await in front of it.
     // Falls back to rendering on the spot only if the user somehow taps before that finished —
     // rare, but better than nothing.
-    const canvas = ticketCanvasCache || await (ticketCanvasCachePromise || renderTicketCanvas());
+    // The cache promise catches its own errors (see prerenderTicketCanvas) and resolves to
+    // null rather than rejecting, so a failed prerender falls through to a fresh render here
+    // instead of silently handing shareImage() a null canvas to crash on later.
+    let canvas = ticketCanvasCache || await (ticketCanvasCachePromise || renderTicketCanvas());
+    if (!canvas) canvas = await renderTicketCanvas();
     if (navigator.share) {
       const file = await canvasToJpegFile(canvas);
       if (file && (!navigator.canShare || navigator.canShare({files:[file]}))) {
