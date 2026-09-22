@@ -38,8 +38,13 @@
   --hairline:var(--color-hairline);
 }
 *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
-html{scroll-behavior:smooth}
-body{position:relative;background-color:var(--color-canvas);color:var(--bark);font-family:var(--font-body);font-weight:400;min-height:100vh;overflow-x:hidden;-webkit-font-smoothing:antialiased;cursor:url('images/cursor-heart.png?v=3') 26 9,auto}
+/* overflow-x:hidden lives on <html>, not <body> — iOS Safari has a long-standing bug where
+   putting the overflow clip on <body> instead makes position:fixed descendants (the gradient
+   orbs, the music bar, the falling petals) recompute against a stale layout on scroll/refresh,
+   which visibly clips whatever sits near the top of the page (the header/logo) until the next
+   repaint. Keeping the clip on <html> avoids that class of bug entirely. */
+html{scroll-behavior:smooth;overflow-x:hidden}
+body{position:relative;background-color:var(--color-canvas);color:var(--bark);font-family:var(--font-body);font-weight:400;min-height:100vh;-webkit-font-smoothing:antialiased;cursor:url('images/cursor-heart.png?v=3') 26 9,auto}
 
 .screen{display:none;min-height:100vh}
 /* Decorative gem stickers scattered over the paper (positions computed by layoutGems, in page coordinates). */
@@ -196,7 +201,10 @@ body.music-bar-active{padding-top:44px}
 .music-bar-clip--visible{clip-path:inset(0);opacity:1;pointer-events:auto}
 .music-bar{display:flex;align-items:center;gap:12px;height:44px;padding:0 20px;background-color:var(--color-blush);color:var(--bark);transition:background-color 10s ease-in-out}
 @media(prefers-reduced-motion:reduce){.music-bar{transition:none}}
-.music-bar__play-pause{width:26px;height:26px;border-radius:50%;border:1px solid var(--bark);background:transparent;color:var(--bark);display:flex;align-items:center;justify-content:center;flex-shrink:0;cursor:pointer;padding:0}
+/* -webkit-appearance:none is required here — without it, Safari/Android give this <button>
+   their native button chrome (grey fill, inner shadow, default corner radius) which paints
+   over the flat circular look, especially visible against the blush bar background. */
+.music-bar__play-pause{-webkit-appearance:none;appearance:none;width:26px;height:26px;border-radius:50%;border:1px solid var(--bark);background:transparent;color:var(--bark);display:flex;align-items:center;justify-content:center;flex-shrink:0;cursor:pointer;padding:0;font:inherit;line-height:0}
 .music-bar__play-pause svg{display:block}
 .music-bar__marquee{flex:1;min-width:0;overflow:hidden;-webkit-mask-image:linear-gradient(90deg,transparent,#000 28px calc(100% - 28px),transparent);mask-image:linear-gradient(90deg,transparent,#000 28px calc(100% - 28px),transparent)}
 .music-bar__title{display:inline-flex;align-items:center;gap:8px;white-space:nowrap;padding-left:100%;font-family:var(--font-mono);font-size:12px;letter-spacing:0.02em;animation:music-bar-marquee 22s linear infinite}
@@ -227,7 +235,7 @@ body.music-bar-active{padding-top:44px}
 .switch-row{display:flex;align-items:center;justify-content:space-between;gap:16px}
 .switch-row__label{margin:0}
 .bloom-switch{background:none;border:none;padding:0;cursor:pointer;display:inline-flex;flex-shrink:0}
-.bloom-switch__track{display:inline-flex;align-items:center;gap:3px;padding:4px;border-radius:999px;border:1px solid var(--color-line);background:var(--color-parchment);transition:border-color 0.2s}
+.bloom-switch__track{display:inline-flex;align-items:center;gap:3px;padding:4px;border-radius:999px;border:1px solid var(--color-line);background:var(--color-blush);transition:border-color 0.2s}
 .bloom-switch__option{min-width:38px;height:26px;padding:0 4px;border-radius:999px;display:inline-flex;align-items:center;justify-content:center;font-family:var(--font-body);font-size:11px;letter-spacing:0.06em;color:var(--muted);background:transparent;transition:background-color 0.2s,color 0.2s}
 .bloom-switch[aria-checked="false"] .bloom-switch__option--off{background:var(--color-sage);color:var(--bark)}
 .bloom-switch[aria-checked="true"] .bloom-switch__option--on{background:var(--color-rose);color:var(--parchment)}
@@ -1723,6 +1731,7 @@ function showResult() {
   const bouquet = document.getElementById('receipt-bouquet');
   if (bouquet) bouquet.classList.add('visible');
   setTimeout(() => splashPetals(document.getElementById('ticket')), prefersReducedMotion() ? 0 : 2600);
+  prerenderTicketCanvas();
 }
 
 
@@ -1903,7 +1912,12 @@ function ensureYtPlayer() {
     try {
       ytPlayer = new YT.Player('yt-audio-player', {
         height: '0', width: '0',
-        playerVars: {listType: 'playlist', list: YT_PLAYLIST_ID, autoplay: 0, controls: 0, disablekb: 1},
+        // playsinline is required on iOS or the hidden 0x0 iframe tries to play fullscreen
+        // instead of inline, which can silently swallow the play. autoplay:1 is a safety net:
+        // ensureYtPlayer()'s own playVideo() call happens after the API-load + player-boot
+        // promise chain, and on mobile that delay is often enough for the browser to decide
+        // the original tap's user-activation has expired and drop the play silently.
+        playerVars: {listType: 'playlist', list: YT_PLAYLIST_ID, autoplay: 1, playsinline: 1, controls: 0, disablekb: 1},
         events: {
           onReady: () => resolve(ytPlayer),
           onError: () => reject(new Error('yt error')),
@@ -1974,6 +1988,23 @@ async function renderTicketCanvas() {
   }});
 }
 
+// Mobile browsers (iOS Safari especially) only allow navigator.share()/window.open() to go
+// through when they're called as a direct consequence of the tap that triggered them — any
+// `await` beforehand and the browser can decide the tap's "user activation" has expired and
+// silently drop the call. html2canvas rendering the ticket at scale:3 easily takes long enough
+// on a mid-range phone to burn through that window on its own, which is why Share used to
+// fail (and its download fallback, sitting behind that same expired activation, failed too).
+// So the ticket is rendered once, ahead of time, right when the result screen appears — by
+// the time the user actually taps "Share bouquet", shareImage() has a canvas ready and can
+// call navigator.share() with nothing awaited first.
+let ticketCanvasCache = null, ticketCanvasCachePromise = null;
+function prerenderTicketCanvas() {
+  ticketCanvasCache = null;
+  ticketCanvasCachePromise = renderTicketCanvas()
+    .then(canvas => { ticketCanvasCache = canvas; return canvas; })
+    .catch(() => null);
+}
+
 // iOS Safari does not persist an <a download> data-URL to Photos — clicking it just
 // navigates/opens the image inline instead of saving. Appending the link to the DOM
 // before clicking is required for some browsers to honor the download at all, and
@@ -2019,7 +2050,11 @@ async function shareImage() {
   sharing = true;
   showToast(T.toastGenerating);
   try {
-    const canvas = await renderTicketCanvas();
+    // Prefer the snapshot taken when the result screen appeared (see prerenderTicketCanvas) so
+    // this handler can reach navigator.share()/window.open() without an await in front of it.
+    // Falls back to rendering on the spot only if the user somehow taps before that finished —
+    // rare, but better than nothing.
+    const canvas = ticketCanvasCache || await (ticketCanvasCachePromise || renderTicketCanvas());
     if (navigator.share) {
       const file = await canvasToJpegFile(canvas);
       if (file && (!navigator.canShare || navigator.canShare({files:[file]}))) {
