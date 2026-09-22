@@ -421,9 +421,13 @@ body.music-bar-active{padding-top:44px}
 .ticket-fab-group{
   display:flex;flex-direction:row;gap:22px;justify-content:center;
   position:absolute;z-index:1;left:50%;top:100%;margin-top:32px;transform:translateX(-50%);
-  opacity:0;pointer-events:none;transition:opacity 0.8s var(--ease-bloom);
+  /* visibility:hidden is a hard, non-animatable backstop alongside opacity:0 — the group also
+     rides along with .ticket-wrap's own boothPrint transform (it's a child of it), and on at
+     least one real device the buttons briefly flashed mid print-out despite opacity staying at
+     0 in every check here. visibility can't have that kind of single-frame compositing glitch. */
+  opacity:0;visibility:hidden;pointer-events:none;transition:opacity 0.8s var(--ease-bloom),visibility 0s linear 0.8s;
 }
-.ticket-fab-group.visible{opacity:1;pointer-events:auto}
+.ticket-fab-group.visible{opacity:1;visibility:visible;pointer-events:auto;transition:opacity 0.8s var(--ease-bloom)}
 .ticket-fab{display:flex;flex-direction:column;align-items:center;gap:8px}
 /* Same font styling as .swatch-label (the colour-swatch names), just always visible instead
    of a hover reveal. */
@@ -2065,12 +2069,19 @@ function initFrameAssets() {
 // screen — in both cases the element being scaled has no percentage-based width of its own
 // (a plain block that just fills whatever it's given), so its "natural" size can be measured
 // directly once detached from whatever was constraining it, no reference width needed.
-function fitToSlot(el, slotEl) {
+function fitToSlot(el, slotEl, retriesLeft = 3) {
   if (!el || !slotEl) return;
   el.style.transform = 'none';
   const naturalW = el.offsetWidth, naturalH = el.offsetHeight;
   const slotW = slotEl.clientWidth, slotH = slotEl.clientHeight;
-  if (!naturalW || !naturalH || !slotW || !slotH) return;
+  if (!naturalW || !naturalH || !slotW || !slotH) {
+    // A 0 here usually just means the browser hasn't finished laying out el/slotEl yet (e.g.
+    // right after appendChild in the same tick) — silently giving up left the ticket at full,
+    // untransformed size in whatever broke this way. Retry a couple of times on the next
+    // frame instead, by which point layout has normally settled.
+    if (retriesLeft > 0) requestAnimationFrame(() => fitToSlot(el, slotEl, retriesLeft - 1));
+    return;
+  }
   el.style.transform = `scale(${Math.min(slotW / naturalW, slotH / naturalH)})`;
 }
 
