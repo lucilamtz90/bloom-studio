@@ -339,6 +339,8 @@ body.music-bar-active{padding-top:44px}
    being printed. The window clips it while it slides, then opens up so the tilt isn't cut off. */
 .booth{width:100%;max-width:460px;margin:0 auto;position:relative;z-index:1}
 .result-frame{width:100%;max-width:460px;margin:0 auto;position:relative;z-index:1}
+/* No decoration at all — just #ticket-wrap at its normal size, centered. */
+.result-plain{width:100%;max-width:460px;margin:0 auto;position:relative;z-index:1;display:flex;justify-content:center}
 /* Brushed-metal machine front with a recessed, rounded bezel and a black opening. Colours are
    mixes of the Bloom tokens so the machine stays inside the warm-grey palette. */
 .booth-panel{position:relative;z-index:1;height:104px;
@@ -787,6 +789,12 @@ body.music-bar-active{padding-top:44px}
       <div class="ticket-frame__front" id="rf-puntos-front"></div>
     </div>
   </div>
+
+  <!-- Picking "Ticket" (no frame) from Customize lands here, NOT back in the photo booth —
+       the booth's print-out is a one-time reveal for when the bouquet is first finished, not
+       something that should replay every time the frame choice changes. Just #ticket-wrap,
+       at its normal size, with nothing decorative around it. -->
+  <div class="result-plain" id="result-plain" style="display:none"></div>
 </div>
 
 <footer class="site-footer">
@@ -2085,37 +2093,68 @@ function fitToSlot(el, slotEl, retriesLeft = 3) {
   el.style.transform = `scale(${Math.min(slotW / naturalW, slotH / naturalH)})`;
 }
 
-// Moves the real #ticket-scale + .ticket-fab-group back into the photo-booth window and
-// clears every inline style applyFrameToResult() may have set — the frame='none' default.
-function resetTicketFrameDom() {
+// Hides every alternate home for #ticket-wrap (the booth, both frames, the plain container)
+// so callers can just show the one they want without repeating this list everywhere.
+function hideAllTicketHomes() {
+  document.querySelector('.booth').style.display = 'none';
+  document.getElementById('result-frame-casita').style.display = 'none';
+  document.getElementById('result-frame-puntos').style.display = 'none';
+  document.getElementById('result-plain').style.display = 'none';
+}
+
+// Full reset back to the photo-booth's one-time reveal state — used only for a fresh bouquet
+// (resetBuilder), never by the Customize modal. showResult() re-triggers the actual print
+// animation right after this runs.
+function resetToBoothState() {
   const wrap = document.getElementById('ticket-wrap');
   const scaleEl = document.getElementById('ticket-scale');
   const fabGroup = document.getElementById('ticket-fab-group');
   const boothWindow = document.getElementById('booth-window');
-  const booth = document.querySelector('.booth');
   if (scaleEl.parentElement !== wrap) wrap.insertBefore(scaleEl, wrap.firstChild);
   if (fabGroup.parentElement !== wrap) wrap.appendChild(fabGroup);
   if (wrap.parentElement !== boothWindow) boothWindow.appendChild(wrap);
   scaleEl.style.transform = ''; scaleEl.style.transformOrigin = '';
-  booth.style.display = '';
-  document.getElementById('result-frame-casita').style.display = 'none';
-  document.getElementById('result-frame-puntos').style.display = 'none';
+  fabGroup.classList.remove('visible');
+  hideAllTicketHomes();
+  document.querySelector('.booth').style.display = '';
+}
+
+// Picking "Ticket" (no frame) from Customize — NOT the photo booth. The booth's print-out is
+// a one-time reveal for when the bouquet is first finished; replaying it (or even just
+// bringing the machine graphic back) every time someone flips the frame choice back to "none"
+// would be a strange, repeated effect for something that already happened once. Just
+// #ticket-wrap at its own normal size, no scaling, nothing decorative around it — and
+// .ticket-fab-group is left alone (still a child of #ticket-wrap, still .visible) so the
+// buttons don't dissolve out and back in on top of everything else changing size.
+function showPlainTicket() {
+  const wrap = document.getElementById('ticket-wrap');
+  const scaleEl = document.getElementById('ticket-scale');
+  const fabGroup = document.getElementById('ticket-fab-group');
+  const plain = document.getElementById('result-plain');
+  // If a frame was showing, #ticket-scale and .ticket-fab-group are currently living inside
+  // that frame's slot/box, not #ticket-wrap — pull them back in before moving #ticket-wrap
+  // itself, or #ticket-wrap arrives at .result-plain empty and the ticket vanishes entirely
+  // (it's still sitting inside the now-hidden frame container).
+  if (scaleEl.parentElement !== wrap) wrap.insertBefore(scaleEl, wrap.firstChild);
+  if (fabGroup.parentElement !== wrap) wrap.appendChild(fabGroup);
+  scaleEl.style.transform = ''; scaleEl.style.transformOrigin = '';
+  if (wrap.parentElement !== plain) plain.appendChild(wrap);
+  hideAllTicketHomes();
+  plain.style.display = '';
 }
 
 // The result screen's actual "apply" step — called once the user confirms a choice in the
 // modal (never while just browsing options in there). #ticket-scale moves into the chosen
 // frame's photo slot (clipped there, just the ticket itself); .ticket-fab-group moves into
 // the frame's own box instead (NOT the slot — the slot clips tightly to the photo, which
-// would cut off buttons meant to float past the ticket's edge, same reasoning as why they
-// live in #ticket-wrap rather than .booth in the 'none' case). Swaps which container is
+// would cut off buttons meant to float past the ticket's edge). Swaps which container is
 // visible, then re-renders the gems + the cached share-image so both stay in sync.
 function applyFrameToResult(type) {
   if (type === 'none') {
-    resetTicketFrameDom();
+    showPlainTicket();
   } else {
-    document.querySelector('.booth').style.display = 'none';
-    document.getElementById('result-frame-casita').style.display = type === 'casita' ? '' : 'none';
-    document.getElementById('result-frame-puntos').style.display = type === 'puntos' ? '' : 'none';
+    hideAllTicketHomes();
+    document.getElementById(`result-frame-${type}`).style.display = '';
     const scaleEl = document.getElementById('ticket-scale');
     const fabGroup = document.getElementById('ticket-fab-group');
     const frameEl = document.getElementById(`rf-${type}-frame`);
@@ -2259,7 +2298,7 @@ function layoutGems() {
   const H = Math.max(document.documentElement.scrollHeight, window.innerHeight);
   layer.style.height = H + 'px';
   const sx = window.scrollX, sy = window.scrollY, PAD = 12;
-  const blockers = [...screen.querySelectorAll('.site-header > *, .sec, .action-row, .ticket-tilt, .result-top > *, .booth, .ticket-fab-group, .result-frame')]
+  const blockers = [...screen.querySelectorAll('.site-header > *, .sec, .action-row, .ticket-tilt, .result-top > *, .booth, .ticket-fab-group, .result-frame, .result-plain')]
     .map(el => el.getBoundingClientRect())
     .filter(r => r.width && r.height)
     .map(r => ({l:r.left+sx-PAD, r:r.right+sx+PAD, t:r.top+sy-PAD, b:r.bottom+sy+PAD}));
@@ -2874,7 +2913,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     state.ribbonColor = '#FFFFFF';
     state.jewelsOn = false;
     state.frame = 'none';
-    resetTicketFrameDom();
+    resetToBoothState();
     document.getElementById('jewels-toggle').setAttribute('aria-checked', 'false');
     // Scoped to the carousel — .frame-card (the Customize modal's frame picker) also carries
     // the .flower-card class for the shared look, but has no .flower-qty pill to reset.
