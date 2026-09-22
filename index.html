@@ -11,9 +11,8 @@
 <link rel="apple-touch-icon" sizes="180x180" href="images/apple-touch-icon.png">
 <link rel="icon" type="image/png" sizes="192x192" href="images/favicon-192x192.png">
 <link rel="icon" type="image/png" sizes="512x512" href="images/favicon-512x512.png">
-<link rel="stylesheet" href="styles/bloom-tokens.css?v=3">
-<link rel="stylesheet" href="styles/bloom-components.css?v=3">
-<link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles/bloom-tokens.css?v=15">
+<link rel="stylesheet" href="styles/bloom-components.css?v=10">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <style>
 :root {
@@ -21,17 +20,16 @@
   --parchment:var(--color-parchment); --canvas:var(--color-canvas);
   --rose:var(--color-rose); --mauve:var(--color-mauve); --sage:var(--color-sage);
   --stone:var(--color-stone); --bark:var(--color-bark); --muted:var(--color-muted);
-  --hairline:var(--color-hairline); --font-script:'Dancing Script',cursive;
+  --hairline:var(--color-hairline);
 }
 *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
 html{scroll-behavior:smooth}
-/* Fraunces is a variable font — Figma's kit dials in "WONK" 1 (its characterful,
-   slightly irregular letterforms) on every Fraunces text style. Setting it here
-   lets it inherit everywhere Fraunces is used; unsupported axes on the other
-   fonts (Schibsted Grotesk, Courier Prime, Dancing Script) are simply ignored. */
-body{background:#F7F3E8;color:var(--bark);font-family:var(--font-body);font-weight:300;min-height:100vh;overflow-x:hidden;font-variation-settings:"SOFT" 0,"WONK" 1}
+body{position:relative;background-color:var(--color-canvas);color:var(--bark);font-family:var(--font-body);font-weight:400;min-height:100vh;overflow-x:hidden;-webkit-font-smoothing:antialiased;cursor:url('images/cursor-heart.png') 24 8,auto}
 
 .screen{display:none;min-height:100vh}
+/* Decorative gem stickers scattered over the paper (positions computed by layoutGems, in page coordinates). */
+.gem-layer{position:absolute;top:0;left:0;width:100%;overflow:hidden;pointer-events:none;z-index:0}
+.gem{position:absolute;max-width:none;user-select:none;filter:drop-shadow(0 1px 1.5px color-mix(in srgb,var(--color-bark) 30%,transparent))}
 .screen.active{display:block}
 
 /* ── AMBIENT GRADIENT ORBS (home + ticket) ──
@@ -40,8 +38,8 @@ body{background:#F7F3E8;color:var(--bark);font-family:var(--font-body);font-weig
    sine/cosine path instead. A third orb just loops a gentle CSS keyframe
    for extra life without needing JS. All movement is done via `transform`
    (compositor-only) rather than left/top, so it stays cheap at 60fps. */
-.gradient-orbs{position:fixed;inset:0;z-index:0;overflow:hidden;pointer-events:none;background:#F7F3E8}
-.orb{position:absolute;left:50%;top:50%;width:46vmax;height:46vmax;border-radius:50%;transform:translate(-50%,-50%);will-change:transform}
+.gradient-orbs{position:fixed;inset:0;z-index:0;overflow:hidden;pointer-events:none}
+.orb{display:none;position:absolute;left:50%;top:50%;width:46vmax;height:46vmax;border-radius:50%;transform:translate(-50%,-50%);will-change:transform}
 
 .orb-home-1{background:radial-gradient(circle,rgba(226,184,200,0.72) 0%,rgba(226,184,200,0.28) 38%,transparent 68%)}
 .orb-home-2{background:radial-gradient(circle,rgba(224,134,170,0.55) 0%,rgba(224,134,170,0.18) 38%,transparent 68%)}
@@ -64,9 +62,9 @@ body{background:#F7F3E8;color:var(--bark);font-family:var(--font-body);font-weig
 
 /* ── BUILDER ── */
 .builder-bg{min-height:100vh;position:relative}
-.builder-wrap{max-width:680px;margin:0 auto;padding:44px 20px 120px;position:relative;z-index:1}
+.builder-wrap{max-width:680px;margin:0 auto;padding:36px 20px 64px;position:relative;z-index:1}
 
-.petal{position:fixed;top:0;pointer-events:none;z-index:0;object-fit:contain;will-change:transform}
+.petal{display:none;position:fixed;top:0;pointer-events:none;z-index:0;object-fit:contain;will-change:transform}
 @keyframes petalFall{
   0%  {transform:translateY(-6vh) translateX(0px) rotate(0deg);opacity:0}
   6%  {opacity:0.55}
@@ -107,35 +105,31 @@ body{background:#F7F3E8;color:var(--bark);font-family:var(--font-body);font-weig
 }
 
 .page-sub{font-size:13px;color:var(--color-muted);text-align:center;margin-bottom:12px;font-weight:300;line-height:1.6}
-#el-page-title em{font-style:normal}
 
 
-.step-label{font-size:11px;font-weight:800;letter-spacing:0.2em;text-transform:uppercase;color:var(--stone);margin-bottom:10px;display:flex;align-items:center;gap:8px}
-.step-label::after{content:'';flex:1;height:1px;background:var(--hairline)}
-.step-num{background:var(--bark);color:var(--parchment);width:18px;height:18px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:9px;flex-shrink:0}
+.step-label{font-size:12px;font-weight:400;letter-spacing:0.2em;text-transform:uppercase;color:var(--stone);margin-bottom:10px;display:flex;align-items:center;gap:8px}
+.step-label::after{content:'';flex:1;height:1px;background:var(--color-line)}
+.step-num{background:var(--color-rose);color:var(--parchment);width:20px;height:20px;border-radius:0;display:inline-flex;align-items:center;justify-content:center;font-size:11px;flex-shrink:0}
 
 /* ── CAROUSEL ── */
-.carousel-section{margin-bottom:32px}
-.count-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
-.count-hint{font-size:11px;color:var(--muted)}
 
 .carousel-outer{position:relative}
 .carousel{display:flex;gap:12px;overflow-x:auto;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;padding:6px 4px 12px;scrollbar-width:none}
 .carousel::-webkit-scrollbar{display:none}
 
 .flower-card{
-  flex-shrink:0;width:118px;background:var(--parchment);border-radius:var(--radius-lg);
+  flex-shrink:0;width:132px;background:var(--color-parchment);border-radius:0;
   padding:12px 10px 10px;display:flex;flex-direction:column;align-items:center;gap:4px;
-  cursor:pointer;scroll-snap-align:start;border:2px solid transparent;
-  transition:border-color 0.2s,transform 0.25s var(--ease-petal),box-shadow 0.25s;
+  cursor:pointer;scroll-snap-align:start;border:1px solid var(--color-line);
+  transition:border-color 0.2s,background 0.2s;
   position:relative;user-select:none;-webkit-tap-highlight-color:transparent
 }
-.flower-card:hover{transform:translateY(-4px);box-shadow:0 12px 28px rgba(44,45,30,0.1)}
-.flower-card.selected{border-color:var(--bark);background:#F4ECE4}
+.flower-card:hover{border-color:var(--bark)}
+.flower-card.selected{border-color:var(--color-rose);background:var(--parchment);box-shadow:inset 0 0 0 1px var(--color-rose)}
 .flower-qty{
   display:none;position:absolute;top:8px;right:8px;min-width:24px;height:24px;padding:0 8px;
-  background:var(--bark);color:var(--parchment);border:none;border-radius:var(--radius-pill);
-  font-family:var(--font-mono);font-size:11px;align-items:center;justify-content:center;gap:3px;
+  background:var(--color-rose);color:var(--parchment);border:none;border-radius:0;
+  font-family:var(--font-body);font-size:13px;align-items:center;justify-content:center;gap:3px;
   cursor:pointer;transition:transform 0.15s,background 0.15s;touch-action:manipulation
 }
 /* Visible pill stays small so it doesn't dominate the card, but the actual tap
@@ -146,100 +140,144 @@ body{background:#F7F3E8;color:var(--bark);font-family:var(--font-body);font-weig
   content:'';position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
   width:44px;height:44px
 }
-.flower-qty:hover{background:#4a4238;transform:scale(1.08)}
+.flower-qty:hover{background:var(--color-mauve)}
 .flower-qty:focus-visible{outline:2px solid var(--bark);outline-offset:2px}
 .flower-card.selected .flower-qty{display:flex}
 .flower-card .flower-img{height:84px;width:auto;max-width:76px;object-fit:contain;object-position:bottom center;display:block;margin:0 auto}
-.flower-name{font-family:var(--font-display);font-size:13px;font-style:normal;color:var(--bark);text-align:center}
-.flower-mood{font-size:9px;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);text-align:center}
+.flower-name{font-family:var(--font-display);font-size:13px;font-weight:400;font-style:normal;color:var(--bark);text-align:center}
+.flower-mood{font-size:10px;letter-spacing:0.12em;text-transform:uppercase;color:var(--muted);text-align:center}
 
 .carr-arrow{
   position:absolute;top:50%;transform:translateY(-60%);width:30px;height:30px;
-  background:var(--parchment);border:1px solid var(--hairline);border-radius:50%;
+  background:var(--parchment);border:1px solid var(--color-line);border-radius:0;
   display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:2;
-  font-size:13px;color:var(--bark);box-shadow:0 3px 10px rgba(44,45,30,0.1);
-  transition:transform 0.2s,box-shadow 0.2s
+  font-size:13px;color:var(--bark);
+  transition:background 0.2s,color 0.2s
 }
-.carr-arrow:hover{box-shadow:0 6px 16px rgba(44,45,30,0.15)}
+.carr-arrow:hover{background:var(--bark);color:var(--parchment)}
 .carr-arrow.left{left:-15px}
 .carr-arrow.right{right:-15px}
 
-/* ── BOUQUET PREVIEW ── */
-.preview-section{
-  background:var(--parchment);border-radius:var(--radius-lg);padding:20px 16px 24px;
-  margin-bottom:28px;display:flex;flex-direction:column;align-items:center;
-  position:relative;overflow:hidden
+/* ── HEADER ── */
+.site-header{display:flex;justify-content:space-between;align-items:flex-start;gap:12px 24px;flex-wrap:wrap;margin-bottom:40px}
+.site-credits a{color:inherit;text-decoration:underline;text-decoration-color:var(--stone);text-underline-offset:2px}
+.site-credits a:hover{color:var(--bark)}
+
+/* ── FOOTER — a light-pink marquee strip (same tone as the ticket stub / music bar),
+   credits flanked by two little gem stickers, same idea as the music bar's title. ── */
+.site-footer{position:relative;z-index:1;margin-top:24px}
+.footer-marquee{width:100%;min-height:40px;padding:10px 20px;overflow:hidden;background:var(--color-blush);display:flex;align-items:center;justify-content:center}
+.footer-marquee__track{display:inline-flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:center;text-align:center;
+  font-family:var(--font-body);font-size:13px;letter-spacing:0.02em;color:var(--bark)}
+.footer-marquee__track a{color:inherit;text-decoration:underline;text-decoration-color:var(--stone);text-underline-offset:2px}
+.footer-marquee__track a:hover{color:var(--bark)}
+.footer-marquee__gem{width:14px;height:auto;flex-shrink:0}
+
+/* ── MUSIC BAR — pink player strip that clips down from the very top of the page,
+   replicating the portfolio's marquee "now playing" bar with Bloom's own palette
+   (soft blush instead of ink) and a couple of gem stickers flanking the title. ── */
+body.music-bar-active{padding-top:44px}
+.music-bar-clip{position:fixed;top:0;left:0;right:0;z-index:500;height:44px;clip-path:inset(100% 0 0);opacity:0;pointer-events:none;transition:clip-path 0.45s var(--ease-bloom),opacity 0.45s ease}
+.music-bar-clip--visible{clip-path:inset(0);opacity:1;pointer-events:auto}
+.music-bar{display:flex;align-items:center;gap:12px;height:44px;padding:0 20px;background-color:var(--color-blush);color:var(--bark);transition:background-color 10s ease-in-out}
+@media(prefers-reduced-motion:reduce){.music-bar{transition:none}}
+.music-bar__play-pause{width:26px;height:26px;border-radius:50%;border:1px solid var(--bark);background:transparent;color:var(--bark);display:flex;align-items:center;justify-content:center;flex-shrink:0;cursor:pointer;padding:0}
+.music-bar__play-pause svg{display:block}
+.music-bar__marquee{flex:1;min-width:0;overflow:hidden;-webkit-mask-image:linear-gradient(90deg,transparent,#000 28px calc(100% - 28px),transparent);mask-image:linear-gradient(90deg,transparent,#000 28px calc(100% - 28px),transparent)}
+.music-bar__title{display:inline-flex;align-items:center;gap:8px;white-space:nowrap;padding-left:100%;font-family:var(--font-mono);font-size:12px;letter-spacing:0.02em;animation:music-bar-marquee 22s linear infinite}
+.music-bar__gem{width:13px;height:auto;flex-shrink:0}
+@keyframes music-bar-marquee{from{transform:translateX(0)}to{transform:translateX(-100%)}}
+@media(prefers-reduced-motion:reduce){.music-bar__title{animation:none;padding-left:0}}
+
+.site-logo{margin:0;line-height:0}
+.site-logo img{height:34px;width:auto;display:block}
+.site-tagline{margin-top:14px;font-size:12px;letter-spacing:0.22em;text-transform:uppercase;color:var(--muted)}
+.site-credits{font-size:13px;color:var(--muted)}
+.site-credits a{color:inherit;text-decoration:underline;text-decoration-color:var(--stone);text-underline-offset:2px}
+.site-credits a:hover{color:var(--bark)}
+
+/* ── BUILDER: controls + live ticket ──
+   Mobile: ticket first, then the sections. Desktop (900px+): controls left,
+   ticket right and sticky so the live preview stays in view while choosing. */
+.builder-main{display:flex;flex-direction:column;gap:32px}
+.builder-controls{min-width:0}
+.builder-ticket{display:contents}
+.builder-ticket .ticket-tilt{order:-1;width:100%;max-width:380px;margin:0 auto}
+.builder-ticket .action-row{order:1;width:100%;max-width:380px;margin:0 auto}
+.sec{border-top:1px solid var(--color-line);padding:16px 0 18px}
+.sec-title{font-size:18px;margin-bottom:12px}
+/* Pill switch — replicates the two-option track/option shape used on lucilamtz90's
+   portfolio, recoloured with Bloom tokens. This is the one deliberate exception to the
+   square-corners rule: the switch shape itself is the thing being replicated. */
+.switch-row{display:flex;align-items:center;justify-content:space-between;gap:16px}
+.switch-row__label{margin:0}
+.bloom-switch{background:none;border:none;padding:0;cursor:pointer;display:inline-flex;flex-shrink:0}
+.bloom-switch__track{display:inline-flex;align-items:center;gap:3px;padding:4px;border-radius:999px;border:1px solid var(--color-line);background:var(--color-parchment);transition:border-color 0.2s}
+.bloom-switch__option{min-width:38px;height:26px;padding:0 4px;border-radius:999px;display:inline-flex;align-items:center;justify-content:center;font-family:var(--font-body);font-size:11px;letter-spacing:0.06em;color:var(--muted);background:transparent;transition:background-color 0.2s,color 0.2s}
+.bloom-switch[aria-checked="false"] .bloom-switch__option--off{background:var(--color-sage);color:var(--bark)}
+.bloom-switch[aria-checked="true"] .bloom-switch__option--on{background:var(--color-rose);color:var(--parchment)}
+.link-btn{display:inline-block;margin-top:18px;background:none;border:none;padding:0;font:inherit;font-size:16px;color:var(--bark);text-decoration:underline;text-underline-offset:4px;cursor:pointer;transition:color 0.2s}
+.link-btn:hover,.link-btn.has-msg{color:var(--color-rose)}
+.action-row{display:flex;gap:12px;margin-top:14px}
+.action-row .bloom-btn{flex:1;padding-left:16px;padding-right:16px}
+.btn-create:disabled{opacity:0.38;cursor:not-allowed}
+@media(min-width:900px){
+  .builder-wrap{max-width:1240px;padding:56px 48px 80px}
+  .builder-main{display:grid;grid-template-columns:minmax(0,1fr) 380px;column-gap:96px;align-items:start}
+  .builder-ticket{display:block;position:sticky;top:32px}
+  .builder-ticket .ticket-tilt,.builder-ticket .action-row{max-width:none;margin-left:0;margin-right:0}
+  .builder-ticket .action-row{margin-top:20px}
 }
-.preview-section::before{
-  content:'';position:absolute;inset:0;
-  background:radial-gradient(ellipse at 50% 0%,rgba(226,184,200,0.25) 0%,transparent 65%);
-  pointer-events:none
-}
-.preview-lbl{font-size:10px;letter-spacing:0.18em;text-transform:uppercase;color:var(--stone);margin-bottom:14px;align-self:flex-start;position:relative;z-index:1}
-.bouquet-wrap{width:260px;height:300px;position:relative;z-index:1;overflow:hidden}
+
+.bouquet-wrap{width:260px;height:300px;position:relative;margin:8px auto;overflow:hidden}
 .empty-hint{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;height:100%;color:var(--muted)}
 .empty-hint .big{font-size:42px;opacity:0.25}
-.empty-hint .txt{font-family:var(--font-display);font-size:14px;font-style:normal;opacity:0.7}
+.empty-hint .txt{font-family:var(--font-body);font-size:15px;opacity:0.8}
 
 /* ── COLOR PICKERS ── */
 .pickers-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px}
 @media(max-width:480px){.pickers-grid{grid-template-columns:1fr}}
-.picker-group{background:var(--parchment);border-radius:var(--radius-md);padding:16px}
+@media(max-width:340px){.site-header{flex-direction:column;align-items:flex-start}}
+.picker-group{background:var(--parchment);border:1px solid var(--color-line);border-radius:0;padding:16px}
 .picker-title{font-size:10px;letter-spacing:0.16em;text-transform:uppercase;color:var(--stone);margin-bottom:12px}
-.swatches{display:flex;gap:8px;flex-wrap:wrap}
-.swatch{width:32px;height:32px;border-radius:50%;cursor:pointer;border:2.5px solid transparent;transition:transform 0.18s var(--ease-petal),border-color 0.18s,box-shadow 0.18s;position:relative}
-.swatch:hover{transform:scale(1.18)}
-.swatch.active{border-color:var(--bark);box-shadow:0 0 0 3px rgba(44,45,30,0.12)}
-.swatch.light{box-shadow:inset 0 0 0 1.5px rgba(44,45,30,0.15)}
-.swatch.light.active{border-color:var(--stone);box-shadow:inset 0 0 0 1.5px rgba(44,45,30,0.15),0 0 0 3px rgba(44,45,30,0.1)}
-.swatch-label{font-size:9px;color:var(--muted);text-align:center;margin-top:5px;letter-spacing:0.06em;opacity:0;transition:opacity 0.2s}
+.swatches{display:flex;gap:14px;flex-wrap:wrap;align-items:flex-start;padding-bottom:14px}
+.swatch{width:32px;height:32px;border-radius:0;cursor:pointer;border:1px solid transparent;transition:transform 0.18s var(--ease-petal),outline-color 0.18s;position:relative;outline:1px solid transparent;outline-offset:3px}
+.swatch:hover{transform:scale(1.1)}
+.swatch.active{outline-color:var(--bark)}
+.swatch.light{box-shadow:inset 0 0 0 1px var(--color-line)}
+.swatch.light.active{outline-color:var(--bark)}
+.swatch-label{position:absolute;top:100%;left:50%;transform:translateX(-50%);margin-top:9px;font-size:11px;color:var(--muted);white-space:nowrap;letter-spacing:0.06em;opacity:0;pointer-events:none;transition:opacity 0.2s}
 .swatch-wrap:hover .swatch-label,.swatch.active~.swatch-label{opacity:1}
-.swatch-wrap{display:flex;flex-direction:column;align-items:center}
-
-/* ── ACTIONS ── */
-.action-stack{display:flex;flex-direction:column;gap:12px}
-.site-credits{text-align:center;margin-top:36px;font-size:11px;letter-spacing:0.02em;color:var(--muted)}
-.site-credits a{color:inherit;text-decoration:underline;text-decoration-color:var(--stone);text-underline-offset:2px}
-.site-credits a:hover{color:var(--bark)}
-.btn-message{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;padding:14px 28px;box-shadow:inset 0 0 0 1.5px var(--color-rose)}
-.btn-message:hover{background:var(--color-rose)}
-.btn-message.has-msg{box-shadow:inset 0 0 0 1.5px #7D8B3C;background:rgba(125,139,60,0.12)}
-.btn-create{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;padding:16px 36px}
-.btn-create:disabled{opacity:0.38;cursor:not-allowed;transform:none}
+.swatch-wrap{position:relative;width:32px;height:32px;flex:none}
 
 /* ── MODAL ── */
-.overlay{position:fixed;inset:0;background:rgba(44,45,30,0.42);backdrop-filter:blur(5px);z-index:100;display:flex;align-items:flex-end;justify-content:center;opacity:0;pointer-events:none;transition:opacity 0.3s}
+.overlay{position:fixed;inset:0;background:rgba(30,26,25,0.5);z-index:100;display:flex;align-items:center;justify-content:center;padding:16px;opacity:0;pointer-events:none;transition:opacity 0.35s var(--ease-bloom)}
 .overlay.open{opacity:1;pointer-events:auto}
-.sheet{background:var(--parchment);border-radius:28px 28px 0 0;padding:24px 24px 52px;width:100%;max-width:640px;transform:translateY(100%);transition:transform 0.4s var(--ease-petal);max-height:92vh;overflow-y:auto}
-.overlay.open .sheet{transform:translateY(0)}
-.sheet-handle{width:40px;height:4px;background:var(--rose);border-radius:2px;margin:0 auto 22px}
-.sheet-title{font-family:var(--font-display);font-size:26px;font-weight:400;font-style:normal;color:var(--bark);margin-bottom:4px}
-.sheet-sub{font-size:12px;color:var(--muted);margin-bottom:24px}
-.ribbon-modal-preview{display:flex;align-items:center;justify-content:center;padding:12px 0}
-.ribbon-modal-preview img{width:190px;height:auto;display:block}
-.ribbon-color-name{text-align:center;font-family:var(--font-display);font-size:18px;color:var(--bark);margin:4px 0 18px;min-height:22px}
-#ribbon-swatches{justify-content:center;margin-bottom:6px}
-.sheet-btn-row{display:flex;gap:10px;margin-top:24px}
-.sheet-btn-row .bloom-btn{flex:1}
+.sheet{position:relative;background:var(--parchment);border:1px solid var(--bark);padding:32px;width:100%;max-width:520px;max-height:92vh;overflow-y:auto;opacity:0;transition:opacity 0.45s var(--ease-bloom) 0.05s}
+.overlay.open .sheet{opacity:1}
+.sheet-close{position:absolute;top:10px;right:14px;background:none;border:none;font-size:28px;line-height:1;color:var(--bark);cursor:pointer;padding:4px 8px}
+.sheet-close:hover{color:var(--color-rose)}
+.sheet-title{margin-bottom:6px;padding-right:32px}
+.sheet-sub{font-size:14px;color:var(--muted);margin-bottom:24px}
 .field{margin-bottom:18px}
-.field label{font-size:10px;letter-spacing:0.16em;text-transform:uppercase;color:var(--stone);display:block;margin-bottom:6px}
-.field input,.field textarea{width:100%;background:#FFFFFF;border:1px solid rgba(44,45,30,0.14);font-family:var(--font-body);font-size:16px;font-weight:300;color:var(--bark);outline:none;transition:border-color 0.2s,box-shadow 0.2s}
-.field input{border-radius:var(--radius-pill);padding:11px 20px}
-.field textarea{border-radius:var(--radius-lg);padding:13px 18px;resize:none;height:96px}
+.field label{font-size:11px;font-weight:400;letter-spacing:0.16em;text-transform:uppercase;color:var(--stone);display:block;margin-bottom:6px}
+.field input,.field textarea{width:100%;background:transparent;border:1px solid var(--color-line);border-radius:0;font-family:var(--font-body);font-size:16px;font-weight:400;color:var(--bark);outline:none;transition:border-color 0.2s,box-shadow 0.2s}
+.field input{padding:12px 16px}
+.field textarea{padding:13px 16px;resize:none;height:96px}
 .field input::placeholder,.field textarea::placeholder{color:var(--muted)}
-.field input:focus,.field textarea:focus{border-color:var(--rose);box-shadow:0 0 0 3px rgba(226,184,200,0.28)}
+.field input:focus,.field textarea:focus{border-color:var(--color-rose)}
 .char-bar{font-family:var(--font-mono);font-size:10px;color:var(--muted);text-align:right;margin-top:4px}
-.char-bar.warn{color:#C47A7A}
+.char-bar.warn{color:var(--color-error)}
 .fields-2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
 @media(max-width:400px){.fields-2{grid-template-columns:1fr}}
 .font-pick{display:flex;gap:10px;margin-top:2px}
-.font-opt{flex:1;padding:11px 8px;border-radius:var(--radius-md);background:var(--canvas);border:1.5px solid transparent;cursor:pointer;text-align:center;transition:border-color 0.18s,background 0.18s}
-.font-opt:hover{background:#EBE7DC}
-.font-opt.sel{border-color:var(--bark);background:var(--parchment)}
+.font-opt{flex:1;padding:11px 8px;border-radius:0;background:var(--color-parchment);border:1px solid var(--color-line);cursor:pointer;text-align:center;transition:border-color 0.18s,background 0.18s}
+.font-opt:hover{border-color:var(--bark)}
+.font-opt.sel{border-color:var(--color-rose);box-shadow:inset 0 0 0 1px var(--color-rose)}
 .font-opt-preview{font-size:15px;color:var(--bark);margin-bottom:3px;line-height:1.2}
-.font-opt-name{font-size:9px;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted)}
-.btn-sheet-save{width:100%;margin-top:24px;padding:15px}
-.picker-group.bloom-card{overflow:visible;border-radius:var(--radius-md)}
+.font-opt-name{font-size:11px;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted)}
+.btn-sheet-save{width:100%;margin-top:24px}
+.picker-group.bloom-card{overflow:visible;border-radius:0}
 
 /* ── RESULT SCREEN ──
    A genuine full page in normal document flow (like #screen-builder), not a
@@ -249,42 +287,91 @@ body{background:#F7F3E8;color:var(--bark);font-family:var(--font-body);font-weig
 #screen-result{
   display:none;
   min-height:100vh;position:relative;
-  background:#F7F3E8;
   flex-direction:column;align-items:center;padding:28px 20px 80px
 }
 @keyframes resultFadeIn{from{opacity:0}to{opacity:1}}
 #screen-result.active{display:flex;animation:resultFadeIn 0.4s var(--ease-petal) both}
-.result-top{text-align:center;margin-bottom:12px;position:relative;z-index:1}
-.ticket-wrap{position:relative;z-index:1;width:100%;max-width:360px;margin:0 auto;filter:drop-shadow(0 16px 48px rgba(0,0,0,0.18))}
-.ticket{background-image:url('images/ticket-bg.png');background-size:100% 100%;background-repeat:no-repeat;overflow:visible;position:relative}
-.ticket-body{padding:34px 26px 20px}
+.result-top{text-align:center;margin-bottom:24px;position:relative;z-index:1}
+#el-result-title{margin:0 0 6px}
+.result-sub{font-family:var(--font-body);font-size:14px;color:var(--muted)}
+
+/* Photo-booth print-out: the ticket comes out of a slot in stepped bursts, like a strip
+   being printed. The window clips it while it slides, then opens up so the tilt isn't cut off. */
+.booth{width:100%;max-width:460px;margin:0 auto;position:relative;z-index:1}
+/* Brushed-metal machine front with a recessed, rounded bezel and a black opening. Colours are
+   mixes of the Bloom tokens so the machine stays inside the warm-grey palette. */
+.booth-panel{position:relative;z-index:1;height:104px;
+  background:linear-gradient(180deg,color-mix(in srgb,var(--color-bark) 8%,var(--color-canvas)) 0%,color-mix(in srgb,var(--color-bark) 26%,var(--color-canvas)) 100%);
+  border-radius:18px 18px 4px 4px;
+  box-shadow:inset 0 1px 0 var(--color-parchment),inset 0 -2px 0 color-mix(in srgb,var(--color-bark) 30%,transparent),0 6px 18px color-mix(in srgb,var(--color-bark) 22%,transparent)}
+.booth-bezel{position:absolute;left:5%;right:5%;top:16px;height:72px;border-radius:26px;
+  background:linear-gradient(180deg,color-mix(in srgb,var(--color-bark) 22%,var(--color-canvas)) 0%,var(--color-parchment) 100%);
+  box-shadow:inset 0 2px 3px color-mix(in srgb,var(--color-bark) 35%,transparent),0 1px 0 var(--color-parchment)}
+.booth-opening{position:absolute;left:12px;right:12px;top:12px;bottom:12px;border-radius:18px;background:var(--color-bark);
+  box-shadow:inset 0 7px 9px color-mix(in srgb,var(--color-bark) 85%,transparent),inset 0 -2px 3px color-mix(in srgb,var(--color-parchment) 18%,transparent)}
+/* The window starts inside the opening, so the strip appears to come out of the machine.
+   Its horizontal margins mirror the opening's own inset (5% bezel + 12px) so the ticket
+   is always clipped to the opening's actual width, not the wider booth-panel behind it —
+   otherwise on narrow (mobile) screens, where max-width:460px never kicks in, the ticket
+   renders wider than the slot it's supposed to be printing out of. */
+.booth-window{position:relative;z-index:2;margin-top:-70px;margin-left:calc(5% + 12px);margin-right:calc(5% + 12px);overflow:hidden}
+.booth-window.printed{overflow:visible}
+.ticket-wrap.print{animation:boothPrint 3.6s both}
+@keyframes boothPrint{
+  0%  {transform:translateY(-101%);animation-timing-function:cubic-bezier(0.3,0,0.2,1)}
+  20% {transform:translateY(-78%)}
+  30% {transform:translateY(-78%);animation-timing-function:cubic-bezier(0.3,0,0.2,1)}
+  52% {transform:translateY(-44%)}
+  62% {transform:translateY(-44%);animation-timing-function:cubic-bezier(0.3,0,0.2,1)}
+  80% {transform:translateY(-12%)}
+  86% {transform:translateY(-12%);animation-timing-function:cubic-bezier(0.16,1,0.3,1)}
+  100%{transform:translateY(0)}
+}
+.ticket-wrap{position:relative;z-index:1;width:88%;max-width:330px;margin:0 auto}
+.ticket{position:relative}
+/* The paper outline (with the perforation notches) is an inline SVG drawn by JS, not a CSS
+   border/clip-path, so html2canvas can export it. Everything else sits above it. */
+.ticket-shape{position:absolute;top:0;left:0;z-index:0;pointer-events:none;overflow:visible}
+.ticket > *:not(.ticket-shape){position:relative;z-index:1}
+.ticket-perf{position:relative;height:22px}
+.ticket-perf::before{content:'';position:absolute;left:20px;right:20px;top:50%;border-top:1px dashed var(--color-line)}
+.ticket-stub{position:relative;height:44px;background:var(--color-blush);display:flex;align-items:center;color:var(--bark)}
+.ticket-stub .r-date{width:100%;padding:0 26px;justify-content:center;color:var(--bark);font-size:14px;letter-spacing:0.14em}
+
+/* 3D tilt + glare (desktop pointers only, see initTilt) */
+.ticket-tilt{position:relative;transform-origin:50% 50%;transition:transform 0.42s cubic-bezier(0.22,1,0.36,1);will-change:transform}
+.ticket-tilt.tilting{transition:none}
+.ticket-glare{position:absolute;inset:0;z-index:3;pointer-events:none;transition:background 0.42s ease-out}
+.ticket-body{padding:34px 26px 8px}
 .receipt-brand{text-align:center;margin-bottom:12px}
 .receipt-logo{height:18px;width:auto;display:block;margin:0 auto}
 .eyebrow-logo{height:18px;width:auto;vertical-align:middle}
-.receipt-sub{font-family:var(--font-mono);font-size:12px;color:var(--muted);letter-spacing:0.1em}
-.r-divider{border:none;border-top:1px dashed rgba(44,45,30,0.2);margin:10px 0}
-.r-row{display:flex;justify-content:space-between;align-items:baseline;font-family:var(--font-mono);font-size:14px;color:var(--bark);line-height:2}
+.receipt-sub{font-family:var(--font-body);font-size:10px;color:var(--muted);letter-spacing:0.18em;text-transform:uppercase}
+.r-divider{border:none;border-top:1px solid var(--color-line);margin:10px 0}
+.r-row{display:flex;justify-content:space-between;align-items:baseline;font-family:var(--font-body);font-size:15px;letter-spacing:0.08em;color:var(--bark);line-height:2}
 .r-row .lbl{color:var(--muted)}
+.r-people{gap:12px;font-size:14px;line-height:1.6;padding:6px 0}
+.r-who{font-family:var(--font-display);font-weight:400}
+.r-ph{color:var(--muted)}
+.r-date{position:relative;justify-content:center;padding:0}
+
 .receipt-bouquet{display:flex;justify-content:center;align-items:center;padding:6px 0;position:relative;opacity:0;transform:scale(0.9);transition:opacity 0.9s var(--ease-petal),transform 0.9s var(--ease-petal)}
 .receipt-bouquet.visible{opacity:1;transform:scale(1)}
 .receipt-msg{text-align:center;padding:6px 4px}
 .receipt-msg-text{color:var(--bark);line-height:1.65;font-size:16px}
-.font-serif{font-family:var(--font-display);font-size:16px;font-style:italic}
+.font-serif{font-family:var(--font-display);font-size:15px;font-style:normal}
 .font-script{font-family:var(--font-script);font-size:16px}
-.font-mono{font-family:var(--font-mono);font-size:16px}
-.r-total-row{display:flex;justify-content:space-between;align-items:flex-end}
-.r-total-lbl{font-family:var(--font-mono);font-size:14px;letter-spacing:0.1em;color:var(--muted)}
-.r-total-val{font-family:var(--font-mono);font-size:20px;font-weight:700;color:var(--bark)}
-.result-actions{display:flex;gap:10px;margin-top:36px;width:100%;max-width:360px;flex-wrap:wrap;position:relative;z-index:1}
-.btn-act{flex:1;min-width:120px;padding:14px 18px;border-radius:var(--radius-pill);font-family:var(--font-body);font-size:12px;font-weight:300;letter-spacing:0.07em;cursor:pointer;transition:transform 0.18s var(--ease-petal),box-shadow 0.2s;border:none;display:flex;align-items:center;justify-content:center;gap:7px}
-.btn-act:hover{transform:translateY(-2px)}
-.btn-save{background:var(--bark);color:var(--parchment);box-shadow:0 4px 16px rgba(44,45,30,0.2)}
-.btn-save:hover{box-shadow:0 8px 24px rgba(44,45,30,0.3)}
-.btn-new{background:rgba(255,255,255,0.25);color:var(--bark);border:1.5px solid rgba(255,255,255,0.6);flex:none;padding:14px 22px}
+.font-mono{font-family:var(--font-mono);font-size:16px;font-weight:500;letter-spacing:0.04em;text-transform:uppercase}
+.result-actions{display:flex;gap:12px;margin-top:24px;width:100%;max-width:360px;position:relative;z-index:1}
+.btn-act{flex:1;min-width:0;padding:14px 10px;line-height:1.3;text-align:center;border-radius:0;font-family:var(--font-body);font-size:13px;font-weight:400;letter-spacing:0.14em;text-transform:uppercase;cursor:pointer;transition:background 0.2s,color 0.2s;border:none;display:flex;align-items:center;justify-content:center;gap:7px}
+.btn-save{background:var(--color-rose);color:var(--parchment)}
+.btn-save:hover{background:var(--color-mauve)}
+.btn-new{background:transparent;color:var(--bark);border:1px solid var(--bark)}
+.btn-new:hover{background:var(--bark);color:var(--parchment)}
 
 /* ── TOASTS & SPARKLES ── */
 .toast-zone{position:fixed;bottom:28px;left:50%;transform:translateX(-50%);z-index:300;display:flex;flex-direction:column;gap:8px;align-items:center;pointer-events:none}
-.toast{background:var(--bark);color:var(--parchment);border-radius:var(--radius-pill);padding:11px 22px;font-size:13px;font-weight:300;letter-spacing:0.04em;white-space:nowrap;animation:toastin 0.4s var(--ease-petal) both}
+.toast{background:var(--bark);color:var(--parchment);border-radius:0;padding:12px 22px;font-size:14px;font-weight:400;letter-spacing:0.06em;white-space:nowrap;animation:toastin 0.4s var(--ease-petal) both}
 @keyframes toastin{from{opacity:0;transform:translateY(10px) scale(0.97)}to{opacity:1;transform:none}}
 .sparkle{position:fixed;pointer-events:none;z-index:200;font-size:16px;animation:sparkle 1.4s ease-out forwards}
 @keyframes sparkle{0%{opacity:0;transform:scale(0) rotate(0)}40%{opacity:1;transform:scale(1.2) rotate(90deg)}100%{opacity:0;transform:scale(0) rotate(200deg) translateY(-40px)}}
@@ -300,15 +387,27 @@ body{background:#F7F3E8;color:var(--bark);font-family:var(--font-body);font-weig
 [dir="rtl"] .carr-arrow.right{right:auto;left:-15px}
 
 [dir="rtl"] .r-row{flex-direction:row-reverse}
-[dir="rtl"] .r-total-row{flex-direction:row-reverse}
-[dir="rtl"] .sheet-handle{margin:0 auto 22px}
 [dir="rtl"] .fields-2{direction:rtl}
 [dir="rtl"] .result-actions{flex-direction:row-reverse}
 
-@media(max-width:400px){.ticket-body{padding:28px 18px 14px}.result-actions{flex-direction:column}.btn-new{flex:1}}
+@media(max-width:400px){.ticket-body{padding:28px 18px 8px}}
 </style>
 </head>
 <body>
+<div class="gem-layer" id="gem-layer" aria-hidden="true"></div>
+<div class="music-bar-clip" id="music-bar-clip" aria-hidden="true">
+  <div class="music-bar">
+    <button type="button" class="music-bar__play-pause" id="music-play-pause" aria-label="Play/pause"></button>
+    <div class="music-bar__marquee">
+      <span class="music-bar__title" id="el-music-title">
+        <img class="music-bar__gem" src="images/gems/stone-04.png" alt="">
+        <span id="el-music-title-txt">Loading…</span>
+        <img class="music-bar__gem" src="images/gems/stone-25.png" alt="">
+      </span>
+    </div>
+  </div>
+</div>
+<div id="yt-audio-player" style="position:fixed;width:0;height:0;overflow:hidden;left:-9999px;bottom:0" aria-hidden="true"></div>
 
 
 <!-- SCREEN 1: BUILDER -->
@@ -321,49 +420,105 @@ body{background:#F7F3E8;color:var(--bark);font-family:var(--font-body);font-weig
     </div>
 
     <div class="builder-wrap">
-      <p class="bloom-eyebrow" style="text-align:center;margin-bottom:6px" id="el-eyebrow">✿ bloom studio ✿</p>
-      <h1 class="bloom-h1" style="text-align:center;margin:0 0 12px" id="el-page-title">Create your <em>bouquet</em></h1>
-      <p class="page-sub" id="el-page-sub">Choose your flowers, add a heartfelt note, create it and share it.</p>
+      <header class="site-header">
+        <div class="site-brand">
+          <h1 class="site-logo"><img src="images/logo-bloom-studio.png" alt="Bloom Studio"></h1>
+          <p class="site-tagline" id="el-tagline">virtual flower atelier</p>
+        </div>
+        <button type="button" class="bloom-switch" id="music-toggle" role="switch" aria-checked="false" aria-label="Toggle music">
+          <span class="bloom-switch__track">
+            <span class="bloom-switch__option bloom-switch__option--off" aria-hidden="true">🔇</span>
+            <span class="bloom-switch__option bloom-switch__option--on" aria-hidden="true">💿</span>
+          </span>
+        </button>
+      </header>
 
+      <div class="builder-main">
+        <div class="builder-controls">
+          <section class="sec">
+            <h2 class="sec-title bloom-h2" id="el-step1">Choose your flowers</h2>
+            <div class="carousel-outer">
+              <button class="carr-arrow left" id="arr-left" aria-label="scroll left">‹</button>
+              <div class="carousel" id="flower-carousel"></div>
+              <button class="carr-arrow right" id="arr-right" aria-label="scroll right">›</button>
+            </div>
+          </section>
 
-      <div class="preview-section">
-        <p class="preview-lbl bloom-eyebrow" id="el-preview-lbl">live preview</p>
-        <div class="bouquet-wrap" id="bouquet-preview">
-          <div class="empty-hint">
-            <span class="big">✿</span>
-            <span class="txt" id="el-empty-hint">Your bouquet will appear here</span>
+          <section class="sec">
+            <div class="switch-row">
+              <h2 class="switch-row__label bloom-h2" id="el-jewels-label">Add jewels to your bouquet</h2>
+              <button type="button" class="bloom-switch" id="jewels-toggle" role="switch" aria-checked="false" aria-label="Add jewels">
+                <span class="bloom-switch__track">
+                  <span class="bloom-switch__option bloom-switch__option--off" id="el-jewels-off">OFF</span>
+                  <span class="bloom-switch__option bloom-switch__option--on" id="el-jewels-on">ON</span>
+                </span>
+              </button>
+            </div>
+          </section>
+
+          <section class="sec">
+            <h2 class="sec-title bloom-h2" id="el-sec-ribbon">Choose your ribbon color</h2>
+            <div class="swatches" id="ribbon-swatches"></div>
+          </section>
+
+          <section class="sec">
+            <h2 class="sec-title bloom-h2" id="el-sec-msg">Personalise and add a message</h2>
+            <div class="font-pick" id="font-pick">
+              <div class="font-opt sel" data-font="serif">
+                <div class="font-opt-preview" style="font-family:var(--font-display)">Aa</div>
+                <div class="font-opt-name" id="el-font-elegant">Elegant</div>
+              </div>
+              <div class="font-opt" data-font="script">
+                <div class="font-opt-preview" style="font-family:var(--font-script)">Aa</div>
+                <div class="font-opt-name" id="el-font-script">Script</div>
+              </div>
+              <div class="font-opt" data-font="mono">
+                <div class="font-opt-preview" style="font-family:var(--font-mono);font-weight:500;letter-spacing:0.04em;text-transform:uppercase">Aa</div>
+                <div class="font-opt-name" id="el-font-typewriter">Typewriter</div>
+              </div>
+            </div>
+            <button type="button" class="link-btn" id="btn-open-msg"><span id="el-btn-msg-txt">Add message</span></button>
+          </section>
+
+        </div>
+
+        <aside class="builder-ticket" id="builder-ticket-aside" aria-label="live preview">
+          <div class="ticket-tilt">
+            <div class="ticket" id="live-ticket">
+              <div class="ticket-body">
+                <div class="receipt-brand">
+                  <img src="images/logo-bloom-studio.png" alt="Bloom Studio" class="receipt-logo">
+                  <div class="receipt-sub" id="el-ticket-sub">virtual flower atelier</div>
+                </div>
+                <hr class="r-divider">
+                <div class="bouquet-wrap" id="bouquet-preview">
+                  <div class="empty-hint">
+                    <span class="big">✿</span>
+                    <span class="txt" id="el-empty-hint">Your bouquet will appear here</span>
+                  </div>
+                </div>
+                <hr class="r-divider">
+                <div id="lt-details"></div>
+              </div>
+              <div id="lt-footer"></div>
+            </div>
+            <div class="ticket-glare" aria-hidden="true"></div>
           </div>
-        </div>
+          <div class="action-row">
+            <button class="btn-create bloom-btn bloom-btn--primary bloom-btn--lg" id="btn-create" disabled><span id="el-btn-create-txt">Finish bouquet</span></button>
+            <button class="bloom-btn bloom-btn--outline bloom-btn--lg" id="btn-restart"><span id="el-btn-restart-txt">Start over</span></button>
+          </div>
+        </aside>
       </div>
-
-      <div class="carousel-section">
-        <div class="step-label"><span class="step-num">1</span> <span id="el-step1">Choose your flowers</span></div>
-        <div class="count-row">
-          <span class="count-hint" id="el-count-hint">Add as many flowers as you'd like to your bouquet</span>
-        </div>
-        <div class="carousel-outer">
-          <button class="carr-arrow left" id="arr-left" aria-label="scroll left">‹</button>
-          <div class="carousel" id="flower-carousel"></div>
-          <button class="carr-arrow right" id="arr-right" aria-label="scroll right">›</button>
-        </div>
-      </div>
-
-      <div class="action-stack">
-        <button class="btn-message bloom-btn bloom-btn--outline bloom-btn--lg" id="btn-open-ribbon"><span id="el-btn-ribbon-txt">Choose ribbon color</span></button>
-        <button class="btn-message bloom-btn bloom-btn--outline bloom-btn--lg" id="btn-open-msg"><span id="el-btn-msg-txt">Write a cute message</span></button>
-        <button class="btn-create bloom-btn bloom-btn--dark bloom-btn--lg" id="btn-create" disabled><span id="el-btn-create-txt">Create my bouquet</span></button>
-      </div>
-
-      <p class="site-credits">by lucy &nbsp;|&nbsp; <a href="https://instagram.com/holi.lucy" target="_blank" rel="noopener">IG holi.lucy</a></p>
     </div>
   </div>
 </div>
 
-<!-- MODAL: MESSAGE -->
-<div id="modal-msg" class="overlay" role="dialog" aria-modal="true">
+<!-- MODAL: MESSAGE (centered overlay, dissolves in) -->
+<div id="modal-msg" class="overlay" role="dialog" aria-modal="true" aria-labelledby="el-sheet-title">
   <div class="sheet">
-    <div class="sheet-handle"></div>
-    <h2 class="sheet-title" id="el-sheet-title">Write a cute message ✉</h2>
+    <button type="button" class="sheet-close" id="btn-close-msg" aria-label="close">×</button>
+    <h2 class="sheet-title bloom-h2" id="el-sheet-title">Write a cute message ✉</h2>
     <p class="sheet-sub" id="el-sheet-sub">Optional — your note will appear on the bouquet card</p>
 
     <div class="fields-2">
@@ -383,45 +538,7 @@ body{background:#F7F3E8;color:var(--bark);font-family:var(--font-body);font-weig
       <div class="char-bar" id="char-bar">0 / 140</div>
     </div>
 
-    <div class="field bloom-field">
-      <label class="bloom-label" id="el-lbl-font">Message font</label>
-      <div class="font-pick" id="font-pick">
-        <div class="font-opt sel" data-font="serif">
-          <div class="font-opt-preview" style="font-family:var(--font-display);font-style:italic">Aa</div>
-          <div class="font-opt-name" id="el-font-elegant">Elegant</div>
-        </div>
-        <div class="font-opt" data-font="script">
-          <div class="font-opt-preview" style="font-family:'Dancing Script',cursive">Aa</div>
-          <div class="font-opt-name" id="el-font-script">Script</div>
-        </div>
-        <div class="font-opt" data-font="mono">
-          <div class="font-opt-preview" style="font-family:'Courier Prime',monospace">Aa</div>
-          <div class="font-opt-name" id="el-font-typewriter">Typewriter</div>
-        </div>
-      </div>
-    </div>
-
     <button class="btn-sheet-save bloom-btn bloom-btn--primary bloom-btn--lg" id="btn-save-msg">Save message</button>
-  </div>
-</div>
-
-<div id="modal-ribbon" class="overlay" role="dialog" aria-modal="true">
-  <div class="sheet">
-    <div class="sheet-handle"></div>
-    <h2 class="sheet-title" style="text-align:center" id="el-ribbon-sheet-title">Choose your ribbon color</h2>
-    <p class="sheet-sub" style="text-align:center" id="el-ribbon-sheet-sub">Optional — pick a color for your bow</p>
-
-    <div class="ribbon-modal-preview">
-      <img id="ribbon-modal-img" src="images/ribbon.png" alt="">
-    </div>
-    <p class="ribbon-color-name" id="el-ribbon-color-name">&nbsp;</p>
-
-    <div class="swatches" id="ribbon-swatches"></div>
-
-    <div class="sheet-btn-row">
-      <button type="button" class="bloom-btn bloom-btn--outline bloom-btn--lg" id="btn-ribbon-dismiss"><span id="el-btn-ribbon-dismiss">Dismiss</span></button>
-      <button type="button" class="bloom-btn bloom-btn--primary bloom-btn--lg" id="btn-ribbon-apply"><span id="el-btn-ribbon-apply">Apply color</span></button>
-    </div>
   </div>
 </div>
 
@@ -433,22 +550,42 @@ body{background:#F7F3E8;color:var(--bark);font-family:var(--font-body);font-weig
     <div class="orb orb-ticket-3"></div>
   </div>
   <div class="result-top">
-    <h1 class="bloom-h1" style="text-align:center;margin:0 0 12px" id="el-result-title">Your bouquet is ready</h1>
+    <h1 class="bloom-h2" id="el-result-title">Yay! Your bouquet is ready</h1>
+    <p class="result-sub" id="el-result-sub">Share it or take a screenshot.</p>
   </div>
 
-  <div class="ticket-wrap" id="ticket-wrap">
-    <div class="ticket" id="ticket">
-      <div class="ticket-body" id="ticket-body"></div>
+  <div class="booth">
+    <div class="booth-panel" aria-hidden="true">
+      <div class="booth-bezel"><div class="booth-opening"></div></div>
+    </div>
+    <div class="booth-window" id="booth-window">
+      <div class="ticket-wrap" id="ticket-wrap">
+        <div class="ticket-tilt" id="result-tilt">
+          <div class="ticket" id="ticket">
+            <div class="ticket-body" id="ticket-body"></div>
+            <div id="ticket-footer"></div>
+          </div>
+          <div class="ticket-glare" aria-hidden="true"></div>
+        </div>
+      </div>
     </div>
   </div>
 
   <div class="result-actions">
-    <button class="btn-act btn-save" id="btn-save-img" style="flex:1"><span id="el-btn-save">Download bouquet</span></button>
-  </div>
-  <div class="result-actions" style="margin-top:10px">
-    <button class="btn-act btn-new" id="btn-new" style="flex:1"><span id="el-btn-new">Create another bouquet</span></button>
+    <button class="btn-act btn-save" id="btn-save-img"><span id="el-btn-save">Share bouquet</span></button>
+    <button class="btn-act btn-new" id="btn-new"><span id="el-btn-new">Create another bouquet</span></button>
   </div>
 </div>
+
+<footer class="site-footer">
+  <div class="footer-marquee">
+    <span class="footer-marquee__track">
+      <img class="footer-marquee__gem" src="images/gems/stone-04.png" alt="">
+      <span id="el-footer-credits"><span id="el-credits-prefix">Built by</span> <a href="https://lucilamtz90.github.io/LucilaPortfolio/" target="_blank" rel="noopener">Lucy</a> <span id="el-credits-rest">with Claude Code in React</span></span>
+      <img class="footer-marquee__gem" src="images/gems/stone-25.png" alt="">
+    </span>
+  </div>
+</footer>
 
 <div class="toast-zone" id="toasts"></div>
 
@@ -480,8 +617,13 @@ wrapTitle:'Wrapping paper',
     phTo:"Recipient's name", phFrom:'Your name', phMsg:'Write something sweet… ♡',
     fontElegant:'Elegant', fontScript:'Script', fontTypewriter:'Typewriter',
     btnSaveMsg:'Save message',
-    resultTitle:'Your bouquet is ready',
+    resultTitle:'Yay! Your bouquet is ready',
+    resultSub:'Share it or take a screenshot.',
     receiptSub:'virtual flower atelier',
+    btnShare:'Share bouquet',
+    defaultUser:'Guest',
+    jewelsLabel:'Add jewels to your bouquet', jewelsOff:'OFF', jewelsOn:'ON', creditsBuiltBy:'Built by', musicLabel:'Music', musicOnRepeat:'On repeat lately:', musicLoading:'Loading…', musicUnavailable:'Music unavailable',
+    ariaScrollLeft:'scroll left', ariaScrollRight:'scroll right', ariaLivePreview:'live preview', ariaClose:'close', ariaPlayPause:'Play/pause', ariaToggleMusic:'Toggle music', secMsgTitle:'Personalise and add a message', btnAddMsg:'Add message', btnFinalize:'Finish bouquet', btnRestart:'Start over',
     rowFor:'FOR', rowFrom:'FROM', rowDate:'DATE', rowType:'BOUQUET TYPE',
     btnSave:'Download bouquet', btnNew:'Create another bouquet',
     toastMsgSaved:'Message saved ✓', toastNew:'Ready for a new bouquet ✿', ariaRemoveOne:'Remove one',
@@ -501,7 +643,7 @@ wrapTitle:'Wrapping paper',
       anemone:{name:'Anemone',mood:'anticipation'},
       'baby-hair':{name:'Baby Hair',mood:'calm & wonder'},
     },
-ribbonColorNames:['Rose','Mauve','Sage','Sky Blue','Butter','Marigold'],
+ribbonColorNames:['White','Rose','Mauve','Sage','Sky Blue','Butter','Marigold'],
 envelopeNames:['parchment','blush','sage mist','lavender','sky','cream'],
   },
   es: {
@@ -527,8 +669,13 @@ wrapTitle:'Papel de envoltura',
     phTo:'Nombre del destinatario', phFrom:'Tu nombre', phMsg:'Escribe algo dulce… ♡',
     fontElegant:'Elegante', fontScript:'Cursiva', fontTypewriter:'Máquina de escribir',
     btnSaveMsg:'Guardar mensaje',
-    resultTitle:'Tu ramo está listo',
+    resultTitle:'Yay! Tu ramo está listo',
+    resultSub:'Compártelo o toma screenshot.',
     receiptSub:'atelier virtual de flores',
+    btnShare:'Compartir ramo',
+    defaultUser:'Usuario',
+    jewelsLabel:'Agregar joyas a tu ramo', jewelsOff:'NO', jewelsOn:'SÍ', creditsBuiltBy:'Construido por', musicLabel:'Música', musicOnRepeat:'Sonando ahora:', musicLoading:'Cargando…', musicUnavailable:'Música no disponible',
+    ariaScrollLeft:'desplazar a la izquierda', ariaScrollRight:'desplazar a la derecha', ariaLivePreview:'vista previa en vivo', ariaClose:'cerrar', ariaPlayPause:'reproducir o pausar', ariaToggleMusic:'activar o desactivar música', secMsgTitle:'Personaliza y agrega un mensaje', btnAddMsg:'Agregar mensaje', btnFinalize:'Finalizar ramo', btnRestart:'Volver a iniciar',
     rowFor:'PARA', rowFrom:'DE', rowDate:'FECHA', rowType:'TIPO DE RAMO',
     btnSave:'Descargar ramo', btnNew:'Crear otro ramo',
     toastMsgSaved:'Mensaje guardado ✓', toastNew:'Listo para un nuevo ramo ✿', ariaRemoveOne:'Quitar una',
@@ -548,7 +695,7 @@ wrapTitle:'Papel de envoltura',
       anemone:{name:'Anémona',mood:'anticipación'},
       'baby-hair':{name:'Baby Hair',mood:'calma y asombro'},
     },
-ribbonColorNames:['Rosa','Malva','Salvia','Celeste','Mantequilla','Caléndula'],
+ribbonColorNames:['Blanco','Rosa','Malva','Salvia','Celeste','Mantequilla','Caléndula'],
 envelopeNames:['pergamino','rubor','neblina salvia','lavanda','cielo','crema'],
   },
   fr: {
@@ -574,8 +721,13 @@ wrapTitle:"Papier d'emballage",
     phTo:'Nom du destinataire', phFrom:'Ton nom', phMsg:'Écris quelque chose de doux… ♡',
     fontElegant:'Élégant', fontScript:'Manuscrit', fontTypewriter:'Machine à écrire',
     btnSaveMsg:'Sauvegarder le message',
-    resultTitle:'Ton bouquet est prêt',
+    resultTitle:'Yay ! Ton bouquet est prêt',
+    resultSub:'Partage-le ou fais une capture d’écran.',
     receiptSub:'atelier floral virtuel',
+    btnShare:'Partager le bouquet',
+    defaultUser:'Invité',
+    jewelsLabel:'Ajouter des bijoux à ton bouquet', jewelsOff:'NON', jewelsOn:'OUI', creditsBuiltBy:'Conçu par', musicLabel:'Musique', musicOnRepeat:'En boucle en ce moment :', musicLoading:'Chargement…', musicUnavailable:'Musique indisponible',
+    ariaScrollLeft:'défiler à gauche', ariaScrollRight:'défiler à droite', ariaLivePreview:'aperçu en direct', ariaClose:'fermer', ariaPlayPause:'lecture/pause', ariaToggleMusic:'activer la musique', secMsgTitle:'Personnalise et ajoute un message', btnAddMsg:'Ajouter un message', btnFinalize:'Terminer le bouquet', btnRestart:'Recommencer',
     rowFor:'POUR', rowFrom:'DE', rowDate:'DATE', rowType:'TYPE DE BOUQUET',
     btnSave:'Télécharger le bouquet', btnNew:'Créer un autre bouquet',
     toastMsgSaved:'Message sauvegardé ✓', toastNew:'Prêt pour un nouveau bouquet ✿', ariaRemoveOne:'Retirer une',
@@ -595,7 +747,7 @@ wrapTitle:"Papier d'emballage",
       anemone:{name:'Anémone',mood:'anticipation'},
       'baby-hair':{name:'Baby Hair',mood:'calme et émerveillement'},
     },
-ribbonColorNames:['Rose','Mauve','Sauge','Bleu ciel','Beurre','Souci'],
+ribbonColorNames:['Blanc','Rose','Mauve','Sauge','Bleu ciel','Beurre','Souci'],
 envelopeNames:['parchemin','blush','brume sauge','lavande','ciel','crème'],
   },
   pt: {
@@ -621,8 +773,13 @@ wrapTitle:'Papel de embrulho',
     phTo:'Nome do destinatário', phFrom:'Seu nome', phMsg:'Escreva algo doce… ♡',
     fontElegant:'Elegante', fontScript:'Manuscrito', fontTypewriter:'Máquina de escrever',
     btnSaveMsg:'Salvar mensagem',
-    resultTitle:'Seu buquê está pronto',
+    resultTitle:'Yay! Seu buquê está pronto',
+    resultSub:'Compartilhe ou tire um print.',
     receiptSub:'ateliê virtual de flores',
+    btnShare:'Compartilhar buquê',
+    defaultUser:'Convidado',
+    jewelsLabel:'Adicionar joias ao seu buquê', jewelsOff:'NÃO', jewelsOn:'SIM', creditsBuiltBy:'Feito por', musicLabel:'Música', musicOnRepeat:'Tocando agora:', musicLoading:'Carregando…', musicUnavailable:'Música indisponível',
+    ariaScrollLeft:'rolar para a esquerda', ariaScrollRight:'rolar para a direita', ariaLivePreview:'pré-visualização ao vivo', ariaClose:'fechar', ariaPlayPause:'reproduzir/pausar', ariaToggleMusic:'ativar música', secMsgTitle:'Personalize e adicione uma mensagem', btnAddMsg:'Adicionar mensagem', btnFinalize:'Finalizar buquê', btnRestart:'Recomeçar',
     rowFor:'PARA', rowFrom:'DE', rowDate:'DATA', rowType:'TIPO DE BUQUÊ',
     btnSave:'Baixar buquê', btnNew:'Criar outro buquê',
     toastMsgSaved:'Mensagem salva ✓', toastNew:'Pronto para um novo buquê ✿', ariaRemoveOne:'Remover uma',
@@ -642,7 +799,7 @@ wrapTitle:'Papel de embrulho',
       anemone:{name:'Anêmona',mood:'antecipação'},
       'baby-hair':{name:'Baby Hair',mood:'calma e maravilha'},
     },
-ribbonColorNames:['Rosa','Malva','Sálvia','Azul-celeste','Manteiga','Calêndula'],
+ribbonColorNames:['Branco','Rosa','Malva','Sálvia','Azul-celeste','Manteiga','Calêndula'],
 envelopeNames:['pergaminho','blush','neblina sálvia','lavanda','céu','creme'],
   },
   de: {
@@ -668,8 +825,13 @@ wrapTitle:'Geschenkpapier',
     phTo:'Name des Empfängers', phFrom:'Dein Name', phMsg:'Schreibe etwas Süßes… ♡',
     fontElegant:'Elegant', fontScript:'Schreibschrift', fontTypewriter:'Schreibmaschine',
     btnSaveMsg:'Nachricht speichern',
-    resultTitle:'Dein Strauß ist fertig',
+    resultTitle:'Yay! Dein Strauß ist fertig',
+    resultSub:'Teile ihn oder mach einen Screenshot.',
     receiptSub:'virtuelles Blumenatelier',
+    btnShare:'Strauß teilen',
+    defaultUser:'Gast',
+    jewelsLabel:'Schmucksteine zum Strauß hinzufügen', jewelsOff:'AUS', jewelsOn:'AN', creditsBuiltBy:'Erstellt von', musicLabel:'Musik', musicOnRepeat:'Gerade in Dauerschleife:', musicLoading:'Wird geladen…', musicUnavailable:'Musik nicht verfügbar',
+    ariaScrollLeft:'nach links scrollen', ariaScrollRight:'nach rechts scrollen', ariaLivePreview:'Live-Vorschau', ariaClose:'schließen', ariaPlayPause:'Wiedergabe/Pause', ariaToggleMusic:'Musik umschalten', secMsgTitle:'Gestalte und füge eine Nachricht hinzu', btnAddMsg:'Nachricht hinzufügen', btnFinalize:'Strauß fertigstellen', btnRestart:'Neu beginnen',
     rowFor:'FÜR', rowFrom:'VON', rowDate:'DATUM', rowType:'STRAUSSTYP',
     btnSave:'Strauß herunterladen', btnNew:'Weiteren Strauß erstellen',
     toastMsgSaved:'Nachricht gespeichert ✓', toastNew:'Bereit für einen neuen Strauß ✿', ariaRemoveOne:'Eine entfernen',
@@ -689,7 +851,7 @@ wrapTitle:'Geschenkpapier',
       anemone:{name:'Anemone',mood:'Vorfreude'},
       'baby-hair':{name:'Baby Hair',mood:'Stille & Staunen'},
     },
-ribbonColorNames:['Rosa','Malve','Salbei','Himmelblau','Butter','Ringelblume'],
+ribbonColorNames:['Weiß','Rosa','Malve','Salbei','Himmelblau','Butter','Ringelblume'],
 envelopeNames:['Pergament','Erröten','Salbeinebel','Lavendel','Himmel','Creme'],
   },
   it: {
@@ -715,8 +877,13 @@ wrapTitle:'Carta da regalo',
     phTo:'Nome del destinatario', phFrom:'Il tuo nome', phMsg:'Scrivi qualcosa di dolce… ♡',
     fontElegant:'Elegante', fontScript:'Corsivo', fontTypewriter:'Macchina da scrivere',
     btnSaveMsg:'Salva messaggio',
-    resultTitle:'Il tuo bouquet è pronto',
+    resultTitle:'Yay! Il tuo bouquet è pronto',
+    resultSub:'Condividilo o fai uno screenshot.',
     receiptSub:'atelier floreale virtuale',
+    btnShare:'Condividi il bouquet',
+    defaultUser:'Ospite',
+    jewelsLabel:'Aggiungi gioielli al bouquet', jewelsOff:'NO', jewelsOn:'SÌ', creditsBuiltBy:'Creato da', musicLabel:'Musica', musicOnRepeat:'In riproduzione:', musicLoading:'Caricamento…', musicUnavailable:'Musica non disponibile',
+    ariaScrollLeft:'scorri a sinistra', ariaScrollRight:'scorri a destra', ariaLivePreview:'anteprima dal vivo', ariaClose:'chiudi', ariaPlayPause:'riproduci/pausa', ariaToggleMusic:'attiva musica', secMsgTitle:'Personalizza e aggiungi un messaggio', btnAddMsg:'Aggiungi messaggio', btnFinalize:'Completa il bouquet', btnRestart:'Ricomincia',
     rowFor:'PER', rowFrom:'DA', rowDate:'DATA', rowType:'TIPO DI BOUQUET',
     btnSave:'Scarica il bouquet', btnNew:'Crea un altro bouquet',
     toastMsgSaved:'Messaggio salvato ✓', toastNew:'Pronto per un altro bouquet ✿', ariaRemoveOne:'Rimuovi uno',
@@ -736,7 +903,7 @@ wrapTitle:'Carta da regalo',
       anemone:{name:'Anemone',mood:'anticipazione'},
       'baby-hair':{name:'Baby Hair',mood:'calma e meraviglia'},
     },
-ribbonColorNames:['Rosa','Malva','Salvia','Azzurro','Burro','Calendula'],
+ribbonColorNames:['Bianco','Rosa','Malva','Salvia','Azzurro','Burro','Calendula'],
 envelopeNames:['pergamena','cipria','nebbia salvia','lavanda','cielo','crema'],
   },
   ja: {
@@ -762,8 +929,13 @@ wrapTitle:'ラッピングペーパー',
     phTo:'受取人のお名前', phFrom:'あなたのお名前', phMsg:'甘いメッセージを書いて… ♡',
     fontElegant:'エレガント', fontScript:'手書き風', fontTypewriter:'タイプライター',
     btnSaveMsg:'メッセージを保存',
-    resultTitle:'花束の完成',
+    resultTitle:'やったね！花束の完成です',
+    resultSub:'シェアするか、スクリーンショットを撮ってね。',
     receiptSub:'バーチャルフラワーアトリエ',
+    btnShare:'花束をシェア',
+    defaultUser:'ゲスト',
+    jewelsLabel:'花束にジュエリーを追加', jewelsOff:'オフ', jewelsOn:'オン', creditsBuiltBy:'制作:', musicLabel:'音楽', musicOnRepeat:'今リピート中:', musicLoading:'読み込み中…', musicUnavailable:'音楽を利用できません',
+    ariaScrollLeft:'左にスクロール', ariaScrollRight:'右にスクロール', ariaLivePreview:'ライブプレビュー', ariaClose:'閉じる', ariaPlayPause:'再生/一時停止', ariaToggleMusic:'音楽を切り替え', secMsgTitle:'カスタマイズしてメッセージを追加', btnAddMsg:'メッセージを追加', btnFinalize:'花束を完成させる', btnRestart:'最初からやり直す',
     rowFor:'宛先', rowFrom:'送り主', rowDate:'日付', rowType:'花束の種類',
     btnSave:'花束をダウンロード', btnNew:'別の花束を作る',
     toastMsgSaved:'メッセージを保存しました ✓', toastNew:'新しい花束の準備完了 ✿', ariaRemoveOne:'1つ削除',
@@ -783,7 +955,7 @@ wrapTitle:'ラッピングペーパー',
       anemone:{name:'アネモネ',mood:'期待'},
       'baby-hair':{name:'ベイビーヘア',mood:'穏やかさと驚き'},
     },
-ribbonColorNames:['ローズ','モーブ','セージ','スカイブルー','バター','マリーゴールド'],
+ribbonColorNames:['ホワイト','ローズ','モーブ','セージ','スカイブルー','バター','マリーゴールド'],
 envelopeNames:['パーチメント','ブラッシュ','セージミスト','ラベンダー','スカイ','クリーム'],
   },
   zh: {
@@ -809,8 +981,13 @@ wrapTitle:'包装纸',
     phTo:'收件人姓名', phFrom:'你的姓名', phMsg:'写点甜蜜的话… ♡',
     fontElegant:'优雅', fontScript:'手写体', fontTypewriter:'打字机',
     btnSaveMsg:'保存留言',
-    resultTitle:'你的花束准备好了',
+    resultTitle:'太棒了！你的花束准备好了',
+    resultSub:'分享出去，或者截图保存吧。',
     receiptSub:'虚拟花艺工坊',
+    btnShare:'分享花束',
+    defaultUser:'访客',
+    jewelsLabel:'给花束添加宝石', jewelsOff:'关', jewelsOn:'开', creditsBuiltBy:'制作者：', musicLabel:'音乐', musicOnRepeat:'最近单曲循环:', musicLoading:'加载中…', musicUnavailable:'音乐不可用',
+    ariaScrollLeft:'向左滚动', ariaScrollRight:'向右滚动', ariaLivePreview:'实时预览', ariaClose:'关闭', ariaPlayPause:'播放/暂停', ariaToggleMusic:'切换音乐', secMsgTitle:'个性化并添加留言', btnAddMsg:'添加留言', btnFinalize:'完成花束', btnRestart:'重新开始',
     rowFor:'收件人', rowFrom:'发件人', rowDate:'日期', rowType:'花束类型',
     btnSave:'下载花束', btnNew:'创建另一束花',
     toastMsgSaved:'留言已保存 ✓', toastNew:'准备好创建新花束 ✿', ariaRemoveOne:'移除一个',
@@ -830,7 +1007,7 @@ wrapTitle:'包装纸',
       anemone:{name:'银莲花',mood:'期待'},
       'baby-hair':{name:'满天星',mood:'平静与惊叹'},
     },
-ribbonColorNames:['玫瑰粉','紫红','鼠尾草绿','天蓝','奶油黄','万寿菊'],
+ribbonColorNames:['白色','玫瑰粉','紫红','鼠尾草绿','天蓝','奶油黄','万寿菊'],
 envelopeNames:['羊皮纸','腮红','鼠尾草雾','薰衣草','天空','奶油'],
   },
   ko: {
@@ -856,8 +1033,13 @@ wrapTitle:'포장지',
     phTo:'받는 분 이름', phFrom:'보내는 분 이름', phMsg:'달콤한 메시지를 써주세요… ♡',
     fontElegant:'우아한', fontScript:'손글씨', fontTypewriter:'타자기',
     btnSaveMsg:'메시지 저장',
-    resultTitle:'꽃다발이 완성됐어요',
+    resultTitle:'짜잔! 꽃다발이 완성됐어요',
+    resultSub:'공유하거나 스크린샷으로 남겨보세요.',
     receiptSub:'가상 플라워 아뜰리에',
+    btnShare:'꽃다발 공유하기',
+    defaultUser:'게스트',
+    jewelsLabel:'꽃다발에 보석 추가하기', jewelsOff:'꺼짐', jewelsOn:'켜짐', creditsBuiltBy:'제작:', musicLabel:'음악', musicOnRepeat:'요즘 반복 재생 중:', musicLoading:'불러오는 중…', musicUnavailable:'음악을 사용할 수 없어요',
+    ariaScrollLeft:'왼쪽으로 스크롤', ariaScrollRight:'오른쪽으로 스크롤', ariaLivePreview:'실시간 미리보기', ariaClose:'닫기', ariaPlayPause:'재생/일시정지', ariaToggleMusic:'음악 전환', secMsgTitle:'꾸미고 메시지 추가하기', btnAddMsg:'메시지 추가', btnFinalize:'꽃다발 완성하기', btnRestart:'처음부터 다시',
     rowFor:'받는 분', rowFrom:'보내는 분', rowDate:'날짜', rowType:'꽃다발 종류',
     btnSave:'꽃다발 다운로드', btnNew:'새 꽃다발 만들기',
     toastMsgSaved:'메시지가 저장됐어요 ✓', toastNew:'새 꽃다발 준비 완료 ✿', ariaRemoveOne:'하나 제거',
@@ -877,7 +1059,7 @@ wrapTitle:'포장지',
       anemone:{name:'아네모네',mood:'설렘'},
       'baby-hair':{name:'베이비 헤어',mood:'고요함과 경이'},
     },
-ribbonColorNames:['로즈','모브','세이지','스카이블루','버터','메리골드'],
+ribbonColorNames:['화이트','로즈','모브','세이지','스카이블루','버터','메리골드'],
 envelopeNames:['양피지','블러쉬','세이지 미스트','라벤더','스카이','크림'],
   },
   ar: {
@@ -904,8 +1086,13 @@ wrapTitle:'ورق التغليف',
     phTo:'اسم المستلم', phFrom:'اسمك', phMsg:'اكتبي شيئاً رقيقاً… ♡',
     fontElegant:'أنيق', fontScript:'خط يدوي', fontTypewriter:'آلة كاتبة',
     btnSaveMsg:'حفظ الرسالة',
-    resultTitle:'باقتك جاهزة',
+    resultTitle:'يا سلام! باقتك جاهزة',
+    resultSub:'شاركيها أو التقطي لقطة شاشة.',
     receiptSub:'أتيليه زهور افتراضي',
+    btnShare:'مشاركة الباقة',
+    defaultUser:'ضيف',
+    jewelsLabel:'أضيفي جواهر إلى باقتك', jewelsOff:'إيقاف', jewelsOn:'تشغيل', creditsBuiltBy:'بواسطة', musicLabel:'موسيقى', musicOnRepeat:'يتكرر الآن:', musicLoading:'جارٍ التحميل…', musicUnavailable:'الموسيقى غير متاحة',
+    ariaScrollLeft:'التمرير لليسار', ariaScrollRight:'التمرير لليمين', ariaLivePreview:'معاينة مباشرة', ariaClose:'إغلاق', ariaPlayPause:'تشغيل / إيقاف مؤقت', ariaToggleMusic:'تبديل الموسيقى', secMsgTitle:'خصّصي وأضيفي رسالة', btnAddMsg:'إضافة رسالة', btnFinalize:'إنهاء الباقة', btnRestart:'البدء من جديد',
     rowFor:'إلى', rowFrom:'من', rowDate:'التاريخ', rowType:'نوع الباقة',
     btnSave:'تحميل الباقة', btnNew:'إنشاء باقة أخرى',
     toastMsgSaved:'تم حفظ الرسالة ✓', toastNew:'جاهزة لباقة جديدة ✿', ariaRemoveOne:'إزالة واحدة',
@@ -925,7 +1112,7 @@ wrapTitle:'ورق التغليف',
       anemone:{name:'شقائق النعمان',mood:'ترقّب'},
       'baby-hair':{name:'بيبي هير',mood:'هدوء ودهشة'},
     },
-ribbonColorNames:['وردي','موف','مريمية','أزرق سماوي','زبدي','أقحواني'],
+ribbonColorNames:['أبيض','وردي','موف','مريمية','أزرق سماوي','زبدي','أقحواني'],
 envelopeNames:['رق','وردي فاتح','ضباب مريمية','خزامى','سماوي','كريمي'],
   },
 };
@@ -953,37 +1140,43 @@ function applyTranslations() {
   const h = (id, val) => { const el = document.getElementById(id); if (el) el.innerHTML = val; };
   const p = (id, val) => { const el = document.getElementById(id); if (el) el.placeholder = val; };
 
-  h('el-eyebrow', t.eyebrow);
-  h('el-page-title', t.heroHTML);
-  h('el-page-sub', t.heroSub);
+  s('el-tagline', t.receiptSub);
+  s('el-ticket-sub', t.receiptSub);
   s('el-step1', t.step1);
-  s('el-step2', t.step2);
-  s('el-step3', t.step3);
-  s('el-count-hint', t.countHint);
-  s('el-preview-lbl', t.previewLbl);
+  s('el-sec-ribbon', t.ribbonSheetTitle);
+  s('el-jewels-label', t.jewelsLabel);
+  s('el-jewels-off', t.jewelsOff);
+  s('el-jewels-on', t.jewelsOn);
+  s('el-credits-prefix', t.creditsBuiltBy);
+  if (!musicOn) s('el-music-title-txt', t.musicLoading);
+  s('el-sec-msg', t.secMsgTitle);
   s('el-empty-hint', t.emptyHint);
-  s('el-wrap-title', t.wrapTitle);
-  s('el-today-lbl', t.todayLbl);
-  s('el-btn-msg-txt', t.btnMsgTxt);
-  s('el-btn-create-txt', t.btnCreateTxt);
+  s('el-btn-create-txt', t.btnFinalize);
+  s('el-btn-restart-txt', t.btnRestart);
   s('el-sheet-title', t.sheetTitle);
   s('el-sheet-sub', t.sheetSub);
-  s('el-btn-ribbon-txt', t.btnRibbonTxt);
-  s('el-ribbon-sheet-title', t.ribbonSheetTitle);
-  s('el-ribbon-sheet-sub', t.ribbonSheetSub);
-  s('el-btn-ribbon-apply', t.btnRibbonApply);
-  s('el-btn-ribbon-dismiss', t.btnRibbonDismiss);
   s('el-lbl-to', t.lblTo);
   s('el-lbl-from', t.lblFrom);
   s('el-lbl-msg', t.lblMsg);
-  s('el-lbl-font', t.lblFont);
   s('el-font-elegant', t.fontElegant);
   s('el-font-script', t.fontScript);
   s('el-font-typewriter', t.fontTypewriter);
   s('btn-save-msg', t.btnSaveMsg);
   s('el-result-title', t.resultTitle);
-  s('el-btn-save', t.btnSave);
+  s('el-result-sub', t.resultSub);
+  s('el-btn-save', t.btnShare);
   s('el-btn-new', t.btnNew);
+  refreshMsgBtn();
+  renderLiveTicket();
+
+  const aria = (id, val) => { const el = document.getElementById(id); if (el) el.setAttribute('aria-label', val); };
+  aria('arr-left', t.ariaScrollLeft);
+  aria('arr-right', t.ariaScrollRight);
+  aria('builder-ticket-aside', t.ariaLivePreview);
+  aria('btn-close-msg', t.ariaClose);
+  aria('music-play-pause', t.ariaPlayPause);
+  aria('music-toggle', t.ariaToggleMusic);
+  aria('jewels-toggle', t.jewelsLabel);
 
   p('input-to', t.phTo);
   p('input-from', t.phFrom);
@@ -1010,6 +1203,7 @@ const FLOWER_ASPECT = {
 // mask-image or mix-blend-mode correctly, so the tint is baked into a real PNG
 // data-URL that both the live preview and the export just treat as a plain image.
 const RIBBON_COLORS = [
+  {color:'#FFFFFF',light:true,plain:true}, // White — the untinted default ribbon
   {color:'#E2B8C8',light:true},  // Rose (--color-rose)
   {color:'#E086AA',light:false}, // Mauve (--color-mauve)
   {color:'#C8D44A',light:false}, // Sage (--color-sage)
@@ -1043,7 +1237,7 @@ function tintRibbon(color, opacity) {
 }
 
 async function warmRibbonTints() {
-  await Promise.all(RIBBON_COLORS.map(async c => {
+  await Promise.all(RIBBON_COLORS.filter(c => !c.plain).map(async c => {
     ribbonTintCache[c.color] = await tintRibbon(c.color, RIBBON_TINT_OPACITY);
   }));
 }
@@ -1074,7 +1268,7 @@ function getPosition(i) {
 let positionCounter = 0;
 
 const state = {
-  selected:[], ribbonColor:null,
+  selected:[], ribbonColor:'#FFFFFF', jewelsOn:false,
   toName:'', fromName:'', message:'', font:'serif',
 };
 
@@ -1118,9 +1312,12 @@ function renderBouquet(selectedIds, ribbonColor, small=false) {
   html += `<img src="images/envelop-full.png" style="position:absolute;top:0;left:${envLeft}px;width:${envW}px;height:${H}px;z-index:10;pointer-events:none" alt="">`;
   html += `<img src="images/envelop-cover.png" style="position:absolute;top:${coverTop}px;left:${coverLeft}px;width:${coverW}px;height:${coverH}px;z-index:20;pointer-events:none" alt="">`;
   html += `<img src="${ribbonSrc(ribbonColor)}" style="position:absolute;top:${ribbonTop}px;left:${ribbonLeft}px;width:${ribbonW}px;height:${ribbonH}px;z-index:25;pointer-events:none" alt="">`;
+  html += jewelsOverlayHTML(W, H);
   html += `</div>`;
   return html;
 }
+
+
 
 /* ════════════════
    INIT UI
@@ -1207,7 +1404,8 @@ function initBouquetPreview() {
     `<div id="bp-flowers" style="position:absolute;inset:0;z-index:15"></div>` +
     `<img src="images/envelop-full.png" style="position:absolute;top:0;left:${envLeft}px;width:${envW}px;height:auto;z-index:10;pointer-events:none" alt="">` +
     `<img src="images/envelop-cover.png" style="position:absolute;top:${coverTop}px;left:${coverLeft}px;width:${coverW}px;height:${coverH}px;z-index:20;pointer-events:none" alt="">` +
-    `<img id="bp-ribbon" src="${ribbonSrc(state.ribbonColor)}" style="position:absolute;top:${ribbonTop}px;left:${ribbonLeft}px;width:${ribbonW}px;height:${ribbonH}px;z-index:25;pointer-events:none" alt="">`;
+    `<img id="bp-ribbon" src="${ribbonSrc(state.ribbonColor)}" style="position:absolute;top:${ribbonTop}px;left:${ribbonLeft}px;width:${ribbonW}px;height:${ribbonH}px;z-index:25;pointer-events:none" alt="">` +
+    `<div id="bp-jewels" style="position:absolute;inset:0;z-index:21;pointer-events:none"></div>`;
 }
 
 // Called on "Apply" in the ribbon modal — swaps the live home preview's ribbon
@@ -1267,6 +1465,7 @@ function initSwatches(containerId, colorsList, namesList, activeColor, onSelect)
     sw.className = 'swatch'+(c.light?' light':'')+(c.color===activeColor?' active':'');
     sw.style.background = c.color;
     sw.title = namesList[i];
+    sw.setAttribute('aria-label', namesList[i]);
     const lbl = document.createElement('div');
     lbl.className = 'swatch-label';
     lbl.textContent = namesList[i];
@@ -1288,12 +1487,23 @@ function getDateStr() {
 }
 
 /* ════════════════
-   MODAL
+   MESSAGE OVERLAY
 ════════════════ */
+function refreshMsgBtn() {
+  const btn = document.getElementById('btn-open-msg');
+  if (!btn) return;
+  const hasMeta = state.message || state.toName || state.fromName;
+  btn.classList.toggle('has-msg', !!hasMeta);
+  document.getElementById('el-btn-msg-txt').textContent = hasMeta ? T.btnMsgAdded : T.btnAddMsg;
+}
+
 function initModal() {
   const overlay = document.getElementById('modal-msg');
+  const close = () => overlay.classList.remove('open');
   document.getElementById('btn-open-msg').addEventListener('click', () => overlay.classList.add('open'));
-  overlay.addEventListener('click', e => { if (e.target === overlay) overlay.classList.remove('open'); });
+  document.getElementById('btn-close-msg').addEventListener('click', close);
+  overlay.addEventListener('click', e => { if (e.target === overlay) close(); });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') close(); });
 
   const ta = document.getElementById('input-msg'), bar = document.getElementById('char-bar');
   ta.addEventListener('input', () => {
@@ -1302,84 +1512,168 @@ function initModal() {
     bar.className = 'char-bar'+(n>120?' warn':'');
   });
 
-  document.getElementById('font-pick').querySelectorAll('.font-opt').forEach(opt => {
-    opt.addEventListener('click', () => {
-      document.querySelectorAll('.font-opt').forEach(o => o.classList.remove('sel'));
-      opt.classList.add('sel');
-      state.font = opt.dataset.font;
-    });
-  });
-
   document.getElementById('btn-save-msg').addEventListener('click', () => {
     state.toName   = document.getElementById('input-to').value.trim();
     state.fromName = document.getElementById('input-from').value.trim();
     state.message  = document.getElementById('input-msg').value.trim();
-    overlay.classList.remove('open');
-    const btn = document.getElementById('btn-open-msg');
-    const hasMeta = state.message || state.toName || state.fromName;
-    btn.classList.toggle('has-msg', !!hasMeta);
-    document.getElementById('el-btn-msg-txt').textContent = hasMeta ? T.btnMsgAdded : T.btnMsgTxt;
+    close();
+    refreshMsgBtn();
+    renderLiveTicket();
     showToast(T.toastMsgSaved);
   });
 }
 
-// Ribbon color picker modal. Swatch clicks only update a local draft + the
-// modal's own live preview — nothing touches state.ribbonColor (and therefore
-// the home preview / ticket) until "Apply" is pressed. "Dismiss" (or tapping
-// the backdrop) just closes and throws the draft away, so re-opening the modal
-// always starts from whatever was last actually applied.
-function initRibbonModal() {
-  const overlay = document.getElementById('modal-ribbon');
-  const modalImg = document.getElementById('ribbon-modal-img');
-  const nameEl = document.getElementById('el-ribbon-color-name');
-  let draftColor = state.ribbonColor;
-
-  function updatePreview(color, name) {
-    modalImg.src = ribbonSrc(color);
-    nameEl.textContent = name || ' ';
-  }
-
-  function openModal() {
-    draftColor = state.ribbonColor;
-    updatePreview(draftColor, colorNameFor(draftColor));
-    initSwatches('ribbon-swatches', RIBBON_COLORS, T.ribbonColorNames, draftColor, (color, name) => {
-      draftColor = color;
-      updatePreview(color, name);
+// Message font lives on the page (not in the overlay) so the choice is visible on
+// the live ticket immediately.
+function initFontPick() {
+  document.querySelectorAll('#font-pick .font-opt').forEach(opt => {
+    opt.addEventListener('click', () => {
+      document.querySelectorAll('#font-pick .font-opt').forEach(o => o.classList.remove('sel'));
+      opt.classList.add('sel');
+      state.font = opt.dataset.font;
+      renderLiveTicket();
     });
-    overlay.classList.add('open');
-  }
-
-  function colorNameFor(color) {
-    const i = RIBBON_COLORS.findIndex(c => c.color === color);
-    return i > -1 ? T.ribbonColorNames[i] : '';
-  }
-
-  document.getElementById('btn-open-ribbon').addEventListener('click', openModal);
-  overlay.addEventListener('click', e => { if (e.target === overlay) overlay.classList.remove('open'); });
-  document.getElementById('btn-ribbon-dismiss').addEventListener('click', () => overlay.classList.remove('open'));
-
-  document.getElementById('btn-ribbon-apply').addEventListener('click', () => {
-    state.ribbonColor = draftColor;
-    applyRibbonColorToPreview(draftColor);
-    overlay.classList.remove('open');
-    const btn = document.getElementById('btn-open-ribbon');
-    btn.classList.toggle('has-msg', !!draftColor);
-    document.getElementById('el-btn-ribbon-txt').textContent = draftColor ? T.btnRibbonSet : T.btnRibbonTxt;
-    showToast(T.toastRibbonApplied);
   });
+}
+
+// Ribbon colour swatches sit directly in the page and apply on click — no draft /
+// Apply step any more, the live ticket's bow just changes.
+function initRibbonPicker() {
+  initSwatches('ribbon-swatches', RIBBON_COLORS, T.ribbonColorNames, state.ribbonColor, (color) => {
+    state.ribbonColor = color;
+    applyRibbonColorToPreview(color);
+  });
+}
+
+
+/* ════════════════
+   TICKET: SHAPE, TILT, PHOTO-BOOTH PRINT
+   The outline is an inline SVG (not clip-path) so html2canvas can export the perforated shape.
+════════════════ */
+const prefersReducedMotion = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+const cssVar = name => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+
+// Rectangle with a semicircular notch bitten into each side at the perforation.
+function ticketPath(w, h, py, r) {
+  const o = 0.5;
+  return `M${o} ${o} H${w-o} V${py-r} A${r} ${r} 0 0 0 ${w-o} ${py+r} V${h-o} H${o} V${py+r} A${r} ${r} 0 0 0 ${o} ${py-r} Z`;
+}
+
+function attachTicketShape(ticket) {
+  if (!ticket || ticket._updateShape) return;
+  const NS = 'http://www.w3.org/2000/svg';
+  const svg = document.createElementNS(NS, 'svg');
+  svg.setAttribute('class', 'ticket-shape');
+  svg.setAttribute('aria-hidden', 'true');
+  const path = document.createElementNS(NS, 'path');
+  svg.appendChild(path);
+  ticket.prepend(svg);
+  const update = () => {
+    const w = ticket.offsetWidth, h = ticket.offsetHeight;
+    if (!w || !h) return;
+    svg.setAttribute('width', w); svg.setAttribute('height', h);
+    svg.setAttribute('viewBox', `0 0 ${w} ${h}`);
+    const perf = ticket.querySelector('.ticket-perf');
+    // offsetTop is relative to the nearest positioned ancestor, so walk up to the ticket.
+    let top = 0;
+    for (let n = perf; n && n !== ticket; n = n.offsetParent) top += n.offsetTop;
+    const d = perf
+      ? ticketPath(w, h, top + perf.offsetHeight / 2, perf.offsetHeight / 2)
+      : `M0.5 0.5 H${w-0.5} V${h-0.5} H0.5 Z`;
+    path.setAttribute('d', d);
+    path.setAttribute('fill', cssVar('--color-parchment'));
+    path.setAttribute('stroke', cssVar('--color-line'));
+    path.setAttribute('stroke-width', '1');
+  };
+  ticket._updateShape = update;
+  new ResizeObserver(update).observe(ticket);
+  update();
+}
+
+// Hover tilt is switched off for now — flip to true to bring it back.
+const TILT_ENABLED = false;
+function initTilt(wrap) {
+  if (!TILT_ENABLED || !wrap || prefersReducedMotion() || !window.matchMedia('(hover: hover) and (pointer: fine)').matches) return;
+  const glare = wrap.querySelector('.ticket-glare');
+  const MAX = 9;
+  wrap.addEventListener('pointerenter', () => wrap.classList.add('tilting'));
+  wrap.addEventListener('pointermove', e => {
+    const r = wrap.getBoundingClientRect();
+    const dx = (e.clientX - r.left) / r.width - 0.5, dy = (e.clientY - r.top) / r.height - 0.5;
+    wrap.style.transform = `perspective(1200px) rotateX(${-dy * 2 * MAX}deg) rotateY(${dx * 2 * MAX}deg) scale(1.02)`;
+    glare.style.background = `radial-gradient(38% 55% at ${(dx + 0.5) * 100}% ${(dy + 0.5) * 100}%, rgba(255,255,255,0.16) 0%, rgba(255,255,255,0) 70%)`;
+  });
+  wrap.addEventListener('pointerleave', () => {
+    wrap.classList.remove('tilting');
+    wrap.style.transform = '';
+    glare.style.background = 'transparent';
+  });
+}
+
+// Two quick filtered-noise clicks, like a camera shutter, as the strip starts printing.
+let shutterCtx = null;
+function playShutterSound(volume = 0.3) {
+  const Ctor = window.AudioContext || window.webkitAudioContext;
+  if (!Ctor) return;
+  try {
+    shutterCtx = shutterCtx || new Ctor();
+    if (shutterCtx.state === 'suspended') shutterCtx.resume();
+    const click = (at, frequency, decay, gainValue) => {
+      const len = Math.ceil(0.05 * shutterCtx.sampleRate);
+      const buffer = shutterCtx.createBuffer(1, len, shutterCtx.sampleRate);
+      const data = buffer.getChannelData(0);
+      for (let i = 0; i < len; i++) data[i] = Math.random() * 2 - 1;
+      const src = shutterCtx.createBufferSource(); src.buffer = buffer;
+      const filter = shutterCtx.createBiquadFilter(); filter.type = 'bandpass'; filter.frequency.value = frequency; filter.Q.value = 1;
+      const gain = shutterCtx.createGain();
+      gain.gain.setValueAtTime(0.0001, at);
+      gain.gain.exponentialRampToValueAtTime(gainValue, at + 0.001);
+      gain.gain.exponentialRampToValueAtTime(0.0001, at + decay);
+      src.connect(filter).connect(gain).connect(shutterCtx.destination);
+      src.start(at); src.stop(at + decay + 0.02);
+    };
+    const now = shutterCtx.currentTime;
+    click(now, 3200, 0.035, volume);
+    click(now + 0.045, 1800, 0.055, volume * 0.75);
+  } catch (e) { /* sound is a nicety — never block the flow */ }
 }
 
 /* ════════════════
    RESULT SCREEN
 ════════════════ */
-// Multiple of the same species can be added — list each species name once,
-// no counts.
-function flowerSummary() {
-  return [...new Set(state.selected)].map(id => T.flowers[id]?.name || '').join(', ');
+const esc = v => String(v).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+// Translations store the row labels in capitals ("FOR"); the ticket wants "For:".
+const cap = v => v.charAt(0) + v.slice(1).toLowerCase();
+
+// From/To row, message and date — shared by the live ticket and the result screen.
+// `live` shows a muted placeholder for the message so picking a font has a visible effect.
+function ticketDetailsHTML(live) {
+  const fontClass = {serif:'font-serif',script:'font-script',mono:'font-mono'}[state.font]||'font-serif';
+  const who = (label, name) =>
+    `<span><span class="r-who">${esc(cap(label))}:</span> <span class="${name?'':'r-ph'}">${esc(name || T.defaultUser)}</span></span>`;
+  let msgBlock = '';
+  if (state.message) {
+    msgBlock = `<div class="receipt-msg"><div class="receipt-msg-text ${fontClass}">"${esc(state.message)}"</div></div>`;
+  } else if (live) {
+    msgBlock = `<div class="receipt-msg"><div class="receipt-msg-text r-ph ${fontClass}">${esc(T.phMsg)}</div></div>`;
+  }
+  return `<div class="r-row r-people">${who(T.rowFrom, state.fromName)}${who(T.rowFor, state.toName)}</div>` +
+    `<hr class="r-divider">${msgBlock}`;
+}
+
+// Perforation row + stub. The stub carries the date and the animated dither texture.
+function ticketFooterHTML() {
+  return `<div class="ticket-perf"></div>` +
+    `<div class="ticket-stub">` +
+    `<div class="r-row r-date"><span>${getDateStr()}</span></div></div>`;
+}
+
+function renderLiveTicket() {
+  const el = document.getElementById('lt-details');
+  if (el) el.innerHTML = ticketDetailsHTML(true);
 }
 
 function buildResult() {
-  const fontClass = {serif:'font-serif',script:'font-script',mono:'font-mono'}[state.font]||'font-serif';
   const boutSVG = renderBouquet(state.selected, state.ribbonColor, true);
   document.getElementById('ticket-body').innerHTML = `
     <div class="receipt-brand">
@@ -1387,20 +1681,11 @@ function buildResult() {
       <div class="receipt-sub">${T.receiptSub}</div>
     </div>
     <hr class="r-divider">
-    ${state.toName   ? `<div class="r-row"><span class="lbl">${T.rowFor}</span><span>${state.toName}</span></div>`   : ''}
-    ${state.fromName ? `<div class="r-row"><span class="lbl">${T.rowFrom}</span><span>${state.fromName}</span></div>` : ''}
-    <div class="r-row"><span class="lbl">${T.rowDate}</span><span>${getDateStr()}</span></div>
-    <hr class="r-divider">
     <div class="receipt-bouquet" id="receipt-bouquet">${boutSVG||''}</div>
     <hr class="r-divider">
-    ${state.message ? `<div class="receipt-msg"><div class="receipt-msg-text ${fontClass}">"${state.message}"</div></div><hr class="r-divider">` : ''}
-    <div class="r-total-row">
-      <div>
-        <div class="r-total-lbl">${T.rowType}</div>
-        <div class="r-total-lbl" style="font-size:14px;color:var(--bark);margin-top:2px">${flowerSummary()}</div>
-      </div>
-      <div class="r-total-val">♡</div>
-    </div>`;
+    ${ticketDetailsHTML(false)}`;
+  document.getElementById('ticket-footer').innerHTML = ticketFooterHTML();
+  document.getElementById('ticket')._updateShape();
 }
 
 function showResult() {
@@ -1409,11 +1694,244 @@ function showResult() {
   const el = document.getElementById('screen-result');
   el.classList.add('active');
   window.scrollTo(0, 0);
-  splashPetals(document.getElementById('ticket'));
-  setTimeout(() => {
-    const bouquet = document.getElementById('receipt-bouquet');
-    if (bouquet) bouquet.classList.add('visible');
-  }, 650);
+  layoutGems();
+  // Restart the photo-booth print: the ticket slides out of the slot in stepped bursts.
+  const win = document.getElementById('booth-window');
+  const wrap = document.getElementById('ticket-wrap');
+  win.classList.remove('printed');
+  wrap.classList.remove('print');
+  void wrap.offsetWidth;
+  wrap.classList.add('print');
+  wrap.addEventListener('animationend', () => win.classList.add('printed'), {once:true});
+  playShutterSound();
+  const bouquet = document.getElementById('receipt-bouquet');
+  if (bouquet) bouquet.classList.add('visible');
+  setTimeout(() => splashPetals(document.getElementById('ticket')), prefersReducedMotion() ? 0 : 2600);
+}
+
+
+/* ════════════════
+   GEM STICKERS ON THE PAPER BACKGROUND
+   Gems cut from the reference photo are scattered over the corrugated-paper texture,
+   only where nothing else is (keep-out rectangles around the visible content), using a
+   seeded generator so the arrangement is stable between renders.
+════════════════ */
+const GEMS = [["heart-1.png",92,90,"heart"],["heart-2.png",76,75,"heart"],["heart-3.png",87,88,"heart"],["heart-4.png",91,99,"heart"],["heart-5.png",79,80,"heart"],["heart-6.png",80,81,"heart"],["heart-7.png",77,67,"heart"],["heart-8.png",78,81,"heart"],["stone-01.png",37,39,"round"],["stone-02.png",40,42,"round"],["stone-03.png",45,43,"round"],["stone-04.png",48,49,"round"],["stone-05.png",52,54,"round"],["stone-06.png",54,52,"round"],["stone-07.png",55,54,"round"],["stone-08.png",57,55,"round"],["stone-09.png",55,63,"round"],["stone-10.png",64,65,"round"],["stone-11.png",43,40,"round"],["stone-12.png",42,45,"round"],["stone-13.png",50,48,"round"],["stone-14.png",51,52,"round"],["stone-15.png",42,41,"round"],["stone-16.png",50,48,"round"],["stone-17.png",53,52,"round"],["stone-18.png",55,54,"round"],["stone-19.png",40,40,"round"],["stone-20.png",44,44,"round"],["stone-21.png",52,50,"round"],["stone-22.png",53,54,"round"],["stone-23.png",41,42,"round"],["stone-24.png",43,37,"round"],["stone-25.png",51,50,"round"],["stone-26.png",55,54,"round"]];
+
+// A handful of the cut gem stickers placed directly over the bouquet render (not the
+// page background — those are the separate scattered .gem-layer). Fixed spots (as
+// fractions of the 260x300 reference canvas) rather than random, so the look is
+// designed rather than sprinkled, and toggling stays visually stable.
+function findGem(name) { return GEMS.find(g => g[0] === name); }
+// The front paper flap (envelop-cover.png) spans roughly y 33%-73% of the 260x300
+// canvas — spots sit within that band so the jewels read as stuck onto the wrap,
+// not scattered over the flower heads above it.
+const JEWEL_SPOTS = [
+  {xPct:0.50, yPct:0.46, size:17, rot:-8,  gem:findGem('heart-1.png')},
+  {xPct:0.36, yPct:0.47, size:11, rot:14,  gem:findGem('stone-04.png')},
+  {xPct:0.63, yPct:0.45, size:10, rot:-10, gem:findGem('stone-25.png')},
+  {xPct:0.41, yPct:0.60, size:9,  rot:20,  gem:findGem('stone-21.png')},
+  {xPct:0.60, yPct:0.62, size:9,  rot:-16, gem:findGem('stone-16.png')},
+];
+
+function jewelsOverlayHTML(W, H) {
+  if (!state.jewelsOn) return '';
+  const scale = W / 260;
+  return JEWEL_SPOTS.map(j => {
+    const w = j.size * scale, h = w * j.gem[2] / j.gem[1];
+    const x = j.xPct * W - w / 2, y = j.yPct * H - h / 2;
+    // z-index 22: above envelop-cover.png (20, the front flap) so the jewels sit on top of the paper.
+    return `<img src="images/gems/${j.gem[0]}" style="position:absolute;left:${x.toFixed(1)}px;top:${y.toFixed(1)}px;width:${w.toFixed(1)}px;height:${h.toFixed(1)}px;transform:rotate(${j.rot}deg);z-index:21;pointer-events:none;filter:drop-shadow(0 1px 1.5px color-mix(in srgb, var(--color-bark) 30%, transparent))" alt="">`;
+  }).join('');
+}
+
+function renderJewelsOverlay() {
+  const el = document.getElementById('bp-jewels');
+  if (el) el.innerHTML = jewelsOverlayHTML(260, 300);
+}
+
+function mulberry32(seed) {
+  return function() {
+    seed |= 0; seed = seed + 0x6D2B79F5 | 0;
+    let t = Math.imul(seed ^ seed >>> 15, 1 | seed);
+    t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+    return ((t ^ t >>> 14) >>> 0) / 4294967296;
+  };
+}
+
+function layoutGems() {
+  const layer = document.getElementById('gem-layer');
+  const screen = document.querySelector('.screen.active');
+  if (!layer || !screen) return;
+  layer.style.height = '0px';
+  layer.innerHTML = '';
+  const W = document.documentElement.clientWidth;
+  const H = Math.max(document.documentElement.scrollHeight, window.innerHeight);
+  layer.style.height = H + 'px';
+  const sx = window.scrollX, sy = window.scrollY, PAD = 12;
+  const blockers = [...screen.querySelectorAll('.site-header > *, .sec, .action-row, .ticket-tilt, .result-top > *, .booth, .result-actions')]
+    .map(el => el.getBoundingClientRect())
+    .filter(r => r.width && r.height)
+    .map(r => ({l:r.left+sx-PAD, r:r.right+sx+PAD, t:r.top+sy-PAD, b:r.bottom+sy+PAD}));
+  const rnd = mulberry32(20240921);
+  const target = Math.max(25, Math.min(40, Math.round(W * H / 60000) + 20));
+  const placed = [];
+  const frag = document.createDocumentFragment();
+  for (let tries = 0; tries < 1600 && placed.length < target; tries++) {
+    const g = GEMS[Math.floor(rnd() * GEMS.length)];
+    const heart = g[3] === 'heart';
+    if (heart && rnd() < 0.45) continue;                       // hearts are the accent — keep them rarer
+    const size = heart ? 30 + rnd() * 16 : 15 + rnd() * 13;
+    const h = size * g[2] / g[1];
+    const x = -6 + rnd() * (W - size + 12), y = -6 + rnd() * (H - h + 12);
+    if (blockers.some(b => x < b.r && x + size > b.l && y < b.b && y + h > b.t)) continue;
+    if (placed.some(p => Math.hypot(p.cx - (x + size / 2), p.cy - (y + h / 2)) < (p.size + size) / 2 + 110)) continue;
+    placed.push({cx:x + size / 2, cy:y + h / 2, size});
+    const img = document.createElement('img');
+    img.className = 'gem';
+    img.src = 'images/gems/' + g[0];
+    img.alt = '';
+    img.width = Math.round(size); img.height = Math.round(h);
+    img.style.cssText = `left:${x.toFixed(1)}px;top:${y.toFixed(1)}px;width:${size.toFixed(1)}px;height:${h.toFixed(1)}px;transform:rotate(${((rnd() - 0.5) * (heart ? 50 : 20)).toFixed(1)}deg)`;
+    frag.appendChild(img);
+  }
+  layer.appendChild(frag);
+}
+let gemResizeTimer = 0;
+window.addEventListener('resize', () => { clearTimeout(gemResizeTimer); gemResizeTimer = setTimeout(layoutGems, 200); });
+
+
+/* ════════════════
+   MUSIC BAR — hidden YouTube player + pink "now playing" strip
+   Same playlist/EP as lucilamtz90's portfolio ("Fallen Angel"), played through the
+   public YouTube IFrame API (audio only — the player itself is 0x0 and off-screen).
+   Needs a live connection to youtube.com; if that fails the bar just shows
+   "Music unavailable" and the toggle can be switched off again.
+════════════════ */
+const YT_PLAYLIST_ID = 'OLAK5uy_m_Lzi_HWS7_-QEKfZ_q-XC9yL9dNcT24M';
+const YT_EP_NAME = 'Fallen Angel (Digital EP)';
+const ICON_PLAY = '<svg viewBox="0 0 16 16" width="11" height="11" fill="currentColor" aria-hidden="true"><path d="M3.5 2.2v11.6a.8.8 0 0 0 1.22.68l9.3-5.8a.8.8 0 0 0 0-1.36l-9.3-5.8A.8.8 0 0 0 3.5 2.2Z"/></svg>';
+const ICON_PAUSE = '<svg viewBox="0 0 16 16" width="11" height="11" fill="currentColor" aria-hidden="true"><rect x="2" y="2" width="3.5" height="12"/><rect x="9.5" y="2" width="3.5" height="12"/></svg>';
+
+let musicOn = false, ytPlayer = null, ytReadyPromise = null;
+
+function loadYouTubeAPI() {
+  if (ytReadyPromise) return ytReadyPromise;
+  ytReadyPromise = new Promise((resolve, reject) => {
+    if (window.YT && window.YT.Player) { resolve(); return; }
+    const prevReady = window.onYouTubeIframeAPIReady;
+    window.onYouTubeIframeAPIReady = () => { prevReady && prevReady(); resolve(); };
+    const tag = document.createElement('script');
+    tag.src = 'https://www.youtube.com/iframe_api';
+    tag.onerror = reject;
+    document.head.appendChild(tag);
+    setTimeout(reject, 8000);   // offline / blocked — let the caller fall back
+  });
+  return ytReadyPromise;
+}
+
+function setPlayPauseIcon(playing) {
+  const btn = document.getElementById('music-play-pause');
+  if (btn) btn.innerHTML = playing ? ICON_PAUSE : ICON_PLAY;
+}
+
+// Portfolio strips a trailing "- Topic" off auto-generated YouTube artist channel names.
+function cleanArtist(name) {
+  return (name || '').replace(/\s*-\s*Topic$/i, '').trim();
+}
+
+function updateMusicTitle() {
+  const el = document.getElementById('el-music-title-txt');
+  if (!el || !ytPlayer || !ytPlayer.getVideoData) return;
+  const data = ytPlayer.getVideoData();
+  const duration = ytPlayer.getDuration ? ytPlayer.getDuration() : 0;
+  if (data && data.title && duration > 0) {
+    const bits = [data.title, cleanArtist(data.author), YT_EP_NAME].filter(Boolean);
+    el.textContent = `${T.musicOnRepeat} ${bits.join(' · ')}`;
+  }
+}
+
+// Same pastel palette as the little hearts on the paper background. The bar sits solid on
+// one colour per track; starting 5s before a track ends, its background-color is changed to
+// the next colour in the cycle, and the 10s CSS transition on .music-bar naturally carries
+// that crossfade across the track boundary, landing solid ~5s into the next track.
+const MUSIC_BAR_COLORS = ['#EBD3D7', '#93A6D3', '#C2D9EA', '#EBC2DB', '#A7BA8F', '#F4D17A'];
+let musicBarColorIndex = 0, musicBarArmedForVideo = null, musicBarPollTimer = 0;
+
+function startMusicBarColorPoll() {
+  if (musicBarPollTimer) return;
+  musicBarPollTimer = setInterval(() => {
+    if (!ytPlayer || !window.YT || ytPlayer.getPlayerState() !== YT.PlayerState.PLAYING) return;
+    const duration = ytPlayer.getDuration ? ytPlayer.getDuration() : 0;
+    const current = ytPlayer.getCurrentTime ? ytPlayer.getCurrentTime() : 0;
+    const data = ytPlayer.getVideoData ? ytPlayer.getVideoData() : null;
+    const vid = data && data.video_id;
+    if (!vid || !duration) return;
+    if (musicBarArmedForVideo !== vid && duration - current <= 5.3) {
+      musicBarArmedForVideo = vid;
+      musicBarColorIndex = (musicBarColorIndex + 1) % MUSIC_BAR_COLORS.length;
+      const bar = document.querySelector('.music-bar');
+      if (bar) bar.style.backgroundColor = MUSIC_BAR_COLORS[musicBarColorIndex];
+    }
+  }, 1000);
+}
+
+function stopMusicBarColorPoll() {
+  clearInterval(musicBarPollTimer);
+  musicBarPollTimer = 0;
+}
+
+function ensureYtPlayer() {
+  if (ytPlayer) return Promise.resolve(ytPlayer);
+  return loadYouTubeAPI().then(() => new Promise((resolve, reject) => {
+    try {
+      ytPlayer = new YT.Player('yt-audio-player', {
+        height: '0', width: '0',
+        playerVars: {listType: 'playlist', list: YT_PLAYLIST_ID, autoplay: 0, controls: 0, disablekb: 1},
+        events: {
+          onReady: () => resolve(ytPlayer),
+          onError: () => reject(new Error('yt error')),
+          onStateChange: e => {
+            if (window.YT && e.data === YT.PlayerState.PLAYING) { updateMusicTitle(); setPlayPauseIcon(true); }
+            if (window.YT && e.data === YT.PlayerState.PAUSED) setPlayPauseIcon(false);
+          },
+        },
+      });
+    } catch (err) { reject(err); }
+  }));
+}
+
+function setMusicBarVisible(visible) {
+  document.body.classList.toggle('music-bar-active', visible);
+  const clip = document.getElementById('music-bar-clip');
+  if (clip) clip.classList.toggle('music-bar-clip--visible', visible);
+}
+
+function initMusicBar() {
+  const toggle = document.getElementById('music-toggle');
+  const titleEl = document.getElementById('el-music-title-txt');
+  toggle.addEventListener('click', () => {
+    musicOn = !musicOn;
+    toggle.setAttribute('aria-checked', String(musicOn));
+    setMusicBarVisible(musicOn);
+    if (!musicOn) {
+      if (ytPlayer && ytPlayer.pauseVideo) ytPlayer.pauseVideo();
+      stopMusicBarColorPoll();
+      musicBarColorIndex = 0; musicBarArmedForVideo = null;
+      const bar = document.querySelector('.music-bar');
+      if (bar) bar.style.backgroundColor = '';
+      return;
+    }
+    if (titleEl) titleEl.textContent = T.musicLoading;
+    ensureYtPlayer().then(player => { player.playVideo(); startMusicBarColorPoll(); })
+      .catch(() => { if (titleEl) titleEl.textContent = T.musicUnavailable; setPlayPauseIcon(false); });
+  });
+  document.getElementById('music-play-pause').addEventListener('click', () => {
+    if (!ytPlayer || !window.YT) return;
+    if (ytPlayer.getPlayerState() === YT.PlayerState.PLAYING) ytPlayer.pauseVideo();
+    else ytPlayer.playVideo();
+  });
+  setPlayPauseIcon(false);
 }
 
 /* ════════════════
@@ -1435,7 +1953,9 @@ function isMobileDevice() {
 }
 
 async function renderTicketCanvas() {
-  return html2canvas(document.getElementById('ticket'), {scale:3,backgroundColor:'#FFFFFF',useCORS:true,logging:false});
+  return html2canvas(document.getElementById('ticket'), {scale:3,backgroundColor:getComputedStyle(document.documentElement).getPropertyValue('--color-canvas').trim(),useCORS:true,logging:false,onclone:doc => {
+    ['ticket-wrap','result-tilt'].forEach(id => { const e = doc.getElementById(id); if (e) { e.style.transform = 'none'; e.style.animation = 'none'; } });
+  }});
 }
 
 // iOS Safari does not persist an <a download> data-URL to Photos — clicking it just
@@ -1468,22 +1988,19 @@ function canvasToJpegFile(canvas) {
   });
 }
 
-// Single download action for both mobile and desktop. On mobile, going straight to
-// the OS share sheet with the image pre-attached is the only mechanism that reliably
-// lands a JPEG in Photos with just one tap ("Save Image") — a plain <a download>
-// isn't honored by iOS Safari at all. If Web Share isn't available we fall back to
-// opening the JPEG in a new tab so the user can long-press -> Save. Desktop just
-// downloads the file directly, no extra step needed.
-async function saveImage() {
+// Primary action on the result screen: open the OS share sheet with the ticket image
+// attached whenever the browser can (mobile and desktop Safari/Chrome). Where Web Share
+// with files isn't available it falls back to saving the JPEG, so the button always
+// does something useful.
+async function shareImage() {
   showToast(T.toastGenerating);
   try {
     const canvas = await renderTicketCanvas();
-    if (isMobileDevice() && navigator.share) {
+    if (navigator.share) {
       const file = await canvasToJpegFile(canvas);
       if (file && (!navigator.canShare || navigator.canShare({files:[file]}))) {
         try {
           await navigator.share({files:[file], title:'Bloom Studio ✿'});
-          showToast(T.toastSaved);
           return;
         } catch(shareErr) {
           if (shareErr && shareErr.name === 'AbortError') return;
@@ -1508,7 +2025,7 @@ function sparkleAt(el) {
     const s = document.createElement('div');
     s.className = 'sparkle';
     s.textContent = sym;
-    s.style.cssText = `left:${r.left+r.width*Math.random()}px;top:${r.top+r.height*Math.random()}px;animation-delay:${i*0.08}s;color:${['#E2B8C8','#E086AA','#C8D44A','#7D8B3C','#445A3C'][i]}`;
+    s.style.cssText = `left:${r.left+r.width*Math.random()}px;top:${r.top+r.height*Math.random()}px;animation-delay:${i*0.08}s;color:${['var(--color-rose)','var(--color-bark)','var(--color-mauve)','var(--color-rose)','var(--color-bark)'][i]}`;
     document.body.appendChild(s);
     setTimeout(() => s.remove(), 1600);
   });
@@ -1531,6 +2048,13 @@ const PETAL_SRCS = [
   'images/petals/petal-rose.png',
   'images/petals/petal-violet.png',
 ];
+
+// Same little flat heart used on the grid-paper background, in each of its 5 pastel
+// colours — inline SVG data-URIs, so the photo-booth burst needs no extra image files.
+const HEART_SVG_PATH = 'M7 12C7 12 0 7.6 0 3.9 0 1.7 1.7 0 3.6 0 5.1 0 6.4 .9 7 2.1 7.6.9 8.9 0 10.4 0 12.3 0 14 1.7 14 3.9 14 7.6 7 12 7 12Z';
+const HEART_SPLASH_COLORS = ['%2393A6D3','%23C2D9EA','%23EBC2DB','%23A7BA8F','%23F4D17A'];
+const HEART_SPLASH_SRCS = HEART_SPLASH_COLORS.map(c =>
+  `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 14 12'%3E%3Cpath fill='${c}' d='${HEART_SVG_PATH}'/%3E%3C/svg%3E`);
 
 function initPetals() {
   const bg = document.querySelector('.builder-bg');
@@ -1557,7 +2081,7 @@ function splashPetals(originEl) {
   for (let i = 0; i < total; i++) {
     const img = document.createElement('img');
     img.className = 'petal-splash';
-    img.src = PETAL_SRCS[i % PETAL_SRCS.length];
+    img.src = HEART_SPLASH_SRCS[i % HEART_SPLASH_SRCS.length];
     img.alt = '';
     const angle = Math.random() * Math.PI * 2;
     const burst = 70 + Math.random() * 130;
@@ -1639,12 +2163,22 @@ document.addEventListener('DOMContentLoaded', async () => {
   initArrows();
   initPetals();
   initModal();
+  initFontPick();
   initBouquetPreview();
+  document.getElementById('lt-footer').innerHTML = ticketFooterHTML();
+  renderJewelsOverlay();
+  attachTicketShape(document.getElementById('live-ticket'));
+  attachTicketShape(document.getElementById('ticket'));
+  document.querySelectorAll('.ticket-tilt').forEach(initTilt);
+  initMusicBar();
+  requestAnimationFrame(layoutGems);
+  window.addEventListener('load', layoutGems);
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(layoutGems);
   // Warm all 6 tinted ribbon variants before the picker becomes interactive, so
   // a fast click never races an unfinished canvas tint (ribbonSrc() would just
   // silently fall back to the plain original otherwise).
   await warmRibbonTints();
-  initRibbonModal();
+  initRibbonPicker();
 
   document.getElementById('btn-create').addEventListener('click', () => {
     if (state.selected.length < 1) return;
@@ -1652,34 +2186,51 @@ document.addEventListener('DOMContentLoaded', async () => {
     sparkleAt(document.getElementById('screen-result'));
   });
 
-  document.getElementById('btn-save-img').addEventListener('click', saveImage);
+  document.getElementById('btn-save-img').addEventListener('click', shareImage);
+
+  // Clears the whole builder (flowers, ribbon, message, font) back to its first state.
+  function resetBuilder() {
+    state.selected = [];
+    state.toName = state.fromName = state.message = '';
+    state.font = 'serif';
+    state.ribbonColor = '#FFFFFF';
+    state.jewelsOn = false;
+    document.getElementById('jewels-toggle').setAttribute('aria-checked', 'false');
+    document.querySelectorAll('.flower-card').forEach(c => {
+      c.classList.remove('selected');
+      setQtyPill(c, c.dataset.id, 0);
+    });
+    ['input-to','input-from','input-msg'].forEach(id => { document.getElementById(id).value = ''; });
+    document.getElementById('char-bar').textContent = '0 / 140';
+    document.querySelectorAll('#font-pick .font-opt').forEach(o => o.classList.toggle('sel', o.dataset.font === 'serif'));
+    applyRibbonColorToPreview(state.ribbonColor);
+    initRibbonPicker();
+    renderJewelsOverlay();
+    positionCounter = 0;
+    const flowersEl = document.getElementById('bp-flowers');
+    if (flowersEl) flowersEl.innerHTML = '';
+    refreshMsgBtn();
+    renderLiveTicket();
+    updateCreateBtn();
+  }
+
+  document.getElementById('jewels-toggle').addEventListener('click', () => {
+    state.jewelsOn = !state.jewelsOn;
+    document.getElementById('jewels-toggle').setAttribute('aria-checked', String(state.jewelsOn));
+    renderJewelsOverlay();
+  });
+
+  document.getElementById('btn-restart').addEventListener('click', () => {
+    resetBuilder();
+    showToast(T.toastNew);
+  });
 
   document.getElementById('btn-new').addEventListener('click', () => {
     document.getElementById('screen-result').classList.remove('active');
     document.getElementById('screen-builder').classList.add('active');
     window.scrollTo(0, 0);
-    state.selected = [];
-    state.toName = state.fromName = state.message = '';
-    document.querySelectorAll('.flower-card').forEach(c => {
-      c.classList.remove('selected');
-      setQtyPill(c, c.dataset.id, 0);
-    });
-    const btn = document.getElementById('btn-open-msg');
-    btn.classList.remove('has-msg');
-    document.getElementById('el-btn-msg-txt').textContent = T.btnMsgTxt;
-    document.getElementById('input-to').value = '';
-    document.getElementById('input-from').value = '';
-    document.getElementById('input-msg').value = '';
-    document.getElementById('char-bar').textContent = '0 / 140';
-    state.ribbonColor = null;
-    applyRibbonColorToPreview(null);
-    const ribbonBtn = document.getElementById('btn-open-ribbon');
-    ribbonBtn.classList.remove('has-msg');
-    document.getElementById('el-btn-ribbon-txt').textContent = T.btnRibbonTxt;
-    positionCounter = 0;
-    const flowersEl = document.getElementById('bp-flowers');
-    if (flowersEl) flowersEl.innerHTML = '';
-    updateCreateBtn();
+    resetBuilder();
+    layoutGems();
     showToast(T.toastNew);
   });
 });
