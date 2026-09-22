@@ -1913,11 +1913,10 @@ function ensureYtPlayer() {
       ytPlayer = new YT.Player('yt-audio-player', {
         height: '0', width: '0',
         // playsinline is required on iOS or the hidden 0x0 iframe tries to play fullscreen
-        // instead of inline, which can silently swallow the play. autoplay:1 is a safety net:
-        // ensureYtPlayer()'s own playVideo() call happens after the API-load + player-boot
-        // promise chain, and on mobile that delay is often enough for the browser to decide
-        // the original tap's user-activation has expired and drop the play silently.
-        playerVars: {listType: 'playlist', list: YT_PLAYLIST_ID, autoplay: 1, playsinline: 1, controls: 0, disablekb: 1},
+        // instead of inline, which can silently swallow the play. autoplay stays 0 here —
+        // this same player creation also runs as an unrequested warm-up (see initMusicBar),
+        // and we don't want audio starting on its own before the visitor has opted in.
+        playerVars: {listType: 'playlist', list: YT_PLAYLIST_ID, autoplay: 0, playsinline: 1, controls: 0, disablekb: 1},
         events: {
           onReady: () => resolve(ytPlayer),
           onError: () => reject(new Error('yt error')),
@@ -1940,6 +1939,14 @@ function setMusicBarVisible(visible) {
 function initMusicBar() {
   const toggle = document.getElementById('music-toggle');
   const titleEl = document.getElementById('el-music-title-txt');
+  // Warm the hidden YouTube player shortly after the page settles (autoplay:0, so nothing
+  // plays yet). The very first tap of the toggle used to be the moment this whole chain —
+  // fetch the iframe API over the network, boot the player, wait for onReady — started, and
+  // on mobile that round-trip alone was often enough for the browser to decide the tap's
+  // "user activation" had expired and silently drop the playVideo() call at the end of it.
+  // Booting ahead of time means that by the time someone actually taps, ensureYtPlayer()
+  // resolves with an already-ready player and playVideo() fires right on the gesture.
+  setTimeout(() => { ensureYtPlayer().catch(() => {}); }, 1500);
   toggle.addEventListener('click', () => {
     musicOn = !musicOn;
     toggle.setAttribute('aria-checked', String(musicOn));
