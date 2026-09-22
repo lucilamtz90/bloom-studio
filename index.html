@@ -305,6 +305,8 @@ body.music-bar-active{padding-top:44px}
 .font-opt-preview{font-size:15px;color:var(--bark);margin-bottom:3px;line-height:1.2}
 .font-opt-name{font-size:11px;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted)}
 .btn-sheet-save{width:100%;margin-top:24px}
+.btn-sheet-save:disabled{opacity:0.38;cursor:not-allowed}
+.bloom-label--required::after{content:' *';color:var(--color-rose)}
 .picker-group.bloom-card{overflow:visible;border-radius:0}
 
 /* ── RESULT SCREEN ──
@@ -547,16 +549,16 @@ body.music-bar-active{padding-top:44px}
   <div class="sheet">
     <button type="button" class="sheet-close" id="btn-close-msg" aria-label="close">×</button>
     <h2 class="sheet-title bloom-h2" id="el-sheet-title">Write a cute message ✉</h2>
-    <p class="sheet-sub" id="el-sheet-sub">Optional — your note will appear on the bouquet card</p>
+    <p class="sheet-sub" id="el-sheet-sub">Your note will appear on the bouquet card</p>
 
     <div class="fields-2">
       <div class="field bloom-field">
-        <label class="bloom-label" for="input-to" id="el-lbl-to">To</label>
-        <input class="bloom-input" id="input-to" type="text" placeholder="Recipient's name" maxlength="40">
+        <label class="bloom-label bloom-label--required" for="input-to" id="el-lbl-to">To</label>
+        <input class="bloom-input" id="input-to" type="text" placeholder="Recipient's name" maxlength="40" required>
       </div>
       <div class="field bloom-field">
-        <label class="bloom-label" for="input-from" id="el-lbl-from">From</label>
-        <input class="bloom-input" id="input-from" type="text" placeholder="Your name" maxlength="40">
+        <label class="bloom-label bloom-label--required" for="input-from" id="el-lbl-from">From</label>
+        <input class="bloom-input" id="input-from" type="text" placeholder="Your name" maxlength="40" required>
       </div>
     </div>
 
@@ -566,7 +568,7 @@ body.music-bar-active{padding-top:44px}
       <div class="char-bar" id="char-bar">0 / 140</div>
     </div>
 
-    <button class="btn-sheet-save bloom-btn bloom-btn--primary bloom-btn--lg" id="btn-save-msg">Save message</button>
+    <button class="btn-sheet-save bloom-btn bloom-btn--primary bloom-btn--lg" id="btn-save-msg" disabled>Save message</button>
   </div>
 </div>
 
@@ -1536,6 +1538,14 @@ function refreshMsgBtn() {
   document.getElementById('el-btn-msg-txt').textContent = hasMeta ? T.btnMsgAdded : T.btnAddMsg;
 }
 
+// Message is optional; To/From are required — the save button stays disabled until both
+// are filled in, so there's no way to save a message with no name on either side of it.
+function updateSaveMsgBtn() {
+  const to = document.getElementById('input-to').value.trim();
+  const from = document.getElementById('input-from').value.trim();
+  document.getElementById('btn-save-msg').disabled = !(to && from);
+}
+
 function initModal() {
   const overlay = document.getElementById('modal-msg');
   const close = () => overlay.classList.remove('open');
@@ -1551,7 +1561,11 @@ function initModal() {
     bar.className = 'char-bar'+(n>120?' warn':'');
   });
 
+  document.getElementById('input-to').addEventListener('input', updateSaveMsgBtn);
+  document.getElementById('input-from').addEventListener('input', updateSaveMsgBtn);
+
   document.getElementById('btn-save-msg').addEventListener('click', () => {
+    if (document.getElementById('btn-save-msg').disabled) return;
     state.toName   = document.getElementById('input-to').value.trim();
     state.fromName = document.getElementById('input-from').value.trim();
     state.message  = document.getElementById('input-msg').value.trim();
@@ -2360,6 +2374,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
     ['input-to','input-from','input-msg'].forEach(id => { document.getElementById(id).value = ''; });
     document.getElementById('char-bar').textContent = '0 / 140';
+    updateSaveMsgBtn();
     document.querySelectorAll('#font-pick .font-opt').forEach(o => o.classList.toggle('sel', o.dataset.font === 'serif'));
     applyRibbonColorToPreview(state.ribbonColor);
     initRibbonPicker();
