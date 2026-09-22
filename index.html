@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Send a Bouquet Now</title>
+<title>Bloom Studio</title>
 <link rel="icon" href="favicon.ico" sizes="any">
 <link rel="icon" type="image/svg+xml" href="images/favicon.svg">
 <link rel="icon" type="image/png" sizes="32x32" href="images/favicon-32x32.png">
@@ -11,7 +11,7 @@
 <link rel="apple-touch-icon" sizes="180x180" href="images/apple-touch-icon.png">
 <link rel="icon" type="image/png" sizes="192x192" href="images/favicon-192x192.png">
 <link rel="icon" type="image/png" sizes="512x512" href="images/favicon-512x512.png">
-<link rel="stylesheet" href="styles/bloom-tokens.css?v=15">
+<link rel="stylesheet" href="styles/bloom-tokens.css?v=16">
 <link rel="stylesheet" href="styles/bloom-components.css?v=10">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <style>
@@ -24,7 +24,7 @@
 }
 *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
 html{scroll-behavior:smooth}
-body{position:relative;background-color:var(--color-canvas);color:var(--bark);font-family:var(--font-body);font-weight:400;min-height:100vh;overflow-x:hidden;-webkit-font-smoothing:antialiased;cursor:url('images/cursor-heart.png') 24 8,auto}
+body{position:relative;background-color:var(--color-canvas);color:var(--bark);font-family:var(--font-body);font-weight:400;min-height:100vh;overflow-x:hidden;-webkit-font-smoothing:antialiased;cursor:url('images/cursor-heart.png?v=2') 24 8,auto}
 
 .screen{display:none;min-height:100vh}
 /* Decorative gem stickers scattered over the paper (positions computed by layoutGems, in page coordinates). */
@@ -1134,7 +1134,7 @@ function applyTranslations() {
   const t = T;
   document.documentElement.lang = currentLang;
   document.documentElement.dir = t.dir || 'ltr';
-  document.title = t.pageTitle;
+  document.title = 'Bloom Studio';   // brand name — not translated per language, unlike the rest of the UI
 
   const s = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
   const h = (id, val) => { const el = document.getElementById(id); if (el) el.innerHTML = val; };
@@ -1992,7 +1992,15 @@ function canvasToJpegFile(canvas) {
 // attached whenever the browser can (mobile and desktop Safari/Chrome). Where Web Share
 // with files isn't available it falls back to saving the JPEG, so the button always
 // does something useful.
+// `sharing` guards against a double-tap firing this twice before the first share sheet
+// has even opened — each call re-renders + re-shares independently, which is what made
+// WhatsApp show the bouquet as sent twice. Also: `files` alone, no `title` — WhatsApp's
+// share-target treats a files+title payload as two separate items (the image, then a
+// second text-only message with the title), which was the other half of that bug.
+let sharing = false;
 async function shareImage() {
+  if (sharing) return;
+  sharing = true;
   showToast(T.toastGenerating);
   try {
     const canvas = await renderTicketCanvas();
@@ -2000,7 +2008,7 @@ async function shareImage() {
       const file = await canvasToJpegFile(canvas);
       if (file && (!navigator.canShare || navigator.canShare({files:[file]}))) {
         try {
-          await navigator.share({files:[file], title:'Bloom Studio ✿'});
+          await navigator.share({files:[file]});
           return;
         } catch(shareErr) {
           if (shareErr && shareErr.name === 'AbortError') return;
@@ -2013,6 +2021,8 @@ async function shareImage() {
   } catch(e) {
     showToast(T.toastSaveFail);
     console.error(e);
+  } finally {
+    sharing = false;
   }
 }
 
