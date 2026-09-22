@@ -2051,12 +2051,9 @@ async function renderTicketCanvas() {
     clone.querySelectorAll('[id]').forEach(e => e.removeAttribute('id'));
     clone.style.width = W + 'px';
     clone.style.margin = '0';
-    // The ticket's real border/perforated-notch shape is an SVG a script draws on it (see
-    // attachTicketShape) — that script's own reference to the live #ticket is lost on a
-    // clone, and on at least one real device this off-screen composed capture has rendered
-    // with that SVG simply missing (content floating with no card outline at all). This
-    // plain CSS border+fill sits behind it as a fallback: invisible if the SVG draws fine
-    // (it paints on top, same look as before), a plain square-edged card if it doesn't.
+    // Belt-and-suspenders fallback in case the SVG shape below still doesn't draw for some
+    // unforeseen reason: a plain border + the ticket's own fill colour, sitting behind it —
+    // invisible when the SVG draws correctly, a plain square-edged card if it doesn't.
     clone.style.border = `1px solid ${getComputedStyle(document.documentElement).getPropertyValue('--color-line').trim()}`;
     clone.style.backgroundColor = getComputedStyle(document.documentElement).getPropertyValue('--color-parchment').trim();
 
@@ -2081,6 +2078,31 @@ async function renderTicketCanvas() {
     wrap.appendChild(title);
     wrap.appendChild(clone);
     document.body.appendChild(wrap);
+
+    // The cloned .ticket-shape SVG still has the width/height/viewBox/path that
+    // attachTicketShape() last computed for the LIVE #ticket's own box — reparenting the
+    // clone into this detached wrap can settle at a very slightly different height (different
+    // layout context, no ResizeObserver watching it), which was enough on at least one real
+    // device to make the shape miss the card's actual edges and effectively disappear, leaving
+    // just the plain fallback rectangle above. Recompute it here against the clone's real,
+    // now-measurable size so it matches exactly, the same way attachTicketShape's own
+    // update() does for the live ticket.
+    const shapeSvg = clone.querySelector('.ticket-shape');
+    const shapePath = shapeSvg && shapeSvg.querySelector('path');
+    if (shapeSvg && shapePath) {
+      const cw = clone.offsetWidth, ch = clone.offsetHeight;
+      if (cw && ch) {
+        shapeSvg.setAttribute('width', cw);
+        shapeSvg.setAttribute('height', ch);
+        shapeSvg.setAttribute('viewBox', `0 0 ${cw} ${ch}`);
+        const perf = clone.querySelector('.ticket-perf');
+        let top = 0;
+        for (let n = perf; n && n !== clone; n = n.offsetParent) top += n.offsetTop;
+        shapePath.setAttribute('d', perf
+          ? ticketPath(cw, ch, top + perf.offsetHeight / 2, perf.offsetHeight / 2)
+          : `M0.5 0.5 H${cw - 0.5} V${ch - 0.5} H0.5 Z`);
+      }
+    }
 
     try {
       return await html2canvas(wrap, {scale:3, backgroundColor:canvasColor, useCORS:true, logging:false});
