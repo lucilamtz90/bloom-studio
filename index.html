@@ -2138,6 +2138,15 @@ function showPlainTicket() {
   if (scaleEl.parentElement !== wrap) wrap.insertBefore(scaleEl, wrap.firstChild);
   if (fabGroup.parentElement !== wrap) wrap.appendChild(fabGroup);
   scaleEl.style.transform = ''; scaleEl.style.transformOrigin = '';
+  // #ticket-wrap still carries the .print class from the original photo-booth reveal (it's
+  // never removed after that animation finishes — .ticket-wrap.print{animation:...both} just
+  // holds its resting position, which is harmless normally). But moving an element that still
+  // has an active/held CSS animation to a new parent can make the browser treat it as
+  // restarting — confirmed by sampling #ticket-wrap's transform right after this appendChild
+  // in testing, it was visibly re-running the boothPrint slide. Dropping the class first means
+  // there's no animation left to restart; the ticket was already sitting at its resting
+  // position either way, so this has no visual effect beyond stopping that replay.
+  wrap.classList.remove('print');
   if (wrap.parentElement !== plain) plain.appendChild(wrap);
   hideAllTicketHomes();
   plain.style.display = '';
